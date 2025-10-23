@@ -2154,7 +2154,7 @@ namespace LuaUnit
         float y = ALE::CHECKVAL<float>(L, 4);
         float z = ALE::CHECKVAL<float>(L, 5);
         bool genPath = ALE::CHECKVAL<bool>(L, 6, true);
-        unit->GetMotionMaster()->MovePoint(id, x, y, z, genPath);
+        unit->GetMotionMaster()->MovePoint(id, x, y, z, FORCED_MOVEMENT_NONE, 0.f, 0.f, genPath);
         return 0;
     }
 

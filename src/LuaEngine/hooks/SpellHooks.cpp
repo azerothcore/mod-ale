@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
@@ -8,28 +8,28 @@
 #include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ElunaIncludes.h"
-#include "ElunaTemplate.h"
+#include "ALEIncludes.h"
+#include "ALETemplate.h"
 
 using namespace Hooks;
 
 #define START_HOOK(EVENT, ENTRY) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EntryKey<SpellEvents>(EVENT, ENTRY);\
     if (!SpellEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ELUNA
+    LOCK_ALE
 
 #define START_HOOK_WITH_RETVAL(EVENT, ENTRY, RETVAL) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return RETVAL;\
     auto key = EntryKey<SpellEvents>(EVENT, ENTRY);\
     if (!SpellEventBindings->HasBindingsFor(key))\
         return RETVAL;\
-    LOCK_ELUNA
+    LOCK_ALE
 
-void Eluna::OnSpellCastCancel(Unit* caster, Spell* spell, SpellInfo const* spellInfo, bool bySelf)
+void ALE::OnSpellCastCancel(Unit* caster, Spell* spell, SpellInfo const* spellInfo, bool bySelf)
 {
     START_HOOK(SPELL_EVENT_ON_CAST_CANCEL, spellInfo->Id);
     Push(caster);
@@ -39,7 +39,7 @@ void Eluna::OnSpellCastCancel(Unit* caster, Spell* spell, SpellInfo const* spell
     CallAllFunctions(SpellEventBindings, key);
 }
 
-void Eluna::OnSpellCast(Unit* caster, Spell* spell, SpellInfo const* spellInfo, bool skipCheck)
+void ALE::OnSpellCast(Unit* caster, Spell* spell, SpellInfo const* spellInfo, bool skipCheck)
 {
     START_HOOK(SPELL_EVENT_ON_CAST, spellInfo->Id);
     Push(caster);
@@ -49,7 +49,7 @@ void Eluna::OnSpellCast(Unit* caster, Spell* spell, SpellInfo const* spellInfo, 
     CallAllFunctions(SpellEventBindings, key);
 }
 
-void Eluna::OnSpellPrepare(Unit* caster, Spell* spell, SpellInfo const* spellInfo)
+void ALE::OnSpellPrepare(Unit* caster, Spell* spell, SpellInfo const* spellInfo)
 {
     START_HOOK(SPELL_EVENT_ON_PREPARE, spellInfo->Id);
     Push(caster);

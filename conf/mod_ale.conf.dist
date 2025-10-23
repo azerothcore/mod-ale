@@ -1,44 +1,44 @@
 [worldserver]
 
 ###################################################################################################
-#  ELUNA SETTINGS
+#  ALE SETTINGS
 #
-#   Eluna.Enabled
-#       Description: Enable or disable Eluna LuaEngine
+#   ALE.Enabled
+#       Description: Enable or disable ALE LuaEngine
 #       Default:    true  - (enabled)
 #                   false - (disabled)
 #
-#   Eluna.TraceBack
+#   ALE.TraceBack
 #       Description: Sets whether to use debug.traceback function on a lua error or not.
 #                    Notice that you can redefine the function.
 #       Default:    false - (use default error output)
 #                   true  - (use debug.traceback function)
 #
-#   Eluna.ScriptPath
+#   ALE.ScriptPath
 #       Description: Sets the location of the script folder to load scripts from
 #                    The path can be relative or absolute.
 #       Default:    "lua_scripts"
 #
-#   Eluna.PlayerAnnounceReload
+#   ALE.PlayerAnnounceReload
 #       Description: Enable or disable whether the reload announcement is sent to players (Lowest security level).
 #       Default:    false - (disabled)
 #                   true  - (enabled)
 #
-#   Eluna.RequirePaths
+#   ALE.RequirePaths
 #       Description: Sets the location of additional require paths.
 #                    These paths are absolute and follows the standard Lua require path patterns.
 #                    Below are a set of "standard" paths used by most package managers.
 #                    "/usr/share/%s/?.lua;/usr/local/share/lua/%s/?.lua;/usr/local/share/lua/%s/?/init.lua;/usr/share/lua/%s/?.lua;/usr/share/lua/%s/?/init.lua;"
 #       Default:     ""
 #
-#   Eluna.RequireCPaths
+#   ALE.RequireCPaths
 #       Description: Sets the location of additional require C paths.
 #                    These paths are absolute and follows the standard Lua require path patterns.
 #                    Below are a set of "standard" paths used by most package managers.
 #                    "/usr/local/lib/lua/%s/?.so;/usr/lib/x86_64-linux-gnu/lua/%s/?.so;/usr/local/lib/lua/%s/loadall.so;"
 #       Default:     ""
 #
-#   Eluna.AutoReload
+#   ALE.AutoReload
 #       Description: Enable or disable automatic reloading of Lua scripts when files are modified.
 #                    This feature watches the script directory for changes and automatically
 #                    triggers a reload when .lua files are added, modified, or deleted.
@@ -46,29 +46,29 @@
 #       Default:    false - (disabled)
 #                   true  - (enabled)
 #
-#   Eluna.AutoReloadInterval
+#   ALE.AutoReloadInterval
 #       Description: Sets the interval in seconds between file system checks for auto-reload.
 #                    Lower values provide faster detection but use more CPU resources.
 #                    Higher values reduce CPU usage but increase detection delay.
 #       Default:    1 - (check every 1 second)
 #
-#   Eluna.BytecodeCache
+#   ALE.BytecodeCache
 #       Description: Enable or disable bytecode caching for improved performance.
 #                    When enabled, Lua/MoonScript files are compiled to bytecode and cached in memory.
-#                    This significantly speeds up script reloading (.reload eluna).
+#                    This significantly speeds up script reloading (.reload ALE).
 #                    Cache is cleared only when files are modified or server restarts.
 #       Default:    true  - (enabled)
 #                   false - (disabled)
 
-Eluna.Enabled = true
-Eluna.TraceBack = false
-Eluna.ScriptPath = "lua_scripts"
-Eluna.PlayerAnnounceReload = false
-Eluna.RequirePaths = ""
-Eluna.RequireCPaths = ""
-Eluna.AutoReload = false
-Eluna.AutoReloadInterval = 1
-Eluna.BytecodeCache = true
+ALE.Enabled = true
+ALE.TraceBack = false
+ALE.ScriptPath = "lua_scripts"
+ALE.PlayerAnnounceReload = false
+ALE.RequirePaths = ""
+ALE.RequireCPaths = ""
+ALE.AutoReload = false
+ALE.AutoReloadInterval = 1
+ALE.BytecodeCache = true
 
 ###################################################################################################
 # LOGGING SYSTEM SETTINGS
@@ -136,8 +136,8 @@ Eluna.BytecodeCache = true
 #                         NOTE: Does not work with dynamic filenames.
 #                         Example:  536870912 (512 MB)
 #
-Appender.ElunaLog=2,5,0,eluna.log,w
-Appender.ElunaConsole=1,4,0,"0 9 0 3 5 0"
+Appender.ALELog=2,5,0,ALE.log,w
+Appender.ALEConsole=1,4,0,"0 9 0 3 5 0"
 
 #  Logger config values: Given a logger "name"
 #    Logger.name
@@ -156,4 +156,4 @@ Appender.ElunaConsole=1,4,0,"0 9 0 3 5 0"
 #                     AppenderList: List of appenders linked to logger
 #                     (Using spaces as separator).
 #
-Logger.eluna=4,ElunaLog ElunaConsole
+Logger.ALE=4,ALELog ALEConsole

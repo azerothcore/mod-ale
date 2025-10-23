@@ -1,5 +1,5 @@
-#ifndef ELUNADBCREGISTRY_H
-#define ELUNADBCREGISTRY_H
+#ifndef ALEDBCREGISTRY_H
+#define ALEDBCREGISTRY_H
 
 #include <string>
 #include <vector>
@@ -30,9 +30,9 @@ extern std::vector<DBCDefinition> dbcRegistry;
         },                                      \
         [](lua_State* L, const void* entry) {   \
             auto cast_entry = static_cast<const entryType*>(entry); \
-            Eluna::Push(L, *cast_entry);        \
+            ALE::Push(L, *cast_entry);        \
         }                                       \
     }
 
-#endif // ELUNADBCREGISTRY_H
+#endif // ALEDBCREGISTRY_H
 

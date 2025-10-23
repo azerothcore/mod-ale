@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
@@ -8,19 +8,19 @@
 #include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ElunaTemplate.h"
+#include "ALETemplate.h"
 
 using namespace Hooks;
 
 #define START_HOOK(EVENT) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EventKey<BGEvents>(EVENT);\
     if (!BGEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ELUNA
+    LOCK_ALE
 
-void Eluna::OnBGStart(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId)
+void ALE::OnBGStart(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId)
 {
     START_HOOK(BG_EVENT_ON_START);
     Push(bg);
@@ -29,7 +29,7 @@ void Eluna::OnBGStart(BattleGround* bg, BattleGroundTypeId bgId, uint32 instance
     CallAllFunctions(BGEventBindings, key);
 }
 
-void Eluna::OnBGEnd(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId, TeamId winner)
+void ALE::OnBGEnd(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId, TeamId winner)
 {
     START_HOOK(BG_EVENT_ON_END);
     Push(bg);
@@ -39,7 +39,7 @@ void Eluna::OnBGEnd(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId
     CallAllFunctions(BGEventBindings, key);
 }
 
-void Eluna::OnBGCreate(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId)
+void ALE::OnBGCreate(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId)
 {
     START_HOOK(BG_EVENT_ON_CREATE);
     Push(bg);
@@ -48,7 +48,7 @@ void Eluna::OnBGCreate(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanc
     CallAllFunctions(BGEventBindings, key);
 }
 
-void Eluna::OnBGDestroy(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId)
+void ALE::OnBGDestroy(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId)
 {
     START_HOOK(BG_EVENT_ON_PRE_DESTROY);
     Push(bg);

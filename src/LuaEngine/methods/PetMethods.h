@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2025 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -33,7 +33,7 @@ namespace LuaPet
      */
     int GetPetType(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->getPetType());
+        ALE::Push(L, pet->getPetType());
         return 1;
     }
 
@@ -53,7 +53,7 @@ namespace LuaPet
      */
     int SetPetType(lua_State* L, Pet* pet)
     {
-        uint32 petType = Eluna::CHECKVAL<uint32>(L, 2);
+        uint32 petType = ALE::CHECKVAL<uint32>(L, 2);
         pet->setPetType(static_cast<PetType>(petType));
         return 0;
     }
@@ -65,7 +65,7 @@ namespace LuaPet
      */
     int IsControlled(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->isControlled());
+        ALE::Push(L, pet->isControlled());
         return 1;
     }
 
@@ -76,7 +76,7 @@ namespace LuaPet
      */
     int IsTemporarySummoned(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->isTemporarySummoned());
+        ALE::Push(L, pet->isTemporarySummoned());
         return 1;
     }
 
@@ -88,8 +88,8 @@ namespace LuaPet
      */
     int IsPermanentPetFor(lua_State* L, Pet* pet)
     {
-        Player* owner = Eluna::CHECKOBJ<Player>(L, 2);
-        Eluna::Push(L, pet->IsPermanentPetFor(owner));
+        Player* owner = ALE::CHECKOBJ<Player>(L, 2);
+        ALE::Push(L, pet->IsPermanentPetFor(owner));
         return 1;
     }
 
@@ -101,8 +101,8 @@ namespace LuaPet
      */
     int CreateBaseAtCreature(lua_State* L, Pet* pet)
     {
-        Creature* creature = Eluna::CHECKOBJ<Creature>(L, 2);
-        Eluna::Push(L, pet->CreateBaseAtCreature(creature));
+        Creature* creature = ALE::CHECKOBJ<Creature>(L, 2);
+        ALE::Push(L, pet->CreateBaseAtCreature(creature));
         return 1;
     }
 
@@ -113,7 +113,7 @@ namespace LuaPet
      */
     int GetDuration(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->GetDuration().count());
+        ALE::Push(L, pet->GetDuration().count());
         return 1;
     }
 
@@ -124,7 +124,7 @@ namespace LuaPet
      */
     int SetDuration(lua_State* L, Pet* pet)
     {
-        uint32 duration = Eluna::CHECKVAL<uint32>(L, 2);
+        uint32 duration = ALE::CHECKVAL<uint32>(L, 2);
         pet->SetDuration(Milliseconds(duration));
         return 0;
     }
@@ -145,7 +145,7 @@ namespace LuaPet
      */
     int GetHappinessState(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->GetHappinessState());
+        ALE::Push(L, pet->GetHappinessState());
         return 1;
     }
 
@@ -156,7 +156,7 @@ namespace LuaPet
      */
     int GivePetXP(lua_State* L, Pet* pet)
     {
-        uint32 xp = Eluna::CHECKVAL<uint32>(L, 2);
+        uint32 xp = ALE::CHECKVAL<uint32>(L, 2);
         pet->GivePetXP(xp);
         return 0;
     }
@@ -168,7 +168,7 @@ namespace LuaPet
      */
     int GivePetLevel(lua_State* L, Pet* pet)
     {
-        uint8 level = Eluna::CHECKVAL<uint8>(L, 2);
+        uint8 level = ALE::CHECKVAL<uint8>(L, 2);
         pet->GivePetLevel(level);
         return 0;
     }
@@ -192,8 +192,8 @@ namespace LuaPet
      */
     int HaveInDiet(lua_State* L, Pet* pet)
     {
-        Item* item = Eluna::CHECKOBJ<Item>(L, 2);
-        Eluna::Push(L, pet->HaveInDiet(item->GetTemplate()));
+        Item* item = ALE::CHECKOBJ<Item>(L, 2);
+        ALE::Push(L, pet->HaveInDiet(item->GetTemplate()));
         return 1;
     }
 
@@ -205,8 +205,8 @@ namespace LuaPet
      */
     int GetCurrentFoodBenefitLevel(lua_State* L, Pet* pet)
     {
-        uint32 itemLevel = Eluna::CHECKVAL<uint32>(L, 2);
-        Eluna::Push(L, pet->GetCurrentFoodBenefitLevel(itemLevel));
+        uint32 itemLevel = ALE::CHECKVAL<uint32>(L, 2);
+        ALE::Push(L, pet->GetCurrentFoodBenefitLevel(itemLevel));
         return 1;
     }
 
@@ -218,8 +218,8 @@ namespace LuaPet
      */
     int ToggleAutocast(lua_State* L, Pet* pet)
     {
-        uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
-        bool apply = Eluna::CHECKVAL<bool>(L, 3);
+        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
+        bool apply = ALE::CHECKVAL<bool>(L, 3);
         
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
         if (spellInfo)
@@ -248,10 +248,10 @@ namespace LuaPet
      */
     int CastWhenWillAvailable(lua_State* L, Pet* pet)
     {
-        uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
-        Unit* target = Eluna::CHECKOBJ<Unit>(L, 3);
+        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
+        Unit* target = ALE::CHECKOBJ<Unit>(L, 3);
         ObjectGuid oldTarget = ObjectGuid::Empty;
-        bool isPositive = Eluna::CHECKVAL<bool>(L, 4, false);
+        bool isPositive = ALE::CHECKVAL<bool>(L, 4, false);
         
         pet->CastWhenWillAvailable(spellId, target, oldTarget, isPositive);
         return 0;
@@ -308,12 +308,12 @@ namespace LuaPet
      */
     int AddSpell(lua_State* L, Pet* pet)
     {
-        uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
-        uint32 active = Eluna::CHECKVAL<uint32>(L, 3, ACT_DECIDE);
-        uint32 state = Eluna::CHECKVAL<uint32>(L, 4, PETSPELL_NEW);
-        uint32 type = Eluna::CHECKVAL<uint32>(L, 5, PETSPELL_NORMAL);
+        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
+        uint32 active = ALE::CHECKVAL<uint32>(L, 3, ACT_DECIDE);
+        uint32 state = ALE::CHECKVAL<uint32>(L, 4, PETSPELL_NEW);
+        uint32 type = ALE::CHECKVAL<uint32>(L, 5, PETSPELL_NORMAL);
         
-        Eluna::Push(L, pet->addSpell(spellId, static_cast<ActiveStates>(active), static_cast<PetSpellState>(state), static_cast<PetSpellType>(type)));
+        ALE::Push(L, pet->addSpell(spellId, static_cast<ActiveStates>(active), static_cast<PetSpellState>(state), static_cast<PetSpellType>(type)));
         return 1;
     }
 
@@ -325,8 +325,8 @@ namespace LuaPet
      */
     int LearnSpell(lua_State* L, Pet* pet)
     {
-        uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
-        Eluna::Push(L, pet->learnSpell(spellId));
+        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
+        ALE::Push(L, pet->learnSpell(spellId));
         return 1;
     }
 
@@ -337,7 +337,7 @@ namespace LuaPet
      */
     int LearnSpellHighRank(lua_State* L, Pet* pet)
     {
-        uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
+        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
         pet->learnSpellHighRank(spellId);
         return 0;
     }
@@ -363,11 +363,11 @@ namespace LuaPet
      */
     int UnlearnSpell(lua_State* L, Pet* pet)
     {
-        uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
-        bool learnPrev = Eluna::CHECKVAL<bool>(L, 3, false);
-        bool clearAb = Eluna::CHECKVAL<bool>(L, 4, true);
+        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
+        bool learnPrev = ALE::CHECKVAL<bool>(L, 3, false);
+        bool clearAb = ALE::CHECKVAL<bool>(L, 4, true);
         
-        Eluna::Push(L, pet->unlearnSpell(spellId, learnPrev, clearAb));
+        ALE::Push(L, pet->unlearnSpell(spellId, learnPrev, clearAb));
         return 1;
     }
 
@@ -381,11 +381,11 @@ namespace LuaPet
      */
     int RemoveSpell(lua_State* L, Pet* pet)
     {
-        uint32 spellId = Eluna::CHECKVAL<uint32>(L, 2);
-        bool learnPrev = Eluna::CHECKVAL<bool>(L, 3, false);
-        bool clearAb = Eluna::CHECKVAL<bool>(L, 4, true);
+        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
+        bool learnPrev = ALE::CHECKVAL<bool>(L, 3, false);
+        bool clearAb = ALE::CHECKVAL<bool>(L, 4, true);
         
-        Eluna::Push(L, pet->removeSpell(spellId, learnPrev, clearAb));
+        ALE::Push(L, pet->removeSpell(spellId, learnPrev, clearAb));
         return 1;
     }
 
@@ -405,7 +405,7 @@ namespace LuaPet
      */
     int GenerateActionBarData(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->GenerateActionBarData());
+        ALE::Push(L, pet->GenerateActionBarData());
         return 1;
     }
 
@@ -427,7 +427,7 @@ namespace LuaPet
      */
     int ResetTalents(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->resetTalents());
+        ALE::Push(L, pet->resetTalents());
         return 1;
     }
 
@@ -450,8 +450,8 @@ namespace LuaPet
      */
     int GetMaxTalentPointsForLevel(lua_State* L, Pet* pet)
     {
-        uint8 level = Eluna::CHECKVAL<uint8>(L, 2);
-        Eluna::Push(L, pet->GetMaxTalentPointsForLevel(level));
+        uint8 level = ALE::CHECKVAL<uint8>(L, 2);
+        ALE::Push(L, pet->GetMaxTalentPointsForLevel(level));
         return 1;
     }
 
@@ -462,7 +462,7 @@ namespace LuaPet
      */
     int GetFreeTalentPoints(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->GetFreeTalentPoints());
+        ALE::Push(L, pet->GetFreeTalentPoints());
         return 1;
     }
 
@@ -473,7 +473,7 @@ namespace LuaPet
      */
     int SetFreeTalentPoints(lua_State* L, Pet* pet)
     {
-        uint8 points = Eluna::CHECKVAL<uint8>(L, 2);
+        uint8 points = ALE::CHECKVAL<uint8>(L, 2);
         pet->SetFreeTalentPoints(points);
         return 0;
     }
@@ -485,7 +485,7 @@ namespace LuaPet
      */
     int GetUsedTalentCount(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->m_usedTalentCount);
+        ALE::Push(L, pet->m_usedTalentCount);
         return 1;
     }
 
@@ -496,7 +496,7 @@ namespace LuaPet
      */
     int SetUsedTalentCount(lua_State* L, Pet* pet)
     {
-        uint32 count = Eluna::CHECKVAL<uint32>(L, 2);
+        uint32 count = ALE::CHECKVAL<uint32>(L, 2);
         pet->m_usedTalentCount = count;
         return 0;
     }
@@ -508,7 +508,7 @@ namespace LuaPet
      */
     int GetAuraUpdateMaskForRaid(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->GetAuraUpdateMaskForRaid());
+        ALE::Push(L, pet->GetAuraUpdateMaskForRaid());
         return 1;
     }
 
@@ -519,7 +519,7 @@ namespace LuaPet
      */
     int SetAuraUpdateMaskForRaid(lua_State* L, Pet* pet)
     {
-        uint8 slot = Eluna::CHECKVAL<uint8>(L, 2);
+        uint8 slot = ALE::CHECKVAL<uint8>(L, 2);
         pet->SetAuraUpdateMaskForRaid(slot);
         return 0;
     }
@@ -540,7 +540,7 @@ namespace LuaPet
      */
     int GetOwner(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->GetOwner());
+        ALE::Push(L, pet->GetOwner());
         return 1;
     }
 
@@ -551,7 +551,7 @@ namespace LuaPet
      */
     int HasTempSpell(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->HasTempSpell());
+        ALE::Push(L, pet->HasTempSpell());
         return 1;
     }
 
@@ -562,7 +562,7 @@ namespace LuaPet
      */
     int IsRemoved(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->m_removed);
+        ALE::Push(L, pet->m_removed);
         return 1;
     }
 
@@ -573,7 +573,7 @@ namespace LuaPet
      */
     int SetRemoved(lua_State* L, Pet* pet)
     {
-        bool removed = Eluna::CHECKVAL<bool>(L, 2);
+        bool removed = ALE::CHECKVAL<bool>(L, 2);
         pet->m_removed = removed;
         return 0;
     }
@@ -585,7 +585,7 @@ namespace LuaPet
      */
     int GetPetAutoSpellSize(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->GetPetAutoSpellSize());
+        ALE::Push(L, pet->GetPetAutoSpellSize());
         return 1;
     }
 
@@ -597,8 +597,8 @@ namespace LuaPet
      */
     int GetPetAutoSpellOnPos(lua_State* L, Pet* pet)
     {
-        uint8 pos = Eluna::CHECKVAL<uint8>(L, 2);
-        Eluna::Push(L, pet->GetPetAutoSpellOnPos(pos));
+        uint8 pos = ALE::CHECKVAL<uint8>(L, 2);
+        ALE::Push(L, pet->GetPetAutoSpellOnPos(pos));
         return 1;
     }
 
@@ -620,7 +620,7 @@ namespace LuaPet
      */
     int SavePetToDB(lua_State* L, Pet* pet)
     {
-        uint32 mode = Eluna::CHECKVAL<uint32>(L, 2);
+        uint32 mode = ALE::CHECKVAL<uint32>(L, 2);
         pet->SavePetToDB(static_cast<PetSaveMode>(mode));
         return 0;
     }
@@ -644,8 +644,8 @@ namespace LuaPet
      */
     int Remove(lua_State* L, Pet* pet)
     {
-        uint32 mode = Eluna::CHECKVAL<uint32>(L, 2);
-        bool returnReagent = Eluna::CHECKVAL<bool>(L, 3, false);
+        uint32 mode = ALE::CHECKVAL<uint32>(L, 2);
+        bool returnReagent = ALE::CHECKVAL<bool>(L, 3, false);
         pet->Remove(static_cast<PetSaveMode>(mode), returnReagent);
         return 0;
     }
@@ -657,7 +657,7 @@ namespace LuaPet
      */
     int IsBeingLoaded(lua_State* L, Pet* pet)
     {
-        Eluna::Push(L, pet->isBeingLoaded());
+        ALE::Push(L, pet->isBeingLoaded());
         return 1;
     }
 };

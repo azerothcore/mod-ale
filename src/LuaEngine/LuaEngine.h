@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -19,13 +19,13 @@
 #include "World.h"
 #include "Hooks.h"
 #include "LFG.h"
-#include "ElunaUtility.h"
+#include "ALEUtility.h"
 #include "HttpManager.h"
 #include "EventEmitter.h"
 #include "TicketMgr.h"
 #include "LootMgr.h"
-#include "ElunaFileWatcher.h"
-#include "ElunaConfig.h"
+#include "ALEFileWatcher.h"
+#include "ALEConfig.h"
 #include <mutex>
 #include <memory>
 #include <vector>
@@ -34,7 +34,7 @@
 
 extern "C"
 {
-#include "lua.h"
+#include <lua.h>
 };
 
 struct ItemTemplate;
@@ -54,7 +54,7 @@ class Guild;
 class Group;
 class InstanceScript;
 typedef InstanceScript InstanceData;
-class ElunaInstanceAI;
+class ALEInstanceAI;
 class Item;
 class Pet;
 class Player;
@@ -70,8 +70,8 @@ class Vehicle;
 
 struct lua_State;
 class EventMgr;
-class ElunaObject;
-template<typename T> class ElunaTemplate;
+class ALEObject;
+template<typename T> class ALETemplate;
 
 template<typename K> class BindingMap;
 template<typename T> struct EventKey;
@@ -102,12 +102,12 @@ struct LuaScript
     LuaScript() {}
 };
 
-#define ELUNA_STATE_PTR "Eluna State Ptr"
-#define LOCK_ELUNA Eluna::Guard __guard(Eluna::GetLock())
+#define ALE_STATE_PTR "ALE State Ptr"
+#define LOCK_ALE ALE::Guard __guard(ALE::GetLock())
 
-#define ELUNA_GAME_API AC_GAME_API
+#define ALE_GAME_API AC_GAME_API
 
-class ELUNA_GAME_API Eluna
+class ALE_GAME_API ALE
 {
 public:
     typedef std::list<LuaScript> ScriptList;
@@ -122,7 +122,7 @@ private:
     static bool reload;
     static bool initialized;
     static LockType lock;
-    static std::unique_ptr<ElunaFileWatcher> fileWatcher;
+    static std::unique_ptr<ALEFileWatcher> fileWatcher;
 
     // Lua script locations
     static ScriptList lua_scripts;
@@ -152,12 +152,12 @@ private:
     // Map from map ID -> Lua table ref
     std::unordered_map<uint32, int> continentDataRefs;
 
-    Eluna();
-    ~Eluna();
+    ALE();
+    ~ALE();
 
     // Prevent copy
-    Eluna(Eluna const&) = delete;
-    Eluna& operator=(const Eluna&) = delete;
+    ALE(ALE const&) = delete;
+    ALE& operator=(const ALE&) = delete;
 
     void OpenLua();
     void CloseLua();
@@ -165,9 +165,9 @@ private:
     void CreateBindStores();
     void InvalidateObjects();
 
-    // Use ReloadEluna() to make eluna reload
-    // This is called on world update to reload eluna
-    static void _ReloadEluna();
+    // Use ReloadALE() to make ALE reload
+    // This is called on world update to reload ALE
+    static void _ReloadALE();
     static void LoadScriptPaths();
     static void GetScripts(std::string path);
     static void AddScriptPath(std::string filename, const std::string& fullpath);
@@ -231,7 +231,7 @@ private:
     void Push(T const* ptr)                     { Push(L, ptr); ++push_counter; }
 
 public:
-    static Eluna* GEluna;
+    static ALE* GALE;
 
     lua_State* L;
     EventMgr* eventMgr;
@@ -264,17 +264,17 @@ public:
 
     static void Initialize();
     static void Uninitialize();
-    // This function is used to make eluna reload
-    static void ReloadEluna() { LOCK_ELUNA; reload = true; }
+    // This function is used to make ALE reload
+    static void ReloadALE() { LOCK_ALE; reload = true; }
     static LockType& GetLock() { return lock; };
     static bool IsInitialized() { return initialized; }
     // Never returns nullptr
-    static Eluna* GetEluna(lua_State* L)
+    static ALE* GetALE(lua_State* L)
     {
-        lua_pushstring(L, ELUNA_STATE_PTR);
+        lua_pushstring(L, ALE_STATE_PTR);
         lua_rawget(L, LUA_REGISTRYINDEX);
         ASSERT(lua_islightuserdata(L, -1));
-        Eluna* E = static_cast<Eluna*>(lua_touserdata(L, -1));
+        ALE* E = static_cast<ALE*>(lua_touserdata(L, -1));
         lua_pop(L, 1);
         ASSERT(E);
         return E;
@@ -305,7 +305,7 @@ public:
     template<typename T>
     static void Push(lua_State* luastate, T const* ptr)
     {
-        ElunaTemplate<T>::Push(luastate, ptr);
+        ALETemplate<T>::Push(luastate, ptr);
     }
 
     static std::string FormatQuery(lua_State* L, const char* query);
@@ -313,7 +313,7 @@ public:
     bool ExecuteCall(int params, int res);
 
     /*
-     * Returns `true` if Eluna has instance data for `map`.
+     * Returns `true` if ALE has instance data for `map`.
      */
     bool HasInstanceData(Map const* map);
 
@@ -327,14 +327,14 @@ public:
      * Retrieve the instance data for the `Map` scripted by `ai` and push it
      *   onto the stack.
      *
-     * An `ElunaInstanceAI` is needed because the instance data might
-     *   not exist (i.e. Eluna has been reloaded).
+     * An `ALEInstanceAI` is needed because the instance data might
+     *   not exist (i.e. ALE has been reloaded).
      *
      * In that case, the AI is "reloaded" (new instance data table is created
      *   and loaded with the last known save state, and `Load`/`Initialize`
      *   hooks are called).
      */
-    void PushInstanceData(lua_State* L, ElunaInstanceAI* ai, bool incrementCounter = true);
+    void PushInstanceData(lua_State* L, ALEInstanceAI* ai, bool incrementCounter = true);
 
     void RunScripts();
     bool ShouldReload() const { return reload; }
@@ -350,9 +350,9 @@ public:
     }
     template<typename T> static T* CHECKOBJ(lua_State* luastate, int narg, bool error = true)
     {
-        return ElunaTemplate<T>::Check(luastate, narg, error);
+        return ALETemplate<T>::Check(luastate, narg, error);
     }
-    static ElunaObject* CHECKTYPE(lua_State* luastate, int narg, const char *tname, bool error = true);
+    static ALEObject* CHECKTYPE(lua_State* luastate, int narg, const char *tname, bool error = true);
 
     CreatureAI* GetAI(Creature* creature);
     InstanceData* GetInstanceData(Map* map);
@@ -555,13 +555,13 @@ public:
     void OnRemove(GameObject* gameobject);
 
     /* Instance */
-    void OnInitialize(ElunaInstanceAI* ai);
-    void OnLoad(ElunaInstanceAI* ai);
-    void OnUpdateInstance(ElunaInstanceAI* ai, uint32 diff);
-    void OnPlayerEnterInstance(ElunaInstanceAI* ai, Player* player);
-    void OnCreatureCreate(ElunaInstanceAI* ai, Creature* creature);
-    void OnGameObjectCreate(ElunaInstanceAI* ai, GameObject* gameobject);
-    bool OnCheckEncounterInProgress(ElunaInstanceAI* ai);
+    void OnInitialize(ALEInstanceAI* ai);
+    void OnLoad(ALEInstanceAI* ai);
+    void OnUpdateInstance(ALEInstanceAI* ai, uint32 diff);
+    void OnPlayerEnterInstance(ALEInstanceAI* ai, Player* player);
+    void OnCreatureCreate(ALEInstanceAI* ai, Creature* creature);
+    void OnGameObjectCreate(ALEInstanceAI* ai, GameObject* gameobject);
+    bool OnCheckEncounterInProgress(ALEInstanceAI* ai);
 
     /* World */
     void OnOpenStateChange(bool open);
@@ -596,10 +596,10 @@ public:
     void OnAllCreatureSelectLevel(const CreatureTemplate* cinfo, Creature* creature);
     void OnAllCreatureBeforeSelectLevel(const CreatureTemplate* cinfo, Creature* creature, uint8& level);
 };
-template<> Unit* Eluna::CHECKOBJ<Unit>(lua_State* L, int narg, bool error);
-template<> Object* Eluna::CHECKOBJ<Object>(lua_State* L, int narg, bool error);
-template<> WorldObject* Eluna::CHECKOBJ<WorldObject>(lua_State* L, int narg, bool error);
-template<> ElunaObject* Eluna::CHECKOBJ<ElunaObject>(lua_State* L, int narg, bool error);
+template<> Unit* ALE::CHECKOBJ<Unit>(lua_State* L, int narg, bool error);
+template<> Object* ALE::CHECKOBJ<Object>(lua_State* L, int narg, bool error);
+template<> WorldObject* ALE::CHECKOBJ<WorldObject>(lua_State* L, int narg, bool error);
+template<> ALEObject* ALE::CHECKOBJ<ALEObject>(lua_State* L, int narg, bool error);
 
-#define sEluna Eluna::GEluna
+#define sALE ALE::GALE
 #endif

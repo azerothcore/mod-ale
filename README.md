@@ -1,6 +1,6 @@
 <div align="center">
 
-# [![mod-eluna](src/LuaEngine/docs/Eluna.png)](https://github.com/azerothcore/mod-eluna)
+# ALE - AzerothCore Lua Engine
 
 *Unleash the power of Lua scripting in your AzerothCore server*
 
@@ -12,11 +12,11 @@
 </div>
 
 > [!IMPORTANT]
-> **mod-eluna** is an independent Lua scripting engine specifically designed for AzerothCore. This project has **diverged from the original Eluna project** and is no longer compatible with standard Eluna scripts. Scripts written for mod-eluna will not work with the original Eluna engine and vice versa.
+> **ALE** is an independent Lua scripting engine specifically designed for AzerothCore. This project has **diverged from the original Eluna project** and is no longer compatible with standard Eluna scripts. Scripts written for ALE will not work with the original Eluna engine and vice versa.
 
 ## 🚀 Overview
 
-mod-eluna is a powerful, AzerothCore-specific implementation of a Lua scripting engine that enables server administrators and developers to create custom gameplay features, events, and mechanics without modifying the core server code.
+ALE is a powerful, AzerothCore-specific implementation of a Lua scripting engine that enables server administrators and developers to create custom gameplay features, events, and mechanics without modifying the core server code.
 
 ### Key Features
 - **Native AzerothCore Integration**: Built specifically for AzerothCore's architecture
@@ -25,9 +25,9 @@ mod-eluna is a powerful, AzerothCore-specific implementation of a Lua scripting 
 
 ## ⚠️ Compatibility Notice
 
-### mod-eluna vs Original Eluna
+### ALE vs Original Eluna
 
-**mod-eluna is NOT compatible with the original Eluna project.** This fork has evolved independently with AzerothCore-specific enhancements and API changes that make scripts non-interchangeable.
+**ALE is NOT compatible with the original Eluna project.** This fork has evolved independently with AzerothCore-specific enhancements and API changes that make scripts non-interchangeable.
 
 ### For Original Eluna Compatibility
 
@@ -59,8 +59,8 @@ This repository maintains compatibility with the original Eluna API and supports
 # Navigate to your AzerothCore modules directory
 cd <azerothcore-path>/modules
 
-# Clone the mod-eluna repository
-git clone https://github.com/azerothcore/mod-eluna.git
+# Clone the mod-ale repository
+git clone https://github.com/azerothcore/mod-ale.git
 
 # Configure build with your preferred Lua version
 cd <azerothcore-build-directory>
@@ -81,21 +81,21 @@ make -j$(nproc)
 ## 📚 Documentation
 
 ### Getting Started
-- [Installation Guide](https://github.com/azerothcore/mod-eluna/tree/master/docs/USAGE.md)
-- [Implementation Details](https://github.com/azerothcore/mod-eluna/tree/master/docs/IMPL_DETAILS.md)
+- [Installation Guide](https://github.com/azerothcore/mod-ale/tree/master/docs/USAGE.md)
+- [Implementation Details](https://github.com/azerothcore/mod-ale/tree/master/docs/IMPL_DETAILS.md)
 
 ### API Reference
-- **[mod-eluna API Documentation](https://www.azerothcore.org/eluna/)** - Complete API reference for mod-eluna
-- **[Hooks Documentation](https://github.com/azerothcore/mod-eluna/blob/master/src/LuaEngine/Hooks.h)** - Available event hooks
+- **[mod-ale API Documentation](https://www.azerothcore.org/eluna/)** - Complete API reference for mod-ale
+- **[Hooks Documentation](https://github.com/azerothcore/mod-ale/blob/master/src/LuaEngine/Hooks.h)** - Available event hooks
 - **[Lua 5.2 Reference](http://www.lua.org/manual/5.2/)** - Official Lua language documentation
 
 > [!WARNING]
-> **API Differences**: mod-eluna functions may not be available in the original Eluna project and vice versa. Always refer to the mod-eluna specific documentation when developing scripts.
+> **API Differences**: ALE functions may not be available in the original Eluna project and vice versa. Always refer to the ALE specific documentation when developing scripts.
 
 ## 💬 Support
 
 ### Getting Help
-- **GitHub Issues**: [Report bugs or request features](https://github.com/azerothcore/mod-eluna/issues)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/azerothcore/mod-ale/issues)
 - **Discord Community**: [Join our Discord server](https://discord.com/invite/bx3y5Qmy)
 - **AzerothCore Discord**: [Official AzerothCore support](http://www.azerothcore.org/)
 
@@ -120,7 +120,7 @@ We welcome contributions from the community! Here's how you can help:
 ## 🌟 Acknowledgements
 
 ### Original Project
-mod-eluna is built upon the foundation of the original [Eluna](https://github.com/ElunaLuaEngine/Eluna) project. We acknowledge and thank the original Eluna team for their pioneering work in Lua scripting for World of Warcraft server emulators.
+mod-ale is built upon the foundation of the original [Eluna](https://github.com/ElunaLuaEngine/Eluna) project. We acknowledge and thank the original Eluna team for their pioneering work in Lua scripting for World of Warcraft server emulators.
 
 ### Related Projects
 - **[Original Eluna Repository](https://github.com/ElunaLuaEngine/Eluna)** - The original Eluna project
@@ -135,12 +135,12 @@ mod-eluna is built upon the foundation of the original [Eluna](https://github.co
 
 ## 📄 License
 
-This project is licensed under the GNU General Public License v3.0. See [LICENSE](https://github.com/azerothcore/mod-eluna/blob/master/LICENSE) for details.
+This project is licensed under the GNU General Public License v3.0. See [LICENSE](https://github.com/azerothcore/mod-ale/blob/master/LICENSE) for details.
 
 ---
 
 <div align="center">
-<sub>Developed with ❤️ by the AzerothCore and mod-eluna community</sub>
+<sub>Developed with ❤️ by the AzerothCore and ALE community</sub>
 
 [⬆ Back to Top](#-overview)
 </div>

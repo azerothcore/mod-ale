@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
@@ -8,28 +8,28 @@
 #include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ElunaIncludes.h"
-#include "ElunaTemplate.h"
+#include "ALEIncludes.h"
+#include "ALETemplate.h"
 
 using namespace Hooks;
 
 #define START_HOOK(EVENT, ENTRY) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EntryKey<ItemEvents>(EVENT, ENTRY);\
     if (!ItemEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ELUNA
+    LOCK_ALE
 
 #define START_HOOK_WITH_RETVAL(EVENT, ENTRY, RETVAL) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return RETVAL;\
     auto key = EntryKey<ItemEvents>(EVENT, ENTRY);\
     if (!ItemEventBindings->HasBindingsFor(key))\
         return RETVAL;\
-    LOCK_ELUNA
+    LOCK_ALE
 
-void Eluna::OnDummyEffect(WorldObject* pCaster, uint32 spellId, SpellEffIndex effIndex, Item* pTarget)
+void ALE::OnDummyEffect(WorldObject* pCaster, uint32 spellId, SpellEffIndex effIndex, Item* pTarget)
 {
     START_HOOK(ITEM_EVENT_ON_DUMMY_EFFECT, pTarget->GetEntry());
     Push(pCaster);
@@ -39,7 +39,7 @@ void Eluna::OnDummyEffect(WorldObject* pCaster, uint32 spellId, SpellEffIndex ef
     CallAllFunctions(ItemEventBindings, key);
 }
 
-bool Eluna::OnQuestAccept(Player* pPlayer, Item* pItem, Quest const* pQuest)
+bool ALE::OnQuestAccept(Player* pPlayer, Item* pItem, Quest const* pQuest)
 {
     START_HOOK_WITH_RETVAL(ITEM_EVENT_ON_QUEST_ACCEPT, pItem->GetEntry(), false);
     Push(pPlayer);
@@ -48,7 +48,7 @@ bool Eluna::OnQuestAccept(Player* pPlayer, Item* pItem, Quest const* pQuest)
     return CallAllFunctionsBool(ItemEventBindings, key);
 }
 
-bool Eluna::OnUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
+bool ALE::OnUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
 {
     ObjectGuid guid = pItem->GET_GUID();
     bool castSpell = true;
@@ -78,7 +78,7 @@ bool Eluna::OnUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
     return false;
 }
 
-bool Eluna::OnItemUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
+bool ALE::OnItemUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
 {
     START_HOOK_WITH_RETVAL(ITEM_EVENT_ON_USE, pItem->GetEntry(), true);
     Push(pPlayer);
@@ -100,7 +100,7 @@ bool Eluna::OnItemUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targ
     return CallAllFunctionsBool(ItemEventBindings, key, true);
 }
 
-bool Eluna::OnExpire(Player* pPlayer, ItemTemplate const* pProto)
+bool ALE::OnExpire(Player* pPlayer, ItemTemplate const* pProto)
 {
     START_HOOK_WITH_RETVAL(ITEM_EVENT_ON_EXPIRE, pProto->ItemId, false);
     Push(pPlayer);
@@ -108,7 +108,7 @@ bool Eluna::OnExpire(Player* pPlayer, ItemTemplate const* pProto)
     return CallAllFunctionsBool(ItemEventBindings, key);
 }
 
-bool Eluna::OnRemove(Player* pPlayer, Item* pItem)
+bool ALE::OnRemove(Player* pPlayer, Item* pItem)
 {
     START_HOOK_WITH_RETVAL(ITEM_EVENT_ON_REMOVE, pItem->GetEntry(), false);
     Push(pPlayer);

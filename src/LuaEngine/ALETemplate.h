@@ -1,11 +1,11 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef _ELUNA_TEMPLATE_H
-#define _ELUNA_TEMPLATE_H
+#ifndef _ALE_TEMPLATE_H
+#define _ALE_TEMPLATE_H
 
 extern "C"
 {
@@ -14,11 +14,11 @@ extern "C"
 #include "lauxlib.h"
 };
 #include "LuaEngine.h"
-#include "ElunaCompat.h"
-#include "ElunaUtility.h"
+#include "ALECompat.h"
+#include "ALEUtility.h"
 #include "SharedDefines.h"
 
-class ElunaGlobal
+class ALEGlobal
 {
 public:
     static int thunk(lua_State* L)
@@ -29,14 +29,14 @@ public:
         int args = lua_gettop(L) - top;
         if (args < 0 || args > expected)
         {
-            ELUNA_LOG_ERROR("[Eluna]: {} returned unexpected amount of arguments {} out of {}. Report to devs", l->name, args, expected);
+            ALE_LOG_ERROR("[ALE]: {} returned unexpected amount of arguments {} out of {}. Report to devs", l->name, args, expected);
             ASSERT(false);
         }
         lua_settop(L, top + expected);
         return expected;
     }
 
-    static void SetMethods(Eluna* E, luaL_Reg* methodTable)
+    static void SetMethods(ALE* E, luaL_Reg* methodTable)
     {
         ASSERT(E);
         ASSERT(methodTable);
@@ -55,20 +55,20 @@ public:
     }
 };
 
-class ElunaObject
+class ALEObject
 {
 public:
     template<typename T>
-    ElunaObject(T * obj, bool manageMemory);
+    ALEObject(T * obj, bool manageMemory);
 
-    ~ElunaObject()
+    ~ALEObject()
     {
     }
 
     // Get wrapped object pointer
     void* GetObj() const { return object; }
     // Returns whether the object is valid or not
-    bool IsValid() const { return !callstackid || callstackid == sEluna->GetCallstackId(); }
+    bool IsValid() const { return !callstackid || callstackid == sALE->GetCallstackId(); }
     // Returns whether the object can be invalidated or not
     bool CanInvalidate() const { return _invalidate; }
     // Returns pointer to the wrapped object's type name
@@ -87,7 +87,7 @@ public:
         ASSERT(!valid || (valid && object));
         if (valid)
             if (CanInvalidate())
-                callstackid = sEluna->GetCallstackId();
+                callstackid = sALE->GetCallstackId();
             else
                 callstackid = 0;
         else
@@ -113,14 +113,14 @@ private:
 };
 
 template<typename T>
-struct ElunaRegister
+struct ALERegister
 {
     const char* name;
     int(*mfunc)(lua_State*, T*);
 };
 
 template<typename T>
-class ElunaTemplate
+class ALETemplate
 {
 public:
     static const char* tname;
@@ -130,7 +130,7 @@ public:
     // If gc is true, lua will handle the memory management for object pushed
     // gc should be used if pushing for example WorldPacket,
     // that will only be needed on lua side and will not be managed by TC/mangos/<core>
-    static void Register(Eluna* E, const char* name, bool gc = false)
+    static void Register(ALE* E, const char* name, bool gc = false)
     {
         ASSERT(E);
         ASSERT(name);
@@ -230,7 +230,7 @@ public:
     }
 
     template<typename C>
-    static void SetMethods(Eluna* E, ElunaRegister<C>* methodTable)
+    static void SetMethods(ALE* E, ALERegister<C>* methodTable)
     {
         ASSERT(E);
         ASSERT(tname);
@@ -261,21 +261,21 @@ public:
         }
 
         // Create new userdata
-        ElunaObject** ptrHold = static_cast<ElunaObject**>(lua_newuserdata(L, sizeof(ElunaObject*)));
+        ALEObject** ptrHold = static_cast<ALEObject**>(lua_newuserdata(L, sizeof(ALEObject*)));
         if (!ptrHold)
         {
-            ELUNA_LOG_ERROR("{} could not create new userdata", tname);
+            ALE_LOG_ERROR("{} could not create new userdata", tname);
             lua_pushnil(L);
             return 1;
         }
-        *ptrHold = new ElunaObject(const_cast<T*>(obj), manageMemory);
+        *ptrHold = new ALEObject(const_cast<T*>(obj), manageMemory);
 
         // Set metatable for it
         lua_pushstring(L, tname);
         lua_rawget(L, LUA_REGISTRYINDEX);
         if (!lua_istable(L, -1))
         {
-            ELUNA_LOG_ERROR("{} missing metatable", tname);
+            ALE_LOG_ERROR("{} missing metatable", tname);
             lua_pop(L, 2);
             lua_pushnil(L);
             return 1;
@@ -286,11 +286,11 @@ public:
 
     static T* Check(lua_State* L, int narg, bool error = true)
     {
-        ElunaObject* elunaObj = Eluna::CHECKTYPE(L, narg, tname, error);
-        if (!elunaObj)
+        ALEObject* ALEObj = ALE::CHECKTYPE(L, narg, tname, error);
+        if (!ALEObj)
             return NULL;
 
-        if (!elunaObj->IsValid())
+        if (!ALEObj->IsValid())
         {
             char buff[256];
             snprintf(buff, 256, "%s expected, got pointer to nonexisting (invalidated) object (%s). Check your code.", tname, luaL_typename(L, narg));
@@ -300,11 +300,11 @@ public:
             }
             else
             {
-                ELUNA_LOG_ERROR("{}", buff);
+                ALE_LOG_ERROR("{}", buff);
             }
             return NULL;
         }
-        return static_cast<T*>(elunaObj->GetObj());
+        return static_cast<T*>(ALEObj->GetObj());
     }
 
     static int GetType(lua_State* L)
@@ -315,25 +315,25 @@ public:
 
     static int SetInvalidation(lua_State* L)
     {
-        ElunaObject* elunaObj = Eluna::CHECKOBJ<ElunaObject>(L, 1);
-        bool invalidate = Eluna::CHECKVAL<bool>(L, 2);
+        ALEObject* ALEObj = ALE::CHECKOBJ<ALEObject>(L, 1);
+        bool invalidate = ALE::CHECKVAL<bool>(L, 2);
 
-        elunaObj->SetValidation(invalidate);
+        ALEObj->SetValidation(invalidate);
         return 0;
     }
 
     static int CallMethod(lua_State* L)
     {
-        T* obj = Eluna::CHECKOBJ<T>(L, 1); // get self
+        T* obj = ALE::CHECKOBJ<T>(L, 1); // get self
         if (!obj)
             return 0;
-        ElunaRegister<T>* l = static_cast<ElunaRegister<T>*>(lua_touserdata(L, lua_upvalueindex(1)));
+        ALERegister<T>* l = static_cast<ALERegister<T>*>(lua_touserdata(L, lua_upvalueindex(1)));
         int top = lua_gettop(L);
         int expected = l->mfunc(L, obj);
         int args = lua_gettop(L) - top;
         if (args < 0 || args > expected)
         {
-            ELUNA_LOG_ERROR("[Eluna]: {} returned unexpected amount of arguments {} out of {}. Report to devs", l->name, args, expected);
+            ALE_LOG_ERROR("[ALE]: {} returned unexpected amount of arguments {} out of {}. Report to devs", l->name, args, expected);
             ASSERT(false);
         }
         lua_settop(L, top + expected);
@@ -342,11 +342,11 @@ public:
 
     // Metamethods ("virtual")
 
-    // Remember special cases like ElunaTemplate<Vehicle>::CollectGarbage
+    // Remember special cases like ALETemplate<Vehicle>::CollectGarbage
     static int CollectGarbage(lua_State* L)
     {
         // Get object pointer (and check type, no error)
-        ElunaObject* obj = Eluna::CHECKOBJ<ElunaObject>(L, 1, false);
+        ALEObject* obj = ALE::CHECKOBJ<ALEObject>(L, 1, false);
         if (obj && manageMemory)
             delete static_cast<T*>(obj->GetObj());
         delete obj;
@@ -355,7 +355,7 @@ public:
 
     static int ToString(lua_State* L)
     {
-        T* obj = Eluna::CHECKOBJ<T>(L, 1, true); // get self
+        T* obj = ALE::CHECKOBJ<T>(L, 1, true); // get self
         lua_pushfstring(L, "%s: %p", tname, obj);
         return 1;
     }
@@ -371,19 +371,19 @@ public:
     static int UnaryMinus(lua_State* L) { return ArithmeticError(L); }
     static int Concat(lua_State* L) { return luaL_error(L, "attempt to concatenate a %s value", tname); }
     static int Length(lua_State* L) { return luaL_error(L, "attempt to get length of a %s value", tname); }
-    static int Equal(lua_State* L) { Eluna::Push(L, Eluna::CHECKOBJ<T>(L, 1) == Eluna::CHECKOBJ<T>(L, 2)); return 1; }
+    static int Equal(lua_State* L) { ALE::Push(L, ALE::CHECKOBJ<T>(L, 1) == ALE::CHECKOBJ<T>(L, 2)); return 1; }
     static int Less(lua_State* L) { return CompareError(L); }
     static int LessOrEqual(lua_State* L) { return CompareError(L); }
     static int Call(lua_State* L) { return luaL_error(L, "attempt to call a %s value", tname); }
 };
 
 template<typename T>
-ElunaObject::ElunaObject(T * obj, bool manageMemory) : callstackid(1), _invalidate(!manageMemory), object(obj), type_name(ElunaTemplate<T>::tname)
+ALEObject::ALEObject(T * obj, bool manageMemory) : callstackid(1), _invalidate(!manageMemory), object(obj), type_name(ALETemplate<T>::tname)
 {
     SetValid(true);
 }
 
-template<typename T> const char* ElunaTemplate<T>::tname = NULL;
-template<typename T> bool ElunaTemplate<T>::manageMemory = false;
+template<typename T> const char* ALETemplate<T>::tname = NULL;
+template<typename T> bool ALETemplate<T>::manageMemory = false;
 
 #endif

@@ -1,4 +1,4 @@
-#include "ElunaDBCRegistry.h"
+#include "ALEDBCRegistry.h"
 
 std::vector<DBCDefinition> dbcRegistry = {
     REGISTER_DBC(GemProperties, GemPropertiesEntry, sGemPropertiesStore),

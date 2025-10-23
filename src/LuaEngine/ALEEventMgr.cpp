@@ -1,10 +1,10 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#include "ElunaEventMgr.h"
+#include "ALEEventMgr.h"
 #include "LuaEngine.h"
 #include "Object.h"
 
@@ -14,7 +14,7 @@ extern "C"
 #include "lauxlib.h"
 };
 
-ElunaEventProcessor::ElunaEventProcessor(Eluna** _E, WorldObject* _obj) : m_time(0), obj(_obj), E(_E)
+ALEEventProcessor::ALEEventProcessor(ALE** _E, WorldObject* _obj) : m_time(0), obj(_obj), E(_E)
 {
     // can be called from multiple threads
     if (obj)
@@ -24,22 +24,22 @@ ElunaEventProcessor::ElunaEventProcessor(Eluna** _E, WorldObject* _obj) : m_time
     }
 }
 
-ElunaEventProcessor::~ElunaEventProcessor()
+ALEEventProcessor::~ALEEventProcessor()
 {
     // can be called from multiple threads
     {
-        LOCK_ELUNA;
+        LOCK_ALE;
         RemoveEvents_internal();
     }
 
-    if (obj && Eluna::IsInitialized())
+    if (obj && ALE::IsInitialized())
     {
         EventMgr::Guard guard((*E)->eventMgr->GetLock());
         (*E)->eventMgr->processors.erase(this);
     }
 }
 
-void ElunaEventProcessor::Update(uint32 diff)
+void ALEEventProcessor::Update(uint32 diff)
 {
     m_time += diff;
     for (EventList::iterator it = eventList.begin(); it != eventList.end() && it->first <= m_time; it = eventList.begin())
@@ -69,7 +69,7 @@ void ElunaEventProcessor::Update(uint32 diff)
     }
 }
 
-void ElunaEventProcessor::SetStates(LuaEventState state)
+void ALEEventProcessor::SetStates(LuaEventState state)
 {
     for (EventList::iterator it = eventList.begin(); it != eventList.end(); ++it)
         it->second->SetState(state);
@@ -77,7 +77,7 @@ void ElunaEventProcessor::SetStates(LuaEventState state)
         eventMap.clear();
 }
 
-void ElunaEventProcessor::RemoveEvents_internal()
+void ALEEventProcessor::RemoveEvents_internal()
 {
     //if (!final)
     //{
@@ -93,7 +93,7 @@ void ElunaEventProcessor::RemoveEvents_internal()
     eventMap.clear();
 }
 
-void ElunaEventProcessor::SetState(int eventId, LuaEventState state)
+void ALEEventProcessor::SetState(int eventId, LuaEventState state)
 {
     if (eventMap.find(eventId) != eventMap.end())
         eventMap[eventId]->SetState(state);
@@ -101,22 +101,22 @@ void ElunaEventProcessor::SetState(int eventId, LuaEventState state)
         eventMap.erase(eventId);
 }
 
-void ElunaEventProcessor::AddEvent(LuaEvent* luaEvent)
+void ALEEventProcessor::AddEvent(LuaEvent* luaEvent)
 {
     luaEvent->GenerateDelay();
     eventList.insert(std::pair<uint64, LuaEvent*>(m_time + luaEvent->delay, luaEvent));
     eventMap[luaEvent->funcRef] = luaEvent;
 }
 
-void ElunaEventProcessor::AddEvent(int funcRef, uint32 min, uint32 max, uint32 repeats)
+void ALEEventProcessor::AddEvent(int funcRef, uint32 min, uint32 max, uint32 repeats)
 {
     AddEvent(new LuaEvent(funcRef, min, max, repeats));
 }
 
-void ElunaEventProcessor::RemoveEvent(LuaEvent* luaEvent)
+void ALEEventProcessor::RemoveEvent(LuaEvent* luaEvent)
 {
-    // Unreference if should and if Eluna was not yet uninitialized and if the lua state still exists
-    if (luaEvent->state != LUAEVENT_STATE_ERASE && Eluna::IsInitialized() && (*E)->HasLuaState())
+    // Unreference if should and if ALE was not yet uninitialized and if the lua state still exists
+    if (luaEvent->state != LUAEVENT_STATE_ERASE && ALE::IsInitialized() && (*E)->HasLuaState())
     {
         // Free lua function ref
         luaL_unref((*E)->L, LUA_REGISTRYINDEX, luaEvent->funcRef);
@@ -124,7 +124,7 @@ void ElunaEventProcessor::RemoveEvent(LuaEvent* luaEvent)
     delete luaEvent;
 }
 
-EventMgr::EventMgr(Eluna** _E) : globalProcessor(new ElunaEventProcessor(_E, NULL)), E(_E)
+EventMgr::EventMgr(ALE** _E) : globalProcessor(new ALEEventProcessor(_E, NULL)), E(_E)
 {
 }
 

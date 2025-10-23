@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -25,7 +25,7 @@ namespace LuaItemTemplate
      */
     int GetItemId(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->ItemId);
+        ALE::Push(L, itemTemplate->ItemId);
         return 1;
     }
 
@@ -36,7 +36,7 @@ namespace LuaItemTemplate
      */
     int GetClass(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->Class);
+        ALE::Push(L, itemTemplate->Class);
         return 1;
     }
 
@@ -47,7 +47,7 @@ namespace LuaItemTemplate
      */
     int GetSubClass(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->SubClass);
+        ALE::Push(L, itemTemplate->SubClass);
         return 1;
     }
 
@@ -60,7 +60,7 @@ namespace LuaItemTemplate
      */
     int GetName(lua_State* L, ItemTemplate* itemTemplate)
     {
-        uint32 loc_idx = Eluna::CHECKVAL<uint32>(L, 2, LocaleConstant::LOCALE_enUS);
+        uint32 loc_idx = ALE::CHECKVAL<uint32>(L, 2, LocaleConstant::LOCALE_enUS);
 
         const ItemLocale* itemLocale = eObjectMgr->GetItemLocale(itemTemplate->ItemId);
         std::string name = itemTemplate->Name1;
@@ -68,7 +68,7 @@ namespace LuaItemTemplate
         if (itemLocale && !itemLocale->Name[loc_idx].empty())
             name = itemLocale->Name[loc_idx];
 
-        Eluna::Push(L, name);
+        ALE::Push(L, name);
         return 1;
     }
 
@@ -79,7 +79,7 @@ namespace LuaItemTemplate
      */
     int GetDisplayId(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->DisplayInfoID);
+        ALE::Push(L, itemTemplate->DisplayInfoID);
         return 1;
     }
 
@@ -90,7 +90,7 @@ namespace LuaItemTemplate
      */
     int GetQuality(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->Quality);
+        ALE::Push(L, itemTemplate->Quality);
         return 1;
     }
 
@@ -101,7 +101,7 @@ namespace LuaItemTemplate
      */
     int GetFlags(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->Flags);
+        ALE::Push(L, itemTemplate->Flags);
         return 1;
     }
 
@@ -112,7 +112,7 @@ namespace LuaItemTemplate
      */
     int GetExtraFlags(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->Flags2);
+        ALE::Push(L, itemTemplate->Flags2);
         return 1;
     }
 
@@ -123,7 +123,7 @@ namespace LuaItemTemplate
      */
     int GetBuyCount(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->BuyCount);
+        ALE::Push(L, itemTemplate->BuyCount);
         return 1;
     }
 
@@ -134,7 +134,7 @@ namespace LuaItemTemplate
      */
     int GetBuyPrice(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->BuyPrice);
+        ALE::Push(L, itemTemplate->BuyPrice);
         return 1;
     }
 
@@ -145,7 +145,7 @@ namespace LuaItemTemplate
      */
     int GetSellPrice(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->SellPrice);
+        ALE::Push(L, itemTemplate->SellPrice);
         return 1;
     }
 
@@ -156,7 +156,7 @@ namespace LuaItemTemplate
      */
     int GetInventoryType(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->InventoryType);
+        ALE::Push(L, itemTemplate->InventoryType);
         return 1;
     }
 
@@ -167,7 +167,7 @@ namespace LuaItemTemplate
      */
     int GetAllowableClass(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->AllowableClass);
+        ALE::Push(L, itemTemplate->AllowableClass);
         return 1;
     }
 
@@ -178,7 +178,7 @@ namespace LuaItemTemplate
      */
     int GetAllowableRace(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->AllowableRace);
+        ALE::Push(L, itemTemplate->AllowableRace);
         return 1;
     }
 
@@ -189,7 +189,7 @@ namespace LuaItemTemplate
      */
     int GetItemLevel(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->ItemLevel);
+        ALE::Push(L, itemTemplate->ItemLevel);
         return 1;
     }
 
@@ -200,7 +200,7 @@ namespace LuaItemTemplate
      */
     int GetRequiredLevel(lua_State* L, ItemTemplate* itemTemplate)
     {
-        Eluna::Push(L, itemTemplate->RequiredLevel);
+        ALE::Push(L, itemTemplate->RequiredLevel);
         return 1;
     }
 
@@ -216,7 +216,7 @@ namespace LuaItemTemplate
         ItemDisplayInfoEntry const* displayInfo = sItemDisplayInfoStore.LookupEntry(display_id);       
         const char* icon = displayInfo->inventoryIcon;
 
-        Eluna::Push(L, icon);
+        ALE::Push(L, icon);
         return 1;
     }
 }

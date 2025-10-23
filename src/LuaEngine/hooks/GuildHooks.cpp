@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
@@ -8,19 +8,19 @@
 #include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ElunaTemplate.h"
+#include "ALETemplate.h"
 
 using namespace Hooks;
 
 #define START_HOOK(EVENT) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EventKey<GuildEvents>(EVENT);\
     if (!GuildEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ELUNA
+    LOCK_ALE
 
-void Eluna::OnAddMember(Guild* guild, Player* player, uint32 plRank)
+void ALE::OnAddMember(Guild* guild, Player* player, uint32 plRank)
 {
     START_HOOK(GUILD_EVENT_ON_ADD_MEMBER);
     Push(guild);
@@ -29,7 +29,7 @@ void Eluna::OnAddMember(Guild* guild, Player* player, uint32 plRank)
     CallAllFunctions(GuildEventBindings, key);
 }
 
-void Eluna::OnRemoveMember(Guild* guild, Player* player, bool isDisbanding)
+void ALE::OnRemoveMember(Guild* guild, Player* player, bool isDisbanding)
 {
     START_HOOK(GUILD_EVENT_ON_REMOVE_MEMBER);
     Push(guild);
@@ -38,7 +38,7 @@ void Eluna::OnRemoveMember(Guild* guild, Player* player, bool isDisbanding)
     CallAllFunctions(GuildEventBindings, key);
 }
 
-void Eluna::OnMOTDChanged(Guild* guild, const std::string& newMotd)
+void ALE::OnMOTDChanged(Guild* guild, const std::string& newMotd)
 {
     START_HOOK(GUILD_EVENT_ON_MOTD_CHANGE);
     Push(guild);
@@ -46,7 +46,7 @@ void Eluna::OnMOTDChanged(Guild* guild, const std::string& newMotd)
     CallAllFunctions(GuildEventBindings, key);
 }
 
-void Eluna::OnInfoChanged(Guild* guild, const std::string& newInfo)
+void ALE::OnInfoChanged(Guild* guild, const std::string& newInfo)
 {
     START_HOOK(GUILD_EVENT_ON_INFO_CHANGE);
     Push(guild);
@@ -54,7 +54,7 @@ void Eluna::OnInfoChanged(Guild* guild, const std::string& newInfo)
     CallAllFunctions(GuildEventBindings, key);
 }
 
-void Eluna::OnCreate(Guild* guild, Player* leader, const std::string& name)
+void ALE::OnCreate(Guild* guild, Player* leader, const std::string& name)
 {
     START_HOOK(GUILD_EVENT_ON_CREATE);
     Push(guild);
@@ -63,14 +63,14 @@ void Eluna::OnCreate(Guild* guild, Player* leader, const std::string& name)
     CallAllFunctions(GuildEventBindings, key);
 }
 
-void Eluna::OnDisband(Guild* guild)
+void ALE::OnDisband(Guild* guild)
 {
     START_HOOK(GUILD_EVENT_ON_DISBAND);
     Push(guild);
     CallAllFunctions(GuildEventBindings, key);
 }
 
-void Eluna::OnMemberWitdrawMoney(Guild* guild, Player* player, uint32& amount, bool isRepair)
+void ALE::OnMemberWitdrawMoney(Guild* guild, Player* player, uint32& amount, bool isRepair)
 {
     START_HOOK(GUILD_EVENT_ON_MONEY_WITHDRAW);
     Push(guild);
@@ -97,7 +97,7 @@ void Eluna::OnMemberWitdrawMoney(Guild* guild, Player* player, uint32& amount, b
     CleanUpStack(4);
 }
 
-void Eluna::OnMemberDepositMoney(Guild* guild, Player* player, uint32& amount)
+void ALE::OnMemberDepositMoney(Guild* guild, Player* player, uint32& amount)
 {
     START_HOOK(GUILD_EVENT_ON_MONEY_DEPOSIT);
     Push(guild);
@@ -123,7 +123,7 @@ void Eluna::OnMemberDepositMoney(Guild* guild, Player* player, uint32& amount)
     CleanUpStack(3);
 }
 
-void Eluna::OnItemMove(Guild* guild, Player* player, Item* pItem, bool isSrcBank, uint8 srcContainer, uint8 srcSlotId,
+void ALE::OnItemMove(Guild* guild, Player* player, Item* pItem, bool isSrcBank, uint8 srcContainer, uint8 srcSlotId,
     bool isDestBank, uint8 destContainer, uint8 destSlotId)
 {
     START_HOOK(GUILD_EVENT_ON_ITEM_MOVE);
@@ -139,7 +139,7 @@ void Eluna::OnItemMove(Guild* guild, Player* player, Item* pItem, bool isSrcBank
     CallAllFunctions(GuildEventBindings, key);
 }
 
-void Eluna::OnEvent(Guild* guild, uint8 eventType, uint32 playerGuid1, uint32 playerGuid2, uint8 newRank)
+void ALE::OnEvent(Guild* guild, uint8 eventType, uint32 playerGuid1, uint32 playerGuid2, uint8 newRank)
 {
     START_HOOK(GUILD_EVENT_ON_EVENT);
     Push(guild);
@@ -150,7 +150,7 @@ void Eluna::OnEvent(Guild* guild, uint8 eventType, uint32 playerGuid1, uint32 pl
     CallAllFunctions(GuildEventBindings, key);
 }
 
-void Eluna::OnBankEvent(Guild* guild, uint8 eventType, uint8 tabId, uint32 playerGuid, uint32 itemOrMoney, uint16 itemStackCount, uint8 destTabId)
+void ALE::OnBankEvent(Guild* guild, uint8 eventType, uint8 tabId, uint32 playerGuid, uint32 itemOrMoney, uint16 itemStackCount, uint8 destTabId)
 {
     START_HOOK(GUILD_EVENT_ON_BANK_EVENT);
     Push(guild);

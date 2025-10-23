@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -28,7 +28,7 @@ namespace LuaAura
      */
     int GetCaster(lua_State* L, Aura* aura)
     {
-        Eluna::Push(L, aura->GetCaster());
+        ALE::Push(L, aura->GetCaster());
         return 1;
     }
 
@@ -39,7 +39,7 @@ namespace LuaAura
      */
     int GetCasterGUID(lua_State* L, Aura* aura)
     {
-        Eluna::Push(L, aura->GetCasterGUID());
+        ALE::Push(L, aura->GetCasterGUID());
         return 1;
     }
 
@@ -50,7 +50,7 @@ namespace LuaAura
      */
     int GetCasterLevel(lua_State* L, Aura* aura)
     {
-        Eluna::Push(L, aura->GetCaster()->GetLevel());
+        ALE::Push(L, aura->GetCaster()->GetLevel());
         return 1;
     }
 
@@ -61,7 +61,7 @@ namespace LuaAura
      */
     int GetDuration(lua_State* L, Aura* aura)
     {
-        Eluna::Push(L, aura->GetDuration());
+        ALE::Push(L, aura->GetDuration());
         return 1;
     }
 
@@ -72,7 +72,7 @@ namespace LuaAura
      */
     int GetAuraId(lua_State* L, Aura* aura)
     {
-        Eluna::Push(L, aura->GetId());
+        ALE::Push(L, aura->GetId());
         return 1;
     }
 
@@ -86,7 +86,7 @@ namespace LuaAura
      */
     int GetMaxDuration(lua_State* L, Aura* aura)
     {
-        Eluna::Push(L, aura->GetMaxDuration());
+        ALE::Push(L, aura->GetMaxDuration());
         return 1;
     }
 
@@ -99,7 +99,7 @@ namespace LuaAura
      */
     int GetStackAmount(lua_State* L, Aura* aura)
     {
-        Eluna::Push(L, aura->GetStackAmount());
+        ALE::Push(L, aura->GetStackAmount());
         return 1;
     }
 
@@ -110,7 +110,7 @@ namespace LuaAura
      */
     int GetOwner(lua_State* L, Aura* aura)
     {
-        Eluna::Push(L, aura->GetOwner());
+        ALE::Push(L, aura->GetOwner());
         return 1;
     }
 
@@ -121,7 +121,7 @@ namespace LuaAura
      */
     int SetDuration(lua_State* L, Aura* aura)
     {
-        int32 duration = Eluna::CHECKVAL<int32>(L, 2);
+        int32 duration = ALE::CHECKVAL<int32>(L, 2);
         aura->SetDuration(duration);
         return 0;
     }
@@ -136,7 +136,7 @@ namespace LuaAura
      */
     int SetMaxDuration(lua_State* L, Aura* aura)
     {
-        int32 duration = Eluna::CHECKVAL<int32>(L, 2);
+        int32 duration = ALE::CHECKVAL<int32>(L, 2);
         aura->SetMaxDuration(duration);
         return 0;
     }
@@ -151,7 +151,7 @@ namespace LuaAura
      */
     int SetStackAmount(lua_State* L, Aura* aura)
     {
-        uint8 amount = Eluna::CHECKVAL<uint8>(L, 2);
+        uint8 amount = ALE::CHECKVAL<uint8>(L, 2);
         aura->SetStackAmount(amount);
         return 0;
     }
@@ -162,7 +162,7 @@ namespace LuaAura
     int Remove(lua_State* L, Aura* aura)
     {
         aura->Remove();
-        Eluna::CHECKOBJ<ElunaObject>(L, 1)->Invalidate();
+        ALE::CHECKOBJ<ALEObject>(L, 1)->Invalidate();
         return 0;
     }
 };

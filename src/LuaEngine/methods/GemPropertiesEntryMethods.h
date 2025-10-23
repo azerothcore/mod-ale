@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -27,7 +27,7 @@ namespace LuaGemPropertiesEntry
      */
     int GetId(lua_State* L, GemPropertiesEntry* gemProperties)
     {
-        Eluna::Push(L, gemProperties->ID);
+        ALE::Push(L, gemProperties->ID);
         return 1;
     }
 
@@ -40,7 +40,7 @@ namespace LuaGemPropertiesEntry
      */
     int GetSpellItemEnchantement(lua_State* L, GemPropertiesEntry* entry)
     {
-        Eluna::Push(L, entry->spellitemenchantement);
+        ALE::Push(L, entry->spellitemenchantement);
         return 1;
     }
 }

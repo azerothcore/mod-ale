@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -36,7 +36,7 @@ namespace LuaGuild
                 {
                     if (player->IsInWorld() && player->GetGuildId() == guild->GetId())
                     {
-                        Eluna::Push(L, player);
+                        ALE::Push(L, player);
                         lua_rawseti(L, tbl, ++i);
                     }
                 }
@@ -54,7 +54,7 @@ namespace LuaGuild
      */
     int GetMemberCount(lua_State* L, Guild* guild)
     {
-        Eluna::Push(L, guild->GetMemberCount());
+        ALE::Push(L, guild->GetMemberCount());
         return 1;
     }
 
@@ -65,7 +65,7 @@ namespace LuaGuild
      */
     int GetLeader(lua_State* L, Guild* guild)
     {
-        Eluna::Push(L, eObjectAccessor()FindPlayer(guild->GetLeaderGUID()));
+        ALE::Push(L, eObjectAccessor()FindPlayer(guild->GetLeaderGUID()));
         return 1;
     }
 
@@ -76,7 +76,7 @@ namespace LuaGuild
      */
     int GetLeaderGUID(lua_State* L, Guild* guild)
     {
-        Eluna::Push(L, guild->GetLeaderGUID());
+        ALE::Push(L, guild->GetLeaderGUID());
         return 1;
     }
 
@@ -87,7 +87,7 @@ namespace LuaGuild
      */
     int GetId(lua_State* L, Guild* guild)
     {
-        Eluna::Push(L, guild->GetId());
+        ALE::Push(L, guild->GetId());
         return 1;
     }
 
@@ -98,7 +98,7 @@ namespace LuaGuild
      */
     int GetName(lua_State* L, Guild* guild)
     {
-        Eluna::Push(L, guild->GetName());
+        ALE::Push(L, guild->GetName());
         return 1;
     }
 
@@ -109,7 +109,7 @@ namespace LuaGuild
      */
     int GetMOTD(lua_State* L, Guild* guild)
     {
-        Eluna::Push(L, guild->GetMOTD());
+        ALE::Push(L, guild->GetMOTD());
         return 1;
     }
 
@@ -120,7 +120,7 @@ namespace LuaGuild
      */
     int GetInfo(lua_State* L, Guild* guild)
     {
-        Eluna::Push(L, guild->GetInfo());
+        ALE::Push(L, guild->GetInfo());
         return 1;
     }
 
@@ -131,7 +131,7 @@ namespace LuaGuild
      */
     int SetLeader(lua_State* L, Guild* guild)
     {
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
 
         guild->HandleSetLeader(player->GetSession(), player->GetName());
         return 0;
@@ -145,8 +145,8 @@ namespace LuaGuild
      */
     int SetBankTabText(lua_State* L, Guild* guild)
     {
-        uint8 tabId = Eluna::CHECKVAL<uint8>(L, 2);
-        const char* text = Eluna::CHECKVAL<const char*>(L, 3);
+        uint8 tabId = ALE::CHECKVAL<uint8>(L, 2);
+        const char* text = ALE::CHECKVAL<const char*>(L, 3);
         guild->SetBankTabText(tabId, text);
         return 0;
     }
@@ -159,7 +159,7 @@ namespace LuaGuild
      */
     int SendPacket(lua_State* L, Guild* guild)
     {
-        WorldPacket* data = Eluna::CHECKOBJ<WorldPacket>(L, 2);
+        WorldPacket* data = ALE::CHECKOBJ<WorldPacket>(L, 2);
 
         guild->BroadcastPacket(data);
         return 0;
@@ -174,8 +174,8 @@ namespace LuaGuild
      */
     int SendPacketToRanked(lua_State* L, Guild* guild)
     {
-        WorldPacket* data = Eluna::CHECKOBJ<WorldPacket>(L, 2);
-        uint8 ranked = Eluna::CHECKVAL<uint8>(L, 3);
+        WorldPacket* data = ALE::CHECKOBJ<WorldPacket>(L, 2);
+        uint8 ranked = ALE::CHECKVAL<uint8>(L, 3);
 
         guild->BroadcastPacketToRank(data, ranked);
         return 0;
@@ -200,8 +200,8 @@ namespace LuaGuild
      */
     int AddMember(lua_State* L, Guild* guild)
     {
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
-        uint8 rankId = Eluna::CHECKVAL<uint8>(L, 3, GUILD_RANK_NONE);
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        uint8 rankId = ALE::CHECKVAL<uint8>(L, 3, GUILD_RANK_NONE);
 
         guild->AddMember(player->GET_GUID(), rankId);
         return 0;
@@ -215,8 +215,8 @@ namespace LuaGuild
      */
     int DeleteMember(lua_State* L, Guild* guild)
     {
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
-        bool isDisbanding = Eluna::CHECKVAL<bool>(L, 3, false);
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        bool isDisbanding = ALE::CHECKVAL<bool>(L, 3, false);
 
         guild->DeleteMember(player->GET_GUID(), isDisbanding);
         return 0;
@@ -230,8 +230,8 @@ namespace LuaGuild
      */
     int SetMemberRank(lua_State* L, Guild* guild)
     {
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
-        uint8 newRank = Eluna::CHECKVAL<uint8>(L, 3);
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        uint8 newRank = ALE::CHECKVAL<uint8>(L, 3);
 
         guild->ChangeMemberRank(player->GET_GUID(), newRank);
         return 0;
@@ -244,7 +244,7 @@ namespace LuaGuild
      */
     int SetName(lua_State* L, Guild* guild)
     {
-        std::string name = Eluna::CHECKVAL<std::string>(L, 2);
+        std::string name = ALE::CHECKVAL<std::string>(L, 2);
         
         guild->SetName(name);
         return 0;
@@ -265,9 +265,9 @@ namespace LuaGuild
      */
     int UpdateMemberData(lua_State* L, Guild* guild)
     {
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
-        uint8 dataid = Eluna::CHECKVAL<uint8>(L, 3);
-        uint32 value = Eluna::CHECKVAL<uint32>(L, 4);
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        uint8 dataid = ALE::CHECKVAL<uint8>(L, 3);
+        uint32 value = ALE::CHECKVAL<uint32>(L, 4);
 
         guild->UpdateMemberData(player, dataid, value);
         return 0;
@@ -283,10 +283,10 @@ namespace LuaGuild
      */
     int SendMessage(lua_State* L, Guild* guild)
     {
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
-        bool officerOnly = Eluna::CHECKVAL<bool>(L, 3, false);
-        std::string msg = Eluna::CHECKVAL<std::string>(L, 4);
-        uint32 language = Eluna::CHECKVAL<uint32>(L, 5, false);
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        bool officerOnly = ALE::CHECKVAL<bool>(L, 3, false);
+        std::string msg = ALE::CHECKVAL<std::string>(L, 4);
+        uint32 language = ALE::CHECKVAL<uint32>(L, 5, false);
 
         guild->BroadcastToGuild(player->GetSession(), officerOnly, msg, language);
         return 0;
@@ -302,10 +302,10 @@ namespace LuaGuild
      */
     int MassInviteToEvent(lua_State* L, Guild* guild)
     { 
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
-        uint32 minLevel = Eluna::CHECKVAL<uint32>(L, 3);
-        uint32 maxLevel = Eluna::CHECKVAL<uint32>(L, 4);
-        uint32 minRank = Eluna::CHECKVAL<uint32>(L, 5);
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        uint32 minLevel = ALE::CHECKVAL<uint32>(L, 3);
+        uint32 maxLevel = ALE::CHECKVAL<uint32>(L, 4);
+        uint32 minRank = ALE::CHECKVAL<uint32>(L, 5);
 
         guild->MassInviteToEvent(player->GetSession(), minLevel, maxLevel, minRank);
         return 0;
@@ -323,12 +323,12 @@ namespace LuaGuild
      */
     int SwapItems(lua_State* L, Guild* guild)
     { 
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
-        uint8 tabId = Eluna::CHECKVAL<uint32>(L, 3);
-        uint8 slotId = Eluna::CHECKVAL<uint32>(L, 4);
-        uint8 destTabId = Eluna::CHECKVAL<uint32>(L, 5);
-        uint8 destSlotId = Eluna::CHECKVAL<uint32>(L, 6);
-        uint32 splitedAmount = Eluna::CHECKVAL<uint32>(L, 7);
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        uint8 tabId = ALE::CHECKVAL<uint32>(L, 3);
+        uint8 slotId = ALE::CHECKVAL<uint32>(L, 4);
+        uint8 destTabId = ALE::CHECKVAL<uint32>(L, 5);
+        uint8 destSlotId = ALE::CHECKVAL<uint32>(L, 6);
+        uint32 splitedAmount = ALE::CHECKVAL<uint32>(L, 7);
 
         guild->SwapItems(player, tabId, slotId, destTabId, destSlotId, splitedAmount);
         return 0;
@@ -347,13 +347,13 @@ namespace LuaGuild
      */
     int SwapItemsWithInventory(lua_State* L, Guild* guild)
     { 
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
-        bool toChar = Eluna::CHECKVAL<bool>(L, 3, false);
-        uint8 tabId = Eluna::CHECKVAL<uint8>(L, 4);
-        uint8 slotId = Eluna::CHECKVAL<uint8>(L, 5);
-        uint8 playerBag = Eluna::CHECKVAL<uint8>(L, 6);
-        uint8 playerSlotId = Eluna::CHECKVAL<uint8>(L, 7);
-        uint32 splitedAmount = Eluna::CHECKVAL<uint32>(L, 8);
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        bool toChar = ALE::CHECKVAL<bool>(L, 3, false);
+        uint8 tabId = ALE::CHECKVAL<uint8>(L, 4);
+        uint8 slotId = ALE::CHECKVAL<uint8>(L, 5);
+        uint8 playerBag = ALE::CHECKVAL<uint8>(L, 6);
+        uint8 playerSlotId = ALE::CHECKVAL<uint8>(L, 7);
+        uint32 splitedAmount = ALE::CHECKVAL<uint32>(L, 8);
 
         guild->SwapItemsWithInventory(player, toChar, tabId, slotId, playerBag, playerSlotId, splitedAmount);
         return 0;
@@ -366,7 +366,7 @@ namespace LuaGuild
      */
     int GetTotalBankMoney(lua_State* L, Guild* guild)
     { 
-        Eluna::Push(L, guild->GetTotalBankMoney());
+        ALE::Push(L, guild->GetTotalBankMoney());
         return 1;
     }
 
@@ -377,7 +377,7 @@ namespace LuaGuild
      */
     int GetCreatedDate(lua_State* L, Guild* guild)
     { 
-        Eluna::Push(L, guild->GetCreatedDate());
+        ALE::Push(L, guild->GetCreatedDate());
         return 1;
     }
 
@@ -399,11 +399,11 @@ namespace LuaGuild
      */
     int ModifyBankMoney(lua_State* L, Guild* guild)
     { 
-        uint64 amount = Eluna::CHECKVAL<uint64>(L, 2);
-        bool add = Eluna::CHECKVAL<bool>(L, 2);
+        uint64 amount = ALE::CHECKVAL<uint64>(L, 2);
+        bool add = ALE::CHECKVAL<bool>(L, 2);
 
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-        Eluna::Push(L, guild->ModifyBankMoney(trans, amount, add));
+        ALE::Push(L, guild->ModifyBankMoney(trans, amount, add));
 
         CharacterDatabase.CommitTransaction(trans);
         return 1;

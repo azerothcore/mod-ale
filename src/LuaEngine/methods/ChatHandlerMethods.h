@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -30,12 +30,12 @@ namespace LuaChatHandler
     {
         if (lua_isnumber(L, 2))
         {
-            uint32 entry = Eluna::CHECKVAL<uint32>(L, 2);
+            uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
             handler->SendSysMessage(entry);
         }
         else
         {
-            std::string text = Eluna::CHECKVAL<std::string>(L, 2);
+            std::string text = ALE::CHECKVAL<std::string>(L, 2);
             handler->SendSysMessage(text);
         }
         return 0;
@@ -48,7 +48,7 @@ namespace LuaChatHandler
      */
     int IsConsole(lua_State* L, ChatHandler* handler)
     {
-        Eluna::Push(L, handler->IsConsole());
+        ALE::Push(L, handler->IsConsole());
         return 1;
     }
 
@@ -59,7 +59,7 @@ namespace LuaChatHandler
      */
     int GetPlayer(lua_State* L, ChatHandler* handler)
     {
-        Eluna::Push(L, handler->GetPlayer());
+        ALE::Push(L, handler->GetPlayer());
         return 1;
     }
 
@@ -70,7 +70,7 @@ namespace LuaChatHandler
      */
     int SendGlobalSysMessage(lua_State* L, ChatHandler* handler)
     {
-        std::string text = Eluna::CHECKVAL<std::string>(L, 2);
+        std::string text = ALE::CHECKVAL<std::string>(L, 2);
         handler->SendGlobalSysMessage(text.c_str());
         return 0;
     }
@@ -82,7 +82,7 @@ namespace LuaChatHandler
      */
     int SendGlobalGMSysMessage(lua_State* L, ChatHandler* handler)
     {
-        std::string text = Eluna::CHECKVAL<std::string>(L, 2);
+        std::string text = ALE::CHECKVAL<std::string>(L, 2);
         handler->SendGlobalGMSysMessage(text.c_str());
         return 0;
     }
@@ -96,9 +96,9 @@ namespace LuaChatHandler
      */
     int HasLowerSecurity(lua_State* L, ChatHandler* handler)
     {
-        Player* player = Eluna::CHECKOBJ<Player>(L, 2);
-        bool strong = Eluna::CHECKVAL<bool>(L, 3);
-        Eluna::Push(L, handler->HasLowerSecurity(player, ObjectGuid::Empty, strong));
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        bool strong = ALE::CHECKVAL<bool>(L, 3);
+        ALE::Push(L, handler->HasLowerSecurity(player, ObjectGuid::Empty, strong));
         return 1;
     }
 
@@ -111,9 +111,9 @@ namespace LuaChatHandler
      */
     int HasLowerSecurityAccount(lua_State* L, ChatHandler* handler)
     {
-        uint32 account = Eluna::CHECKVAL<uint32>(L, 2);
-        bool strong = Eluna::CHECKVAL<bool>(L, 3);
-        Eluna::Push(L, handler->HasLowerSecurityAccount(nullptr, account, strong));
+        uint32 account = ALE::CHECKVAL<uint32>(L, 2);
+        bool strong = ALE::CHECKVAL<bool>(L, 3);
+        ALE::Push(L, handler->HasLowerSecurityAccount(nullptr, account, strong));
         return 1;
     }
 
@@ -124,7 +124,7 @@ namespace LuaChatHandler
      */
     int GetSelectedPlayer(lua_State* L, ChatHandler* handler)
     {
-        Eluna::Push(L, handler->getSelectedPlayer());
+        ALE::Push(L, handler->getSelectedPlayer());
         return 1;
     }
 
@@ -135,7 +135,7 @@ namespace LuaChatHandler
      */
     int GetSelectedCreature(lua_State* L, ChatHandler* handler)
     {
-        Eluna::Push(L, handler->getSelectedCreature());
+        ALE::Push(L, handler->getSelectedCreature());
         return 1;
     }
 
@@ -146,7 +146,7 @@ namespace LuaChatHandler
      */
     int GetSelectedUnit(lua_State* L, ChatHandler* handler)
     {
-        Eluna::Push(L, handler->getSelectedUnit());
+        ALE::Push(L, handler->getSelectedUnit());
         return 1;
     }
 
@@ -157,7 +157,7 @@ namespace LuaChatHandler
      */
     int GetSelectedObject(lua_State* L, ChatHandler* handler)
     {
-        Eluna::Push(L, handler->getSelectedObject());
+        ALE::Push(L, handler->getSelectedObject());
         return 1;
     }
 
@@ -168,7 +168,7 @@ namespace LuaChatHandler
      */
     int GetSelectedPlayerOrSelf(lua_State* L, ChatHandler* handler)
     {
-        Eluna::Push(L, handler->getSelectedPlayerOrSelf());
+        ALE::Push(L, handler->getSelectedPlayerOrSelf());
         return 1;
     }
 
@@ -180,8 +180,8 @@ namespace LuaChatHandler
      */
     int IsAvailable(lua_State* L, ChatHandler* handler)
     {
-        uint32 securityLevel = Eluna::CHECKVAL<uint32>(L, 2);
-        Eluna::Push(L, handler->IsAvailable(securityLevel));
+        uint32 securityLevel = ALE::CHECKVAL<uint32>(L, 2);
+        ALE::Push(L, handler->IsAvailable(securityLevel));
         return 1;
     }
 
@@ -192,7 +192,7 @@ namespace LuaChatHandler
      */
     int HasSentErrorMessage(lua_State* L, ChatHandler* handler)
     {
-        Eluna::Push(L, handler->HasSentErrorMessage());
+        ALE::Push(L, handler->HasSentErrorMessage());
         return 1;
     }
 }

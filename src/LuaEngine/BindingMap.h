@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -9,7 +9,7 @@
 
 #include <memory>
 #include "Common.h"
-#include "ElunaUtility.h"
+#include "ALEUtility.h"
 #include <type_traits>
 
 extern "C"
@@ -23,7 +23,7 @@ extern "C"
  * A set of bindings from keys of type `K` to Lua references.
  */
 template<typename K>
-class BindingMap : public ElunaUtil::Lockable
+class BindingMap : public ALEUtil::Lockable
 {
 private:
     lua_State* L;

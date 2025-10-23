@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
@@ -8,28 +8,28 @@
 #include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ElunaIncludes.h"
-#include "ElunaTemplate.h"
+#include "ALEIncludes.h"
+#include "ALETemplate.h"
 
 using namespace Hooks;
 
 #define START_HOOK_SERVER(EVENT) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EventKey<ServerEvents>(EVENT);\
     if (!ServerEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ELUNA
+    LOCK_ALE
 
 #define START_HOOK_PACKET(EVENT, OPCODE) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EntryKey<PacketEvents>(EVENT, OPCODE);\
     if (!PacketEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ELUNA
+    LOCK_ALE
 
-bool Eluna::OnPacketSend(WorldSession* session, const WorldPacket& packet)
+bool ALE::OnPacketSend(WorldSession* session, const WorldPacket& packet)
 {
     bool result = true;
     Player* player = NULL;
@@ -39,7 +39,7 @@ bool Eluna::OnPacketSend(WorldSession* session, const WorldPacket& packet)
     OnPacketSendOne(player, packet, result);
     return result;
 }
-void Eluna::OnPacketSendAny(Player* player, const WorldPacket& packet, bool& result)
+void ALE::OnPacketSendAny(Player* player, const WorldPacket& packet, bool& result)
 {
     START_HOOK_SERVER(SERVER_EVENT_ON_PACKET_SEND);
     Push(new WorldPacket(packet));
@@ -59,7 +59,7 @@ void Eluna::OnPacketSendAny(Player* player, const WorldPacket& packet, bool& res
     CleanUpStack(2);
 }
 
-void Eluna::OnPacketSendOne(Player* player, const WorldPacket& packet, bool& result)
+void ALE::OnPacketSendOne(Player* player, const WorldPacket& packet, bool& result)
 {
     START_HOOK_PACKET(PACKET_EVENT_ON_PACKET_SEND, packet.GetOpcode());
     Push(new WorldPacket(packet));
@@ -79,7 +79,7 @@ void Eluna::OnPacketSendOne(Player* player, const WorldPacket& packet, bool& res
     CleanUpStack(2);
 }
 
-bool Eluna::OnPacketReceive(WorldSession* session, WorldPacket& packet)
+bool ALE::OnPacketReceive(WorldSession* session, WorldPacket& packet)
 {
     bool result = true;
     Player* player = NULL;
@@ -90,7 +90,7 @@ bool Eluna::OnPacketReceive(WorldSession* session, WorldPacket& packet)
     return result;
 }
 
-void Eluna::OnPacketReceiveAny(Player* player, WorldPacket& packet, bool& result)
+void ALE::OnPacketReceiveAny(Player* player, WorldPacket& packet, bool& result)
 {
     START_HOOK_SERVER(SERVER_EVENT_ON_PACKET_RECEIVE);
     Push(new WorldPacket(packet));
@@ -114,7 +114,7 @@ void Eluna::OnPacketReceiveAny(Player* player, WorldPacket& packet, bool& result
     CleanUpStack(2);
 }
 
-void Eluna::OnPacketReceiveOne(Player* player, WorldPacket& packet, bool& result)
+void ALE::OnPacketReceiveOne(Player* player, WorldPacket& packet, bool& result)
 {
     START_HOOK_PACKET(PACKET_EVENT_ON_PACKET_RECEIVE, packet.GetOpcode());
     Push(new WorldPacket(packet));

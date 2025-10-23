@@ -1,11 +1,11 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef ELUNA_FILE_WATCHER_H
-#define ELUNA_FILE_WATCHER_H
+#ifndef ALE_FILE_WATCHER_H
+#define ALE_FILE_WATCHER_H
 
 #include <thread>
 #include <atomic>
@@ -15,11 +15,11 @@
 #include <boost/filesystem.hpp>
 #include "Common.h"
 
-class ElunaFileWatcher
+class ALEFileWatcher
 {
 public:
-    ElunaFileWatcher();
-    ~ElunaFileWatcher();
+    ALEFileWatcher();
+    ~ALEFileWatcher();
 
     void StartWatching(const std::string& scriptPath, uint32 intervalSeconds = 1);
     void StopWatching();

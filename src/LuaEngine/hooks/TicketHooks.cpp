@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
@@ -8,49 +8,49 @@
 #include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ElunaIncludes.h"
-#include "ElunaTemplate.h"
+#include "ALEIncludes.h"
+#include "ALETemplate.h"
 
 using namespace Hooks;
 
 #define START_HOOK(EVENT) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EventKey<TicketEvents>(EVENT);\
     if (!TicketEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ELUNA
+    LOCK_ALE
 
 #define START_HOOK(EVENT) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EventKey<TicketEvents>(EVENT);\
     if (!TicketEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ELUNA
+    LOCK_ALE
 
-void Eluna::OnTicketCreate(GmTicket* ticket)
+void ALE::OnTicketCreate(GmTicket* ticket)
 {
     START_HOOK(TICKET_EVENT_ON_CREATE);
     Push(ticket);
     CallAllFunctions(TicketEventBindings, key);
 }
 
-void Eluna::OnTicketUpdateLastChange(GmTicket* ticket)
+void ALE::OnTicketUpdateLastChange(GmTicket* ticket)
 {
     START_HOOK(TICKET_EVENT_UPDATE_LAST_CHANGE);
     Push(ticket);
     CallAllFunctions(TicketEventBindings, key);
 }
 
-void Eluna::OnTicketClose(GmTicket* ticket)
+void ALE::OnTicketClose(GmTicket* ticket)
 {
     START_HOOK(TICKET_EVENT_ON_CLOSE);
     Push(ticket);
     CallAllFunctions(TicketEventBindings, key);
 }
 
-void Eluna::OnTicketResolve(GmTicket* ticket)
+void ALE::OnTicketResolve(GmTicket* ticket)
 {
     START_HOOK(TICKET_EVENT_ON_RESOLVE);
     Push(ticket);

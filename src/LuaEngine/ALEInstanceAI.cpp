@@ -1,31 +1,31 @@
 /*
- * Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#include "ElunaInstanceAI.h"
-#include "ElunaUtility.h"
+#include "ALEInstanceAI.h"
+#include "ALEUtility.h"
 #include "lmarshal.h"
 
 
-void ElunaInstanceAI::Initialize()
+void ALEInstanceAI::Initialize()
 {
-    LOCK_ELUNA;
+    LOCK_ALE;
 
-    ASSERT(!sEluna->HasInstanceData(instance));
+    ASSERT(!sALE->HasInstanceData(instance));
 
     // Create a new table for instance data.
-    lua_State* L = sEluna->L;
+    lua_State* L = sALE->L;
     lua_newtable(L);
-    sEluna->CreateInstanceData(instance);
+    sALE->CreateInstanceData(instance);
 
-    sEluna->OnInitialize(this);
+    sALE->OnInitialize(this);
 }
 
-void ElunaInstanceAI::Load(const char* data)
+void ALEInstanceAI::Load(const char* data)
 {
-    LOCK_ELUNA;
+    LOCK_ALE;
 
     // If we get passed NULL (i.e. `Reload` was called) then use
     //   the last known save data (or maybe just an empty string).
@@ -40,21 +40,21 @@ void ElunaInstanceAI::Load(const char* data)
 
     if (data[0] == '\0')
     {
-        ASSERT(!sEluna->HasInstanceData(instance));
+        ASSERT(!sALE->HasInstanceData(instance));
 
         // Create a new table for instance data.
-        lua_State* L = sEluna->L;
+        lua_State* L = sALE->L;
         lua_newtable(L);
-        sEluna->CreateInstanceData(instance);
+        sALE->CreateInstanceData(instance);
 
-        sEluna->OnLoad(this);
+        sALE->OnLoad(this);
         // Stack: (empty)
         return;
     }
 
     size_t decodedLength;
-    const unsigned char* decodedData = ElunaUtil::DecodeData(data, &decodedLength);
-    lua_State* L = sEluna->L;
+    const unsigned char* decodedData = ALEUtil::DecodeData(data, &decodedLength);
+    lua_State* L = sALE->L;
 
     if (decodedData)
     {
@@ -71,14 +71,14 @@ void ElunaInstanceAI::Load(const char* data)
             // Only use the data if it's a table.
             if (lua_istable(L, -1))
             {
-                sEluna->CreateInstanceData(instance);
+                sALE->CreateInstanceData(instance);
                 // Stack: (empty)
-                sEluna->OnLoad(this);
+                sALE->OnLoad(this);
                 // WARNING! lastSaveData might be different after `OnLoad` if the Lua code saved data.
             }
             else
             {
-                ELUNA_LOG_ERROR("Error while loading instance data: Expected data to be a table (type 5), got type {} instead", lua_type(L, -1));
+                ALE_LOG_ERROR("Error while loading instance data: Expected data to be a table (type 5), got type {} instead", lua_type(L, -1));
                 lua_pop(L, 1);
                 // Stack: (empty)
 
@@ -88,7 +88,7 @@ void ElunaInstanceAI::Load(const char* data)
         else
         {
             // Stack: error_message
-            ELUNA_LOG_ERROR("Error while parsing instance data with lua-marshal: {}", lua_tostring(L, -1));
+            ALE_LOG_ERROR("Error while parsing instance data with lua-marshal: {}", lua_tostring(L, -1));
             lua_pop(L, 1);
             // Stack: (empty)
 
@@ -99,16 +99,16 @@ void ElunaInstanceAI::Load(const char* data)
     }
     else
     {
-        ELUNA_LOG_ERROR("Error while decoding instance data: Data is not valid base-64");
+        ALE_LOG_ERROR("Error while decoding instance data: Data is not valid base-64");
 
         Initialize();
     }
 }
 
-const char* ElunaInstanceAI::Save() const
+const char* ALEInstanceAI::Save() const
 {
-    LOCK_ELUNA;
-    lua_State* L = sEluna->L;
+    LOCK_ALE;
+    lua_State* L = sALE->L;
     // Stack: (empty)
 
     /*
@@ -118,16 +118,16 @@ const char* ElunaInstanceAI::Save() const
      * Declaring virtual methods as `const` is BAD!
      * Don't dictate to children that their methods must be pure.
      */
-    ElunaInstanceAI* self = const_cast<ElunaInstanceAI*>(this);
+    ALEInstanceAI* self = const_cast<ALEInstanceAI*>(this);
 
     lua_pushcfunction(L, mar_encode);
-    sEluna->PushInstanceData(L, self, false);
+    sALE->PushInstanceData(L, self, false);
     // Stack: mar_encode, instance_data
 
     if (lua_pcall(L, 1, 1, 0) != 0)
     {
         // Stack: error_message
-        ELUNA_LOG_ERROR("Error while saving: {}", lua_tostring(L, -1));
+        ALE_LOG_ERROR("Error while saving: {}", lua_tostring(L, -1));
         lua_pop(L, 1);
         return NULL;
     }
@@ -135,7 +135,7 @@ const char* ElunaInstanceAI::Save() const
     // Stack: data
     size_t dataLength;
     const unsigned char* data = (const unsigned char*)lua_tolstring(L, -1, &dataLength);
-    ElunaUtil::EncodeData(data, dataLength, self->lastSaveData);
+    ALEUtil::EncodeData(data, dataLength, self->lastSaveData);
 
     lua_pop(L, 1);
     // Stack: (empty)
@@ -143,39 +143,39 @@ const char* ElunaInstanceAI::Save() const
     return lastSaveData.c_str();
 }
 
-uint32 ElunaInstanceAI::GetData(uint32 key) const
+uint32 ALEInstanceAI::GetData(uint32 key) const
 {
-    LOCK_ELUNA;
-    lua_State* L = sEluna->L;
+    LOCK_ALE;
+    lua_State* L = sALE->L;
     // Stack: (empty)
 
-    sEluna->PushInstanceData(L, const_cast<ElunaInstanceAI*>(this), false);
+    sALE->PushInstanceData(L, const_cast<ALEInstanceAI*>(this), false);
     // Stack: instance_data
 
-    Eluna::Push(L, key);
+    ALE::Push(L, key);
     // Stack: instance_data, key
 
     lua_gettable(L, -2);
     // Stack: instance_data, value
 
-    uint32 value = Eluna::CHECKVAL<uint32>(L, -1, 0);
+    uint32 value = ALE::CHECKVAL<uint32>(L, -1, 0);
     lua_pop(L, 2);
     // Stack: (empty)
 
     return value;
 }
 
-void ElunaInstanceAI::SetData(uint32 key, uint32 value)
+void ALEInstanceAI::SetData(uint32 key, uint32 value)
 {
-    LOCK_ELUNA;
-    lua_State* L = sEluna->L;
+    LOCK_ALE;
+    lua_State* L = sALE->L;
     // Stack: (empty)
 
-    sEluna->PushInstanceData(L, this, false);
+    sALE->PushInstanceData(L, this, false);
     // Stack: instance_data
 
-    Eluna::Push(L, key);
-    Eluna::Push(L, value);
+    ALE::Push(L, key);
+    ALE::Push(L, value);
     // Stack: instance_data, key, value
 
     lua_settable(L, -3);
@@ -185,39 +185,39 @@ void ElunaInstanceAI::SetData(uint32 key, uint32 value)
     // Stack: (empty)
 }
 
-uint64 ElunaInstanceAI::GetData64(uint32 key) const
+uint64 ALEInstanceAI::GetData64(uint32 key) const
 {
-    LOCK_ELUNA;
-    lua_State* L = sEluna->L;
+    LOCK_ALE;
+    lua_State* L = sALE->L;
     // Stack: (empty)
 
-    sEluna->PushInstanceData(L, const_cast<ElunaInstanceAI*>(this), false);
+    sALE->PushInstanceData(L, const_cast<ALEInstanceAI*>(this), false);
     // Stack: instance_data
 
-    Eluna::Push(L, key);
+    ALE::Push(L, key);
     // Stack: instance_data, key
 
     lua_gettable(L, -2);
     // Stack: instance_data, value
 
-    uint64 value = Eluna::CHECKVAL<uint64>(L, -1, 0);
+    uint64 value = ALE::CHECKVAL<uint64>(L, -1, 0);
     lua_pop(L, 2);
     // Stack: (empty)
 
     return value;
 }
 
-void ElunaInstanceAI::SetData64(uint32 key, uint64 value)
+void ALEInstanceAI::SetData64(uint32 key, uint64 value)
 {
-    LOCK_ELUNA;
-    lua_State* L = sEluna->L;
+    LOCK_ALE;
+    lua_State* L = sALE->L;
     // Stack: (empty)
 
-    sEluna->PushInstanceData(L, this, false);
+    sALE->PushInstanceData(L, this, false);
     // Stack: instance_data
 
-    Eluna::Push(L, key);
-    Eluna::Push(L, value);
+    ALE::Push(L, key);
+    ALE::Push(L, value);
     // Stack: instance_data, key, value
 
     lua_settable(L, -3);

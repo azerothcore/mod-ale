@@ -1,34 +1,34 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#include "ElunaFileWatcher.h"
+#include "ALEFileWatcher.h"
 #include "LuaEngine.h"
-#include "ElunaUtility.h"
+#include "ALEUtility.h"
 #include <boost/filesystem.hpp>
 
-ElunaFileWatcher::ElunaFileWatcher() : running(false), checkInterval(1)
+ALEFileWatcher::ALEFileWatcher() : running(false), checkInterval(1)
 {
 }
 
-ElunaFileWatcher::~ElunaFileWatcher()
+ALEFileWatcher::~ALEFileWatcher()
 {
     StopWatching();
 }
 
-void ElunaFileWatcher::StartWatching(const std::string& scriptPath, uint32 intervalSeconds)
+void ALEFileWatcher::StartWatching(const std::string& scriptPath, uint32 intervalSeconds)
 {
     if (running.load())
     {
-        ELUNA_LOG_DEBUG("[ElunaFileWatcher]: Already watching files");
+        ALE_LOG_DEBUG("[ALEFileWatcher]: Already watching files");
         return;
     }
 
     if (scriptPath.empty())
     {
-        ELUNA_LOG_ERROR("[ElunaFileWatcher]: Cannot start watching - script path is empty");
+        ALE_LOG_ERROR("[ALEFileWatcher]: Cannot start watching - script path is empty");
         return;
     }
 
@@ -38,12 +38,12 @@ void ElunaFileWatcher::StartWatching(const std::string& scriptPath, uint32 inter
 
     ScanDirectory(watchPath);
 
-    watcherThread = std::thread(&ElunaFileWatcher::WatchLoop, this);
+    watcherThread = std::thread(&ALEFileWatcher::WatchLoop, this);
     
-    ELUNA_LOG_INFO("[ElunaFileWatcher]: Started watching '{}' (interval: {}s)", watchPath, checkInterval);
+    ALE_LOG_INFO("[ALEFileWatcher]: Started watching '{}' (interval: {}s)", watchPath, checkInterval);
 }
 
-void ElunaFileWatcher::StopWatching()
+void ALEFileWatcher::StopWatching()
 {
     if (!running.load())
         return;
@@ -55,10 +55,10 @@ void ElunaFileWatcher::StopWatching()
 
     fileTimestamps.clear();
     
-    ELUNA_LOG_INFO("[ElunaFileWatcher]: Stopped watching files");
+    ALE_LOG_INFO("[ALEFileWatcher]: Stopped watching files");
 }
 
-void ElunaFileWatcher::WatchLoop()
+void ALEFileWatcher::WatchLoop()
 {
     while (running.load())
     {
@@ -68,20 +68,20 @@ void ElunaFileWatcher::WatchLoop()
         }
         catch (const std::exception& e)
         {
-            ELUNA_LOG_ERROR("[ElunaFileWatcher]: Error during file watching: {}", e.what());
+            ALE_LOG_ERROR("[ALEFileWatcher]: Error during file watching: {}", e.what());
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(checkInterval));
     }
 }
 
-bool ElunaFileWatcher::IsWatchedFileType(const std::string& filename) {
+bool ALEFileWatcher::IsWatchedFileType(const std::string& filename) {
     return (filename.length() >= 4 && filename.substr(filename.length() - 4) == ".lua") ||
         (filename.length() >= 4 && filename.substr(filename.length() - 4) == ".ext") ||
         (filename.length() >= 5 && filename.substr(filename.length() - 5) == ".moon");
 }
 
-void ElunaFileWatcher::ScanDirectory(const std::string& path)
+void ALEFileWatcher::ScanDirectory(const std::string& path)
 {
     try
     {
@@ -113,11 +113,11 @@ void ElunaFileWatcher::ScanDirectory(const std::string& path)
     }
     catch (const std::exception& e)
     {
-        ELUNA_LOG_ERROR("[ElunaFileWatcher]: Error scanning directory '{}': {}", path, e.what());
+        ALE_LOG_ERROR("[ALEFileWatcher]: Error scanning directory '{}': {}", path, e.what());
     }
 }
 
-void ElunaFileWatcher::CheckForChanges()
+void ALEFileWatcher::CheckForChanges()
 {
     bool hasChanges = false;
     
@@ -140,7 +140,7 @@ void ElunaFileWatcher::CheckForChanges()
         {
             if (!boost::filesystem::exists(it->first))
             {
-                ELUNA_LOG_DEBUG("[ElunaFileWatcher]: File deleted: {}", it->first);
+                ALE_LOG_DEBUG("[ALEFileWatcher]: File deleted: {}", it->first);
                 it = fileTimestamps.erase(it);
                 hasChanges = true;
             }
@@ -152,20 +152,20 @@ void ElunaFileWatcher::CheckForChanges()
     }
     catch (const std::exception& e)
     {
-        ELUNA_LOG_ERROR("[ElunaFileWatcher]: Error checking for changes: {}", e.what());
+        ALE_LOG_ERROR("[ALEFileWatcher]: Error checking for changes: {}", e.what());
         return;
     }
 
     if (hasChanges)
     {
-        ELUNA_LOG_INFO("[ElunaFileWatcher]: Lua script changes detected - triggering reload");
-        Eluna::ReloadEluna();
+        ALE_LOG_INFO("[ALEFileWatcher]: Lua script changes detected - triggering reload");
+        ALE::ReloadALE();
         
         ScanDirectory(watchPath);
     }
 }
 
-bool ElunaFileWatcher::ShouldReloadFile(const std::string& filepath)
+bool ALEFileWatcher::ShouldReloadFile(const std::string& filepath)
 {
     try
     {
@@ -195,21 +195,21 @@ bool ElunaFileWatcher::ShouldReloadFile(const std::string& filepath)
         
         if (it == fileTimestamps.end())
         {
-            ELUNA_LOG_DEBUG("[ElunaFileWatcher]: New file detected: {}", filepath);
+            ALE_LOG_DEBUG("[ALEFileWatcher]: New file detected: {}", filepath);
             fileTimestamps[filepath] = currentTime;
             return true;
         }
         
         if (it->second != currentTime)
         {
-            ELUNA_LOG_DEBUG("[ElunaFileWatcher]: File modified: {}", filepath);
+            ALE_LOG_DEBUG("[ALEFileWatcher]: File modified: {}", filepath);
             it->second = currentTime;
             return true;
         }
     }
     catch (const std::exception& e)
     {
-        ELUNA_LOG_ERROR("[ElunaFileWatcher]: Error checking file '{}': {}", filepath, e.what());
+        ALE_LOG_ERROR("[ALEFileWatcher]: Error checking file '{}': {}", filepath, e.what());
     }
     
     return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
@@ -17,7 +17,7 @@
  *         return;
  *
  *     // Lock out any other threads.
- *     LOCK_ELUNA;
+ *     LOCK_ALE;
  *
  *     // Push extra arguments, if any.
  *     Push(a);
@@ -35,7 +35,7 @@
  *          return;
  *
  *     // Lock out any other threads.
- *     LOCK_ELUNA;
+ *     LOCK_ALE;
  *
  *     // Push extra arguments, if any.
  *     Push(a);
@@ -122,8 +122,8 @@ namespace Hooks
         WORLD_EVENT_ON_STARTUP                  =     14,       // (event)
         WORLD_EVENT_ON_SHUTDOWN                 =     15,       // (event)
 
-        // Eluna
-        ELUNA_EVENT_ON_LUA_STATE_CLOSE          =     16,       // (event) - triggers just before shutting down eluna (on shutdown and restart)
+        // ALE
+        ALE_EVENT_ON_LUA_STATE_CLOSE          =     16,       // (event) - triggers just before shutting down ALE (on shutdown and restart)
 
         // Map
         MAP_EVENT_ON_CREATE                     =     17,       // (event, map)
@@ -152,8 +152,8 @@ namespace Hooks
         WORLD_EVENT_ON_DELETE_CREATURE          =     31,       // (event, creature)
         WORLD_EVENT_ON_DELETE_GAMEOBJECT        =     32,       // (event, gameobject)
 
-        // Eluna
-        ELUNA_EVENT_ON_LUA_STATE_OPEN           =     33,       // (event) - triggers after all scripts are loaded
+        // ALE
+        ALE_EVENT_ON_LUA_STATE_OPEN           =     33,       // (event) - triggers after all scripts are loaded
 
         GAME_EVENT_START                        =     34,       // (event, gameeventid)
         GAME_EVENT_STOP                         =     35,       // (event, gameeventid)

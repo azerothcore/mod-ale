@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -7,7 +7,7 @@
 #ifndef MAPMETHODS_H
 #define MAPMETHODS_H
 
-#include "ElunaInstanceAI.h"
+#include "ALEInstanceAI.h"
 
 /***
  * A game map, e.g. Azeroth, Eastern Kingdoms, the Molten Core, etc.
@@ -24,7 +24,7 @@ namespace LuaMap
      */
     int IsArena(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->IsBattleArena());
+        ALE::Push(L, map->IsBattleArena());
         return 1;
     }
 
@@ -35,7 +35,7 @@ namespace LuaMap
      */
     int IsBattleground(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->IsBattleground());
+        ALE::Push(L, map->IsBattleground());
         return 1;
     }
 
@@ -46,7 +46,7 @@ namespace LuaMap
      */
     int IsDungeon(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->IsDungeon());
+        ALE::Push(L, map->IsDungeon());
         return 1;
     }
 
@@ -57,7 +57,7 @@ namespace LuaMap
      */
     int IsEmpty(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->IsEmpty());
+        ALE::Push(L, map->IsEmpty());
         return 1;
     }
 
@@ -68,7 +68,7 @@ namespace LuaMap
      */
     int IsHeroic(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->IsHeroic());
+        ALE::Push(L, map->IsHeroic());
         return 1;
     }
 
@@ -79,7 +79,7 @@ namespace LuaMap
      */
     int IsRaid(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->IsRaid());
+        ALE::Push(L, map->IsRaid());
         return 1;
     }
 
@@ -90,7 +90,7 @@ namespace LuaMap
      */
     int GetName(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->GetMapName());
+        ALE::Push(L, map->GetMapName());
         return 1;
     }
 
@@ -105,12 +105,12 @@ namespace LuaMap
      */
     int GetHeight(lua_State* L, Map* map)
     {
-        float x = Eluna::CHECKVAL<float>(L, 2);
-        float y = Eluna::CHECKVAL<float>(L, 3);
-        uint32 phasemask = Eluna::CHECKVAL<uint32>(L, 4, 1);
+        float x = ALE::CHECKVAL<float>(L, 2);
+        float y = ALE::CHECKVAL<float>(L, 3);
+        uint32 phasemask = ALE::CHECKVAL<uint32>(L, 4, 1);
         float z = map->GetHeight(phasemask, x, y, MAX_HEIGHT);
         if (z != INVALID_HEIGHT)
-            Eluna::Push(L, z);
+            ALE::Push(L, z);
         return 1;
     }
 
@@ -123,7 +123,7 @@ namespace LuaMap
      */
     int GetDifficulty(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->GetDifficulty());
+        ALE::Push(L, map->GetDifficulty());
         return 1;
     }
 
@@ -134,7 +134,7 @@ namespace LuaMap
      */
     int GetInstanceId(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->GetInstanceId());
+        ALE::Push(L, map->GetInstanceId());
         return 1;
     }
 
@@ -145,7 +145,7 @@ namespace LuaMap
      */
     int GetPlayerCount(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->GetPlayersCountExceptGMs());
+        ALE::Push(L, map->GetPlayersCountExceptGMs());
         return 1;
     }
 
@@ -156,7 +156,7 @@ namespace LuaMap
      */
     int GetMapId(lua_State* L, Map* map)
     {
-        Eluna::Push(L, map->GetId());
+        ALE::Push(L, map->GetId());
         return 1;
     }
 
@@ -171,12 +171,12 @@ namespace LuaMap
      */
     int GetAreaId(lua_State* L, Map* map)
     {
-        float x = Eluna::CHECKVAL<float>(L, 2);
-        float y = Eluna::CHECKVAL<float>(L, 3);
-        float z = Eluna::CHECKVAL<float>(L, 4);
-        float phasemask = Eluna::CHECKVAL<uint32>(L, 5, PHASEMASK_NORMAL);
+        float x = ALE::CHECKVAL<float>(L, 2);
+        float y = ALE::CHECKVAL<float>(L, 3);
+        float z = ALE::CHECKVAL<float>(L, 4);
+        float phasemask = ALE::CHECKVAL<uint32>(L, 5, PHASEMASK_NORMAL);
 
-        Eluna::Push(L, map->GetAreaId(phasemask, x, y, z));
+        ALE::Push(L, map->GetAreaId(phasemask, x, y, z));
         return 1;
     }
 
@@ -188,30 +188,30 @@ namespace LuaMap
      */
     int GetWorldObject(lua_State* L, Map* map)
     {
-        ObjectGuid guid = Eluna::CHECKVAL<ObjectGuid>(L, 2);
+        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
 
         switch (guid.GetHigh())
         {
             case HIGHGUID_PLAYER:
-                Eluna::Push(L, eObjectAccessor()GetPlayer(map, guid));
+                ALE::Push(L, eObjectAccessor()GetPlayer(map, guid));
                 break;
             case HIGHGUID_TRANSPORT:
             case HIGHGUID_MO_TRANSPORT:
             case HIGHGUID_GAMEOBJECT:
-                Eluna::Push(L, map->GetGameObject(guid));
+                ALE::Push(L, map->GetGameObject(guid));
                 break;
             case HIGHGUID_VEHICLE:
             case HIGHGUID_UNIT:
-                Eluna::Push(L, map->GetCreature(guid));
+                ALE::Push(L, map->GetCreature(guid));
                 break;
             case HIGHGUID_PET:
-                Eluna::Push(L, map->GetPet(guid));
+                ALE::Push(L, map->GetPet(guid));
                 break;
             case HIGHGUID_DYNAMICOBJECT:
-                Eluna::Push(L, map->GetDynamicObject(guid));
+                ALE::Push(L, map->GetDynamicObject(guid));
                 break;
             case HIGHGUID_CORPSE:
-                Eluna::Push(L, map->GetCorpse(guid));
+                ALE::Push(L, map->GetCorpse(guid));
                 break;
             default:
                 break;
@@ -238,9 +238,9 @@ namespace LuaMap
      */
     int SetWeather(lua_State* L, Map* map)
     {
-        uint32 zoneId = Eluna::CHECKVAL<uint32>(L, 2);
-        uint32 weatherType = Eluna::CHECKVAL<uint32>(L, 3);
-        float grade = Eluna::CHECKVAL<float>(L, 4);
+        uint32 zoneId = ALE::CHECKVAL<uint32>(L, 2);
+        uint32 weatherType = ALE::CHECKVAL<uint32>(L, 3);
+        float grade = ALE::CHECKVAL<float>(L, 4);
 
         Weather* weather = map->GetOrGenerateZoneDefaultWeather(zoneId);
         if (weather)
@@ -251,21 +251,21 @@ namespace LuaMap
     /**
      * Gets the instance data table for the [Map], if it exists.
      *
-     * The instance must be scripted using Eluna for this to succeed.
+     * The instance must be scripted using ALE for this to succeed.
      * If the instance is scripted in C++ this will return `nil`.
      *
      * @return table instance_data : instance data table, or `nil`
      */
     int GetInstanceData(lua_State* L, Map* map)
     {
-        ElunaInstanceAI* iAI = NULL;
+        ALEInstanceAI* iAI = NULL;
         if (InstanceMap* inst = map->ToInstanceMap())
-            iAI = dynamic_cast<ElunaInstanceAI*>(inst->GetInstanceScript());
+            iAI = dynamic_cast<ALEInstanceAI*>(inst->GetInstanceScript());
 
         if (iAI)
-            Eluna::GetEluna(L)->PushInstanceData(L, iAI, false);
+            ALE::GetALE(L)->PushInstanceData(L, iAI, false);
         else
-            Eluna::Push(L); // nil
+            ALE::Push(L); // nil
 
         return 1;
     }
@@ -275,9 +275,9 @@ namespace LuaMap
      */
     int SaveInstanceData(lua_State* /*L*/, Map* map)
     {
-        ElunaInstanceAI* iAI = NULL;
+        ALEInstanceAI* iAI = NULL;
         if (InstanceMap* inst = map->ToInstanceMap())
-            iAI = dynamic_cast<ElunaInstanceAI*>(inst->GetInstanceScript());
+            iAI = dynamic_cast<ALEInstanceAI*>(inst->GetInstanceScript());
 
         if (iAI)
             iAI->SaveToDB();
@@ -300,7 +300,7 @@ namespace LuaMap
     */
     int GetPlayers(lua_State* L, Map* map)
     {
-        uint32 team = Eluna::CHECKVAL<uint32>(L, 2, TEAM_NEUTRAL);
+        uint32 team = ALE::CHECKVAL<uint32>(L, 2, TEAM_NEUTRAL);
 
         lua_newtable(L);
         int tbl = lua_gettop(L);
@@ -314,7 +314,7 @@ namespace LuaMap
                 continue;
             if (player->GetSession() && (team >= TEAM_NEUTRAL || player->GetTeamId() == team))
             {
-                Eluna::Push(L, player);
+                ALE::Push(L, player);
                 lua_rawseti(L, tbl, ++i);
             }
         }
@@ -339,7 +339,7 @@ namespace LuaMap
         {
             Creature* creature = pair.second;
 
-            Eluna::Push(L, creature);
+            ALE::Push(L, creature);
             lua_rawseti(L, tbl, creature->GetSpawnId());
         }
 
@@ -355,7 +355,7 @@ namespace LuaMap
      */
     int GetCreaturesByAreaId(lua_State* L, Map* map)
     {
-        int32 areaId = Eluna::CHECKVAL<int32>(L, 2, -1);
+        int32 areaId = ALE::CHECKVAL<int32>(L, 2, -1);
         std::vector<Creature*> filteredCreatures;
 
         for (const auto& pair : map->GetCreatureBySpawnIdStore())
@@ -372,7 +372,7 @@ namespace LuaMap
 
         for (Creature* creature : filteredCreatures)
         {
-            Eluna::Push(L, creature);
+            ALE::Push(L, creature);
             lua_rawseti(L, tbl, creature->GetSpawnId());
         }
 

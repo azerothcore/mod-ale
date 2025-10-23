@@ -131,7 +131,7 @@ void HttpManager::HttpWorkerThread()
             std::string path;
 
             if (!ParseUrl(req->url, host, path)) {
-                ELUNA_LOG_ERROR("[Eluna]: Could not parse URL {}", req->url);
+                ALE_LOG_ERROR("[ALE]: Could not parse URL {}", req->url);
                 continue;
             }
 
@@ -144,7 +144,7 @@ void HttpManager::HttpWorkerThread()
             httplib::Error err = res.error();
             if (err != httplib::Error::Success)
             {
-                ELUNA_LOG_ERROR("[Eluna]: HTTP request error: {}", httplib::to_string(err));
+                ALE_LOG_ERROR("[ALE]: HTTP request error: {}", httplib::to_string(err));
                 continue;
             }
 
@@ -156,7 +156,7 @@ void HttpManager::HttpWorkerThread()
 
                 if (!ParseUrl(location, host, path))
                 {
-                    ELUNA_LOG_ERROR("[Eluna]: Could not parse URL after redirect: {}", location);
+                    ALE_LOG_ERROR("[ALE]: Could not parse URL after redirect: {}", location);
                     continue;
                 }
                 httplib::Client cli2(host);
@@ -170,7 +170,7 @@ void HttpManager::HttpWorkerThread()
         }
         catch (const std::exception& ex)
         {
-            ELUNA_LOG_ERROR("[Eluna]: HTTP request error: {}", ex.what());
+            ALE_LOG_ERROR("[ALE]: HTTP request error: {}", ex.what());
         }
 
         delete req;
@@ -209,7 +209,7 @@ httplib::Result HttpManager::DoRequest(httplib::Client& client, HttpWorkItem* re
         return client.Options(path, req->headers);
     }
 
-    ELUNA_LOG_ERROR("[Eluna]: HTTP request error: invalid HTTP verb {}", req->httpVerb);
+    ALE_LOG_ERROR("[ALE]: HTTP request error: invalid HTTP verb {}", req->httpVerb);
     return client.Get(path, req->headers);
 }
 
@@ -248,25 +248,25 @@ void HttpManager::HandleHttpResponses()
             continue;
         }
 
-        LOCK_ELUNA;
+        LOCK_ALE;
 
-        lua_State* L = Eluna::GEluna->L;
+        lua_State* L = ALE::GALE->L;
 
         // Get function
         lua_rawgeti(L, LUA_REGISTRYINDEX, res->funcRef);
 
         // Push parameters
-        Eluna::Push(L, res->statusCode);
-        Eluna::Push(L, res->body);
+        ALE::Push(L, res->statusCode);
+        ALE::Push(L, res->body);
         lua_newtable(L);
         for (const auto& item : res->headers) {
-            Eluna::Push(L, item.first);
-            Eluna::Push(L, item.second);
+            ALE::Push(L, item.first);
+            ALE::Push(L, item.second);
             lua_settable(L, -3);
         }
 
         // Call function
-        Eluna::GEluna->ExecuteCall(3, 0);
+        ALE::GALE->ExecuteCall(3, 0);
 
         luaL_unref(L, LUA_REGISTRYINDEX, res->funcRef);
 

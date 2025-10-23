@@ -1,11 +1,11 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef _ELUNA_UTIL_H
-#define _ELUNA_UTIL_H
+#ifndef _ALE_UTIL_H
+#define _ALE_UTIL_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -17,7 +17,7 @@
 #include "Database/QueryResult.h"
 #include "Log.h"
 
-typedef QueryResult ElunaQuery;
+typedef QueryResult ALEQuery;
 #define GET_GUID                GetGUID
 #define HIGHGUID_PLAYER         HighGuid::Player
 #define HIGHGUID_UNIT           HighGuid::Unit
@@ -33,9 +33,9 @@ typedef QueryResult ElunaQuery;
 #define HIGHGUID_INSTANCE       HighGuid::Instance
 #define HIGHGUID_GROUP          HighGuid::Group
 
-#define ELUNA_LOG_INFO(...)     LOG_INFO("eluna", __VA_ARGS__);
-#define ELUNA_LOG_ERROR(...)    LOG_ERROR("eluna", __VA_ARGS__);
-#define ELUNA_LOG_DEBUG(...)    LOG_DEBUG("eluna", __VA_ARGS__);
+#define ALE_LOG_INFO(...)     LOG_INFO("ALE", __VA_ARGS__);
+#define ALE_LOG_ERROR(...)    LOG_ERROR("ALE", __VA_ARGS__);
+#define ALE_LOG_DEBUG(...)    LOG_DEBUG("ALE", __VA_ARGS__);
 
 #ifndef MAKE_NEW_GUID
 #define MAKE_NEW_GUID(l, e, h)  ObjectGuid(h, e, l)
@@ -54,7 +54,7 @@ class Unit;
 class WorldObject;
 struct FactionTemplateEntry;
 
-namespace ElunaUtil
+namespace ALEUtil
 {
     uint32 GetCurrTime();
 

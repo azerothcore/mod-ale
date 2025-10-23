@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
@@ -8,42 +8,42 @@
 #include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ElunaIncludes.h"
-#include "ElunaTemplate.h"
+#include "ALEIncludes.h"
+#include "ALETemplate.h"
 
 using namespace Hooks;
 
 #define START_HOOK(EVENT) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EventKey<AllCreatureEvents>(EVENT);\
     if (!AllCreatureEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ELUNA
+    LOCK_ALE
 
 #define START_HOOK_WITH_RETVAL(EVENT, RETVAL) \
-    if (!ElunaConfig::GetInstance().IsElunaEnabled())\
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
         return RETVAL;\
     auto key = EventKey<AllCreatureEvents>(EVENT);\
     if (!AllCreatureEventBindings->HasBindingsFor(key))\
         return RETVAL;\
-    LOCK_ELUNA
+    LOCK_ALE
 
-void Eluna::OnAllCreatureAddToWorld(Creature* creature)
+void ALE::OnAllCreatureAddToWorld(Creature* creature)
 {
     START_HOOK(ALL_CREATURE_EVENT_ON_ADD);
     Push(creature);
     CallAllFunctions(AllCreatureEventBindings, key);
 }
 
-void Eluna::OnAllCreatureRemoveFromWorld(Creature* creature)
+void ALE::OnAllCreatureRemoveFromWorld(Creature* creature)
 {
     START_HOOK(ALL_CREATURE_EVENT_ON_REMOVE);
     Push(creature);
     CallAllFunctions(AllCreatureEventBindings, key);
 }
 
-void Eluna::OnAllCreatureSelectLevel(const CreatureTemplate* cinfo, Creature* creature)
+void ALE::OnAllCreatureSelectLevel(const CreatureTemplate* cinfo, Creature* creature)
 {
     START_HOOK(ALL_CREATURE_EVENT_ON_SELECT_LEVEL);
     Push(cinfo);
@@ -51,7 +51,7 @@ void Eluna::OnAllCreatureSelectLevel(const CreatureTemplate* cinfo, Creature* cr
     CallAllFunctions(AllCreatureEventBindings, key);
 }
 
-void Eluna::OnAllCreatureBeforeSelectLevel(const CreatureTemplate* cinfo, Creature* creature, uint8& level)
+void ALE::OnAllCreatureBeforeSelectLevel(const CreatureTemplate* cinfo, Creature* creature, uint8& level)
 {
     START_HOOK(ALL_CREATURE_EVENT_ON_BEFORE_SELECT_LEVEL);
     Push(cinfo);

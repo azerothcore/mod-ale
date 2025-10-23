@@ -1,10 +1,10 @@
 /*
- * Copyright (C) 2010 - 2024 Eluna Lua Engine <https://elunaluaengine.github.io/>
+ * Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
  * This program is free software licensed under GPL version 3
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#include "ElunaCompat.h"
+#include "ALECompat.h"
 
 #if LUA_VERSION_NUM == 501
 const char* luaL_tolstring(lua_State* L, int idx, size_t* len) {

@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -21,7 +21,7 @@ namespace LuaCorpse
      */
     int GetOwnerGUID(lua_State* L, Corpse* corpse)
     {
-        Eluna::Push(L, corpse->GetOwnerGUID());
+        ALE::Push(L, corpse->GetOwnerGUID());
         return 1;
     }
 
@@ -32,7 +32,7 @@ namespace LuaCorpse
      */
     int GetGhostTime(lua_State* L, Corpse* corpse)
     {
-        Eluna::Push(L, corpse->GetGhostTime());
+        ALE::Push(L, corpse->GetGhostTime());
         return 1;
     }
 
@@ -50,7 +50,7 @@ namespace LuaCorpse
      */
     int GetType(lua_State* L, Corpse* corpse)
     {
-        Eluna::Push(L, corpse->GetType());
+        ALE::Push(L, corpse->GetType());
         return 1;
     }
 

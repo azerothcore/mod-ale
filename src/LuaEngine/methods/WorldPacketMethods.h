@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2010 - 2016 Eluna Lua Engine <http://emudevs.com/>
+* Copyright (C) 2010 - 2025 Eluna Lua Engine <https://elunaluaengine.github.io/>
 * This program is free software licensed under GPL version 3
 * Please see the included DOCS/LICENSE.md for more information
 */
@@ -27,7 +27,7 @@ namespace LuaPacket
      */
     int GetOpcode(lua_State* L, WorldPacket* packet)
     {
-        Eluna::Push(L, packet->GetOpcode());
+        ALE::Push(L, packet->GetOpcode());
         return 1;
     }
 
@@ -38,7 +38,7 @@ namespace LuaPacket
      */
     int GetSize(lua_State* L, WorldPacket* packet)
     {
-        Eluna::Push(L, packet->size());
+        ALE::Push(L, packet->size());
         return 1;
     }
 
@@ -49,7 +49,7 @@ namespace LuaPacket
      */
     int SetOpcode(lua_State* L, WorldPacket* packet)
     {
-        uint32 opcode = Eluna::CHECKVAL<uint32>(L, 2);
+        uint32 opcode = ALE::CHECKVAL<uint32>(L, 2);
         if (opcode >= NUM_MSG_TYPES)
             return luaL_argerror(L, 2, "valid opcode expected");
         packet->SetOpcode((OpcodesList)opcode);
@@ -65,7 +65,7 @@ namespace LuaPacket
     {
         int8 _byte;
         (*packet) >> _byte;
-        Eluna::Push(L, _byte);
+        ALE::Push(L, _byte);
         return 1;
     }
 
@@ -78,7 +78,7 @@ namespace LuaPacket
     {
         uint8 _ubyte;
         (*packet) >> _ubyte;
-        Eluna::Push(L, _ubyte);
+        ALE::Push(L, _ubyte);
         return 1;
     }
 
@@ -91,7 +91,7 @@ namespace LuaPacket
     {
         int16 _short;
         (*packet) >> _short;
-        Eluna::Push(L, _short);
+        ALE::Push(L, _short);
         return 1;
     }
 
@@ -104,7 +104,7 @@ namespace LuaPacket
     {
         uint16 _ushort;
         (*packet) >> _ushort;
-        Eluna::Push(L, _ushort);
+        ALE::Push(L, _ushort);
         return 1;
     }
 
@@ -117,7 +117,7 @@ namespace LuaPacket
     {
         int32 _long;
         (*packet) >> _long;
-        Eluna::Push(L, _long);
+        ALE::Push(L, _long);
         return 1;
     }
 
@@ -130,7 +130,7 @@ namespace LuaPacket
     {
         uint32 _ulong;
         (*packet) >> _ulong;
-        Eluna::Push(L, _ulong);
+        ALE::Push(L, _ulong);
         return 1;
     }
 
@@ -143,7 +143,7 @@ namespace LuaPacket
     {
         float _val;
         (*packet) >> _val;
-        Eluna::Push(L, _val);
+        ALE::Push(L, _val);
         return 1;
     }
 
@@ -156,7 +156,7 @@ namespace LuaPacket
     {
         double _val;
         (*packet) >> _val;
-        Eluna::Push(L, _val);
+        ALE::Push(L, _val);
         return 1;
     }
 
@@ -169,7 +169,7 @@ namespace LuaPacket
     {
         ObjectGuid guid;
         (*packet) >> guid;
-        Eluna::Push(L, guid);
+        ALE::Push(L, guid);
         return 1;
     }
 
@@ -183,7 +183,7 @@ namespace LuaPacket
     {
         uint64 guid;
         packet->readPackGUID(guid);
-        Eluna::Push(L, guid);
+        ALE::Push(L, guid);
         return 1;
     }
 	
@@ -196,7 +196,7 @@ namespace LuaPacket
     {
         std::string _val;
         (*packet) >> _val;
-        Eluna::Push(L, _val);
+        ALE::Push(L, _val);
         return 1;
     }
 
@@ -207,7 +207,7 @@ namespace LuaPacket
      */
     int WriteGUID(lua_State* L, WorldPacket* packet)
     {
-        ObjectGuid guid = Eluna::CHECKVAL<ObjectGuid>(L, 2);
+        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
         (*packet) << guid;
         return 0;
     }
@@ -219,7 +219,7 @@ namespace LuaPacket
      */
     int WritePackedGUID(lua_State* L, WorldPacket* packet)
     {
-        ObjectGuid guid = Eluna::CHECKVAL<ObjectGuid>(L, 2);
+        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
         PackedGuid packedGuid(guid);
         (*packet) << packedGuid;
         return 0;
@@ -232,7 +232,7 @@ namespace LuaPacket
      */
     int WriteString(lua_State* L, WorldPacket* packet)
     {
-        std::string _val = Eluna::CHECKVAL<std::string>(L, 2);
+        std::string _val = ALE::CHECKVAL<std::string>(L, 2);
         (*packet) << _val;
         return 0;
     }
@@ -244,7 +244,7 @@ namespace LuaPacket
      */
     int WriteByte(lua_State* L, WorldPacket* packet)
     {
-        int8 byte = Eluna::CHECKVAL<int8>(L, 2);
+        int8 byte = ALE::CHECKVAL<int8>(L, 2);
         (*packet) << byte;
         return 0;
     }
@@ -256,7 +256,7 @@ namespace LuaPacket
      */
     int WriteUByte(lua_State* L, WorldPacket* packet)
     {
-        uint8 byte = Eluna::CHECKVAL<uint8>(L, 2);
+        uint8 byte = ALE::CHECKVAL<uint8>(L, 2);
         (*packet) << byte;
         return 0;
     }
@@ -268,7 +268,7 @@ namespace LuaPacket
      */
     int WriteShort(lua_State* L, WorldPacket* packet)
     {
-        int16 _short = Eluna::CHECKVAL<int16>(L, 2);
+        int16 _short = ALE::CHECKVAL<int16>(L, 2);
         (*packet) << _short;
         return 0;
     }
@@ -280,7 +280,7 @@ namespace LuaPacket
      */
     int WriteUShort(lua_State* L, WorldPacket* packet)
     {
-        uint16 _ushort = Eluna::CHECKVAL<uint16>(L, 2);
+        uint16 _ushort = ALE::CHECKVAL<uint16>(L, 2);
         (*packet) << _ushort;
         return 0;
     }
@@ -292,7 +292,7 @@ namespace LuaPacket
      */
     int WriteLong(lua_State* L, WorldPacket* packet)
     {
-        int32 _long = Eluna::CHECKVAL<int32>(L, 2);
+        int32 _long = ALE::CHECKVAL<int32>(L, 2);
         (*packet) << _long;
         return 0;
     }
@@ -304,7 +304,7 @@ namespace LuaPacket
      */
     int WriteULong(lua_State* L, WorldPacket* packet)
     {
-        uint32 _ulong = Eluna::CHECKVAL<uint32>(L, 2);
+        uint32 _ulong = ALE::CHECKVAL<uint32>(L, 2);
         (*packet) << _ulong;
         return 0;
     }
@@ -316,7 +316,7 @@ namespace LuaPacket
      */
     int WriteFloat(lua_State* L, WorldPacket* packet)
     {
-        float _val = Eluna::CHECKVAL<float>(L, 2);
+        float _val = ALE::CHECKVAL<float>(L, 2);
         (*packet) << _val;
         return 0;
     }
@@ -328,7 +328,7 @@ namespace LuaPacket
      */
     int WriteDouble(lua_State* L, WorldPacket* packet)
     {
-        double _val = Eluna::CHECKVAL<double>(L, 2);
+        double _val = ALE::CHECKVAL<double>(L, 2);
         (*packet) << _val;
         return 0;
     }

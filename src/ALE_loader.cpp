@@ -16,10 +16,10 @@
  */
 
 // From SC
-void AddSC_ElunaLuaEngine();
+void AddSC_ALE();
 
 // Add all
-void Addmod_elunaScripts()
+void Addmod_ALEScripts()
 {
-    AddSC_ElunaLuaEngine();
+    AddSC_ALE();
 }

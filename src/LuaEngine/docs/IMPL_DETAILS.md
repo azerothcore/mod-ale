@@ -1,24 +1,24 @@
-# Eluna features
-This article contains information about features and important notes regarding Eluna.
+# ALE features
+This article contains information about features and important notes regarding ALE.
 
 ## Settings
-Eluna has some settings in the server configuration file.
-It is important that you use the new configuration file that you get from compiling after adding Eluna. If the new configuration file is not used you will not receive any error log or output to console.
+ALE has some settings in the server configuration file.
+It is important that you use the new configuration file that you get from compiling after adding ALE. If the new configuration file is not used you will not receive any error log or output to console.
 
 The configuration file includes at least the following settings:
-- enable and disable Eluna
-- enable and disable traceback function - this adds extra debug information if you have the default Eluna extensions.
+- enable and disable ALE
+- enable and disable traceback function - this adds extra debug information if you have the default ALE extensions.
 - configure script folder location
-- configure Eluna logging settings
+- configure ALE logging settings
 
 ## Reloading
-To make testing easier it is good to know that Eluna scripts can be reloaded by using the command `.reload eluna`.
+To make testing easier it is good to know that ALE scripts can be reloaded by using the command `.reload ale`.
 However this command should be used for development purposes __ONLY__. If you are having issues getting something working __restart__ the server.
 
 It is important to know that reloading does not trigger for example the login hook for players that are already logged in when reloading.
 
 ## Script loading
-Eluna loads scripts from the `lua_scripts` folder by default. You can configure the folder name and location in the server configuration file.
+ALE loads scripts from the `lua_scripts` folder by default. You can configure the folder name and location in the server configuration file.
 Any hidden folders are not loaded. All script files must have an unique name, otherwise an error is printed and only the first file found is loaded.
 
 The loading order is not guaranteed to be alphabetic.
@@ -31,7 +31,7 @@ The whole script folder structure is added automatically to the lua require path
 In C++ level code you have types like `Unit` and `Creature` and `Player`.
 When in code you have an object of type `Unit` you need to convert it to a `Creature` or a `Player` object to be able to access the methods of the subclass.
 
-In Eluna this is automatic. All objects are automatically converted to the correct type and you will always have full access to all member functions of an object.
+In ALE this is automatic. All objects are automatically converted to the correct type and you will always have full access to all member functions of an object.
 
 ## Storing userdata
 Storing userdata objects over time that are memory managed by C++ is a bad idea.
@@ -43,7 +43,7 @@ Instead of storing the object itself you can use store guids `player:GetGUID()` 
 Any userdata object that is memory managed by lua is safe to store over time. These objects include but are not limited to: query results, worldpackets, uint64 and int64 numbers.
 
 ## Userdata metamethods
-All userdata objects in Eluna have tostring metamethod implemented.
+All userdata objects in ALE have tostring metamethod implemented.
 This allows you to print the player object for example and to use `tostring(player)`.
 
 The userdata uses metatables that contain the methods and functions it uses.
@@ -83,7 +83,7 @@ __Database types should be followed strictly.__
 Mysql does math in bigint and decimal formats which is why a simple select like `SELECT 1;` actually returns a bigint.
 If you fetch a bigint or decimal using a function for a smaller type it is possible the value is read incorrectly.
 
-For example the same code for fetching the result of `SELECT 1;` returned 1 on one machine and 0 on another. Using the correct function, in this case GetInt64, the right result was returned on both. https://github.com/ElunaLuaEngine/Eluna/issues/89#issuecomment-64121361
+For example the same code for fetching the result of `SELECT 1;` returned 1 on one machine and 0 on another. Using the correct function, in this case GetInt64, the right result was returned on both. [https://github.com/ElunaLuaEngine/Eluna/issues/89#issuecomment-64121361](https://github.com/ElunaLuaEngine/Eluna/issues/89#issuecomment-64121361)
 
 | base type                 | defined type | database type         |
 |---------------------------|--------------|-----------------------|

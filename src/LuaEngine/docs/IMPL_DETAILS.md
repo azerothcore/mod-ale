@@ -83,7 +83,7 @@ __Database types should be followed strictly.__
 Mysql does math in bigint and decimal formats which is why a simple select like `SELECT 1;` actually returns a bigint.
 If you fetch a bigint or decimal using a function for a smaller type it is possible the value is read incorrectly.
 
-For example the same code for fetching the result of `SELECT 1;` returned 1 on one machine and 0 on another. Using the correct function, in this case GetInt64, the right result was returned on both. https://github.com/ALELuaEngine/ALE/issues/89#issuecomment-64121361
+For example the same code for fetching the result of `SELECT 1;` returned 1 on one machine and 0 on another. Using the correct function, in this case GetInt64, the right result was returned on both. [https://github.com/ElunaLuaEngine/Eluna/issues/89#issuecomment-64121361](https://github.com/ElunaLuaEngine/Eluna/issues/89#issuecomment-64121361)
 
 | base type                 | defined type | database type         |
 |---------------------------|--------------|-----------------------|

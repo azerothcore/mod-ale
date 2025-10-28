@@ -416,7 +416,7 @@ ALERegister<Unit> UnitMethods[] =
     { "IsOnVehicle", &LuaUnit::IsOnVehicle },
 
     // Other
-    { "HandleStatModifier", &LuaUnit::HandleStatModifier },
+    { "HandleStatFlatModifier", &LuaUnit::HandleStatFlatModifier },
     { "AddAura", &LuaUnit::AddAura },
     { "RemoveAura", &LuaUnit::RemoveAura },
     { "RemoveAllAuras", &LuaUnit::RemoveAllAuras },

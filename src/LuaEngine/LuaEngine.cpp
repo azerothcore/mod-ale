@@ -30,15 +30,8 @@
 #include <sys/stat.h>
 #include <unordered_map>
 
-extern "C"
-{
-// Base lua libraries
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
+#include <sol/sol.hpp>
 
-// Additional lua libraries
-};
 
 ALE::ScriptList ALE::lua_scripts;
 ALE::ScriptList ALE::lua_extensions;
@@ -182,6 +175,7 @@ ALE::ALE() :
 event_level(0),
 push_counter(0),
 
+luaState(nullptr),
 L(NULL),
 eventMgr(NULL),
 httpManager(),
@@ -237,13 +231,17 @@ void ALE::CloseLua()
 
     DestroyBindStores();
 
-    // Must close lua state after deleting stores and mgr
-    if (L)
-        lua_close(L);
-    L = NULL;
+    if (luaState)
+    {
+        luaState->Shutdown();
+        luaState.reset(); // Destroy the LuaState instance
+    }
+    L = NULL; // Clear legacy pointer
 
     instanceDataRefs.clear();
     continentDataRefs.clear();
+
+    ALE_LOG_DEBUG("[ALE]: Lua state closed");
 }
 
 void ALE::OpenLua()
@@ -254,37 +252,25 @@ void ALE::OpenLua()
         return;
     }
 
-    L = luaL_newstate();
+    luaState = std::make_unique<LuaState>();
+    luaState->Initialize();
+
+    L = luaState->GetLuaState();
 
     lua_pushlightuserdata(L, this);
     lua_setfield(L, LUA_REGISTRYINDEX, ALE_STATE_PTR);
 
     CreateBindStores();
 
-    // open base lua libraries
-    luaL_openlibs(L);
-
-    // open additional lua libraries
-
-    // Register methods and functions
+    // Register ALE methods and functions (types, hooks, etc.)
     RegisterFunctions(this);
 
     // Set lua require folder paths (scripts folder structure)
-    lua_getglobal(L, "package");
-    lua_pushstring(L, GetRequirePath().c_str());
-    lua_setfield(L, -2, "path");
-    lua_pushstring(L, GetRequireCPath().c_str());
-    lua_setfield(L, -2, "cpath");
+    // Note: LuaState already opened standard libraries
+    luaState->SetRequirePath(GetRequirePath());
+    luaState->SetRequireCPath(GetRequireCPath());
 
-    // Set package.loaders loader for precompiled scripts
-    lua_getfield(L, -1, "loaders");
-    if (lua_isnil(L, -1)) {
-        // Lua 5.2+ uses searchers instead of loaders
-        lua_pop(L, 1);
-        lua_getfield(L, -1, "searchers");
-    }
-
-    lua_pop(L, 1);
+    ALE_LOG_DEBUG("[ALE]: Lua state opened with Sol2");
 }
 
 void ALE::CreateBindStores()

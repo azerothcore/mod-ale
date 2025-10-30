@@ -26,6 +26,7 @@
 #include "LootMgr.h"
 #include "ALEFileWatcher.h"
 #include "ALEConfig.h"
+#include "LuaState.hpp"
 #include <mutex>
 #include <memory>
 #include <vector>
@@ -233,7 +234,12 @@ private:
 public:
     static ALE* GALE;
 
+    std::unique_ptr<LuaState> luaState;
+
+    // Legacy lua_State pointer for compatibility during transition
+    // TODO: Remove once all code migrated to use luaState->GetLuaState()
     lua_State* L;
+
     EventMgr* eventMgr;
     HttpManager httpManager;
     QueryCallbackProcessor queryProcessor;

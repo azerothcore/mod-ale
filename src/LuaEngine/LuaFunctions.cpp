@@ -30,7 +30,6 @@ extern "C"
 #include "AuraMethods.h"
 #include "ItemMethods.h"
 #include "WorldPacketMethods.h"
-#include "SpellMethods.h"
 #include "QuestMethods.h"
 #include "MapMethods.h"
 #include "CorpseMethods.h"
@@ -1085,32 +1084,6 @@ ALERegister<Aura> AuraMethods[] =
     { NULL, NULL }
 };
 
-ALERegister<Spell> SpellMethods[] =
-{
-    // Getters
-    { "GetCaster", &LuaSpell::GetCaster },
-    { "GetCastTime", &LuaSpell::GetCastTime },
-    { "GetEntry", &LuaSpell::GetEntry },
-    { "GetDuration", &LuaSpell::GetDuration },
-    { "GetPowerCost", &LuaSpell::GetPowerCost },
-    { "GetReagentCost", &LuaSpell::GetReagentCost },
-    { "GetTargetDest", &LuaSpell::GetTargetDest },
-    { "GetTarget", &LuaSpell::GetTarget },
-
-    // Setters
-    { "SetAutoRepeat", &LuaSpell::SetAutoRepeat },
-
-    // Boolean
-    { "IsAutoRepeat", &LuaSpell::IsAutoRepeat },
-
-    // Other
-    { "Cancel", &LuaSpell::Cancel },
-    { "Cast", &LuaSpell::Cast },
-    { "Finish", &LuaSpell::Finish },
-
-    { NULL, NULL }
-};
-
 ALERegister<Quest> QuestMethods[] =
 {
     // Getters
@@ -1902,9 +1875,6 @@ void RegisterFunctions(ALE* E)
 
     ALETemplate<Aura>::Register(E, "Aura");
     ALETemplate<Aura>::SetMethods(E, AuraMethods);
-
-    ALETemplate<Spell>::Register(E, "Spell");
-    ALETemplate<Spell>::SetMethods(E, SpellMethods);
 
     ALETemplate<Quest>::Register(E, "Quest");
     ALETemplate<Quest>::SetMethods(E, QuestMethods);

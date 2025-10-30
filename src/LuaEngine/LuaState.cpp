@@ -35,8 +35,6 @@ void LuaState::Initialize()
 
     SetupErrorHandling();
 
-    SetupCompatibilityLibraries();
-
     initialized = true;
     ALE_LOG_INFO("[LuaState]: Lua state initialized with Sol2");
 }
@@ -280,49 +278,4 @@ void LuaState::SetupErrorHandling()
     });
 
     ALE_LOG_DEBUG("[LuaState]: Error handling configured");
-}
-
-void LuaState::SetupCompatibilityLibraries()
-{
-    // For Lua 5.1 compatibility: add bit operations if not present
-    // Lua 5.2+ has built-in bit32 library, Lua 5.3+ has bitwise operators
-    lua.script(R"lua(
-        if not bit32 and not bit then
-            -- Simple bit operations for Lua 5.1 compatibility
-            bit = {}
-
-            bit.bor = function(a, b)
-                return a | b
-            end
-
-            bit.band = function(a, b)
-                return a & b
-            end
-
-            bit.bxor = function(a, b)
-                return a ~ b
-            end
-
-            bit.bnot = function(a)
-                return ~a
-            end
-
-            bit.lshift = function(a, b)
-                return a << b
-            end
-
-            bit.rshift = function(a, b)
-                return a >> b
-            end
-        end
-    )lua");
-
-    // Check for 'loaders' vs 'searchers' (Lua 5.1 vs 5.2+)
-    lua.script(R"lua(
-        if package.loaders and not package.searchers then
-            package.searchers = package.loaders
-        end
-    )lua");
-
-    ALE_LOG_DEBUG("[LuaState]: Compatibility libraries configured");
 }

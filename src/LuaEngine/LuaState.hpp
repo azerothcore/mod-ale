@@ -174,14 +174,6 @@ class LuaState
         void SetupErrorHandling();
 
         /**
-         * @brief Setup compatibility libraries
-         *
-         * Adds compatibility shims for different Lua versions.
-         * For example, adds bit32 library for Lua 5.1 compatibility.
-         */
-        void SetupCompatibilityLibraries();
-
-        /**
          * @brief Handle Lua errors internally
          * @param error Error message
          *

@@ -157,12 +157,7 @@ namespace LuaSpell
      *
      * @param bool skipCheck = false : skips initial checks to see if the [Spell] can be casted or not, this is optional
      */
-    inline void Cast(Spell* spell)
-    {
-        spell->cast(false);
-    }
-
-    inline void Cast(Spell* spell, bool skipCheck)
+    inline void Cast(Spell* spell, bool skipCheck = false)
     {
         spell->cast(skipCheck);
     }
@@ -203,10 +198,7 @@ namespace LuaSpell
         type["IsAutoRepeat"] = &IsAutoRepeat;
 
         // Actions
-        type["Cast"] = sol::overload(
-            static_cast<void(*)(Spell*)>(&Cast),
-            static_cast<void(*)(Spell*, bool)>(&Cast)
-        );
+        type["Cast"] = &Cast;
         type["Cancel"] = &Cancel;
         type["Finish"] = &Finish;
     }

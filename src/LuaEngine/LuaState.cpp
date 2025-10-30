@@ -12,7 +12,7 @@ extern "C"
 // Constructor / Destructor
 // ========================================================================
 
-LuaState::LuaState() : lua(), errorHandler(nullptr), lastError(""), initialized(false) { }
+LuaState::LuaState() : lua(), errorHandler(nullptr), initialized(false) { }
 
 LuaState::~LuaState()
 {
@@ -48,8 +48,7 @@ void LuaState::Shutdown()
         return;
     }
 
-    // Clear error state
-    lastError.clear();
+    // Clear error handler
     errorHandler = nullptr;
 
     // Sol2 handles lua_close automatically via RAII in destructor
@@ -168,14 +167,13 @@ void LuaState::SetErrorHandler(std::function<void(const std::string&)> handler)
 
 void LuaState::HandleError(const std::string& error)
 {
-    lastError = error;
-
     if (errorHandler)
     {
         errorHandler(error);
     }
     else
     {
+        // Default: log to ALE logger
         ALE_LOG_ERROR("[LuaState]: {}", error);
     }
 }

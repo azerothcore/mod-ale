@@ -8,7 +8,6 @@
 #include "LuaEngine.h"
 #include "BindingMap.h"
 #include "Chat.h"
-#include "ALECompat.h"
 #include "ALEEventMgr.h"
 #include "ALEIncludes.h"
 #include "ALETemplate.h"
@@ -446,7 +445,7 @@ bool ALE::CompileScriptToGlobalCache(const std::string& filepath)
     BytecodeWriter writer;
     writer.buffer = &cacheEntry.bytecode;
 
-    int dumpResult = lua_dump(tempL, BytecodeWriter::writer, &writer);
+    int dumpResult = lua_dump(tempL, BytecodeWriter::writer, &writer, 0);
     if (dumpResult != LUA_OK || cacheEntry.bytecode.empty())
     {
         globalBytecodeCache.erase(filepath);
@@ -504,7 +503,7 @@ bool ALE::CompileMoonScriptToGlobalCache(const std::string& filepath)
     BytecodeWriter writer;
     writer.buffer = &cacheEntry.bytecode;
 
-    int dumpResult = lua_dump(tempL, BytecodeWriter::writer, &writer);
+    int dumpResult = lua_dump(tempL, BytecodeWriter::writer, &writer, 0);
     if (dumpResult != LUA_OK || cacheEntry.bytecode.empty())
     {
         globalBytecodeCache.erase(filepath);
@@ -924,7 +923,7 @@ void ALE::Push(lua_State* luastate, const int i)
 }
 void ALE::Push(lua_State* luastate, const unsigned int u)
 {
-    lua_pushunsigned(luastate, u);
+    lua_pushinteger(luastate, static_cast<lua_Integer>(u));
 }
 void ALE::Push(lua_State* luastate, const double d)
 {

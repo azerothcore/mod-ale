@@ -19,10 +19,9 @@ namespace LuaSpell
      *
      * @return bool isAutoRepeating
      */
-    int IsAutoRepeat(lua_State* L, Spell* spell)
+    inline bool IsAutoRepeat(Spell* spell)
     {
-        ALE::Push(L, spell->IsAutoRepeat());
-        return 1;
+        return spell->IsAutoRepeat();
     }
 
     /**
@@ -30,10 +29,9 @@ namespace LuaSpell
      *
      * @return [Unit] caster
      */
-    int GetCaster(lua_State* L, Spell* spell)
+    inline Unit* GetCaster(Spell* spell)
     {
-        ALE::Push(L, spell->GetCaster());
-        return 1;
+        return spell->GetCaster();
     }
 
     /**
@@ -41,10 +39,9 @@ namespace LuaSpell
      *
      * @return int32 castTime
      */
-    int GetCastTime(lua_State* L, Spell* spell)
+    inline int32 GetCastTime(Spell* spell)
     {
-        ALE::Push(L, spell->GetCastTime());
-        return 1;
+        return spell->GetCastTime();
     }
 
     /**
@@ -52,10 +49,9 @@ namespace LuaSpell
      *
      * @return uint32 entryId
      */
-    int GetEntry(lua_State* L, Spell* spell)
+    inline uint32 GetEntry(Spell* spell)
     {
-        ALE::Push(L, spell->m_spellInfo->Id);
-        return 1;
+        return spell->m_spellInfo->Id;
     }
 
     /**
@@ -63,10 +59,9 @@ namespace LuaSpell
      *
      * @return uint32 powerCost
      */
-    int GetPowerCost(lua_State* L, Spell* spell)
+    inline uint32 GetPowerCost(Spell* spell)
     {
-        ALE::Push(L, spell->GetPowerCost());
-        return 1;
+        return spell->GetPowerCost();
     }
 
     /**
@@ -74,23 +69,22 @@ namespace LuaSpell
      *
      * @return table reagents : a table containing the [ItemTemplate]s and amount of reagents needed for the [Spell]
     */
-    int GetReagentCost(lua_State* L, Spell* spell)
+    inline sol::table GetReagentCost(Spell* spell, sol::this_state s)
     {
+        sol::state_view lua(s);
+
         auto spellInfo = spell->GetSpellInfo();
-        auto reagents = spellInfo->Reagent;
-        auto reagentCounts = spellInfo->ReagentCount;
-        lua_newtable(L);
-        for (auto i = 0; i < MAX_SPELL_REAGENTS; ++i)
+        sol::table result = lua.create_table();
+
+        for (int i = 0; i < MAX_SPELL_REAGENTS; ++i)
         {
-            if (reagents[i] <= 0)
-                continue;
-            auto reagent = eObjectMgr->GetItemTemplate(reagents[i]);
-            auto count = reagentCounts[i];
-            ALE::Push(L, reagent);
-            ALE::Push(L, count);
-            lua_settable(L, -3);
+            if (spellInfo->Reagent[i] <= 0) continue;
+            
+            auto reagent = eObjectMgr->GetItemTemplate(spellInfo->Reagent[i]);
+            if (reagent)
+                result[reagent] = spellInfo->ReagentCount[i];
         }
-        return 1;
+        return result;
     }
 
     /**
@@ -98,10 +92,9 @@ namespace LuaSpell
      *
      * @return int32 duration
      */
-    int GetDuration(lua_State* L, Spell* spell)
+    inline int32 GetDuration(Spell* spell)
     {
-        ALE::Push(L, spell->GetSpellInfo()->GetDuration());
-        return 1;
+        return spell->GetSpellInfo()->GetDuration();
     }
 
     /**
@@ -111,17 +104,14 @@ namespace LuaSpell
      * @return float y : y coordinate of the [Spell]
      * @return float z : z coordinate of the [Spell]
      */
-    int GetTargetDest(lua_State* L, Spell* spell)
+    inline std::tuple<float, float, float> GetTargetDest(Spell* spell)
     {
         if (!spell->m_targets.HasDst())
-            return 3;
+            return std::make_tuple(0.0f, 0.0f, 0.0f);
+
         float x, y, z;
         spell->m_targets.GetDstPos()->GetPosition(x, y, z);
-
-        ALE::Push(L, x);
-        ALE::Push(L, y);
-        ALE::Push(L, z);
-        return 3;
+        return std::make_tuple(x, y, z);
     }
 
     /**
@@ -136,19 +126,20 @@ namespace LuaSpell
      *
      * @return [Object] target
      */
-    int GetTarget(lua_State* L, Spell* spell)
+    inline Object* GetTarget(Spell* spell)
     {
         if (GameObject* target = spell->m_targets.GetGOTarget())
-            ALE::Push(L, target);
+            return target;
         else if (Item* target = spell->m_targets.GetItemTarget())
-            ALE::Push(L, target);
+            return target;
         else if (Corpse* target = spell->m_targets.GetCorpseTarget())
-            ALE::Push(L, target);
+            return target;
         else if (Unit* target = spell->m_targets.GetUnitTarget())
-            ALE::Push(L, target);
+            return target;
         else if (WorldObject* target = spell->m_targets.GetObjectTarget())
-            ALE::Push(L, target);
-        return 1;
+            return target;
+
+        return nullptr;
     }
 
     /**
@@ -156,11 +147,9 @@ namespace LuaSpell
      *
      * @param bool repeat : set variable to 'true' for spell to automatically repeat
      */
-    int SetAutoRepeat(lua_State* L, Spell* spell)
+    inline void SetAutoRepeat(Spell* spell, bool repeat)
     {
-        bool repeat = ALE::CHECKVAL<bool>(L, 2);
         spell->SetAutoRepeat(repeat);
-        return 0;
     }
 
     /**
@@ -168,29 +157,58 @@ namespace LuaSpell
      *
      * @param bool skipCheck = false : skips initial checks to see if the [Spell] can be casted or not, this is optional
      */
-    int Cast(lua_State* L, Spell* spell)
+    inline void Cast(Spell* spell)
     {
-        bool skipCheck = ALE::CHECKVAL<bool>(L, 2, false);
+        spell->cast(false);
+    }
+
+    inline void Cast(Spell* spell, bool skipCheck)
+    {
         spell->cast(skipCheck);
-        return 0;
     }
 
     /**
      * Cancels the [Spell].
      */
-    int Cancel(lua_State* /*L*/, Spell* spell)
+    inline void Cancel(Spell* spell)
     {
         spell->cancel();
-        return 0;
     }
 
     /**
      * Finishes the [Spell].
      */
-    int Finish(lua_State* /*L*/, Spell* spell)
+    inline void Finish(Spell* spell)
     {
         spell->finish();
-        return 0;
+    }
+
+    template<typename T>
+    void RegisterSpellMethods(sol::usertype<T>& type)
+    {
+        // Getters
+        type["GetCaster"] = &GetCaster;
+        type["GetCastTime"] = &GetCastTime;
+        type["GetEntry"] = &GetEntry;
+        type["GetPowerCost"] = &GetPowerCost;
+        type["GetReagentCost"] = &GetReagentCost;
+        type["GetDuration"] = &GetDuration;
+        type["GetTargetDest"] = &GetTargetDest;
+        type["GetTarget"] = &GetTarget;
+
+        // Setters
+        type["SetAutoRepeat"] = &SetAutoRepeat;
+
+        // Boolean
+        type["IsAutoRepeat"] = &IsAutoRepeat;
+
+        // Actions
+        type["Cast"] = sol::overload(
+            static_cast<void(*)(Spell*)>(&Cast),
+            static_cast<void(*)(Spell*, bool)>(&Cast)
+        );
+        type["Cancel"] = &Cancel;
+        type["Finish"] = &Finish;
     }
 };
 #endif

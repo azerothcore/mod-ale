@@ -1,6 +1,7 @@
 #include "LuaState.hpp"
 #include "ALEIncludes.h"
 #include "ALEUtility.h"
+#include "Methods.hpp"
 
 extern "C"
 {
@@ -34,6 +35,8 @@ void LuaState::Initialize()
     SetupStandardLibraries();
 
     SetupErrorHandling();
+
+    RegisterAll(GetState());
 
     initialized = true;
     ALE_LOG_INFO("[LuaState]: Lua state initialized with Sol2");

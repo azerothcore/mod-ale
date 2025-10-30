@@ -254,6 +254,46 @@ public:
             return 1;
         }
 
+        // Check if this type is registered with Sol2
+        // Sol2 creates a global table for each usertype
+        lua_getglobal(L, tname);
+        bool isSol2Type = lua_istable(L, -1);
+        lua_pop(L, 1);
+
+        if (isSol2Type)
+        {
+            // Push Sol2 usertype manually to avoid template instantiation with incomplete types
+            // Create userdata that holds just the pointer (Sol2 format for pointer types)
+            T** userdata = static_cast<T**>(lua_newuserdata(L, sizeof(T*)));
+            *userdata = const_cast<T*>(obj);
+
+            // Get Sol2's metatable from the registry
+            // Sol2 stores metatables with prefix "sol." + typename
+            std::string meta_key = std::string("sol.") + tname;
+            lua_getfield(L, LUA_REGISTRYINDEX, meta_key.c_str());
+            if (lua_istable(L, -1))
+            {
+                lua_setmetatable(L, -2);
+                return 1;
+            }
+
+            // Try without prefix as fallback
+            lua_pop(L, 1);
+            lua_getfield(L, LUA_REGISTRYINDEX, tname);
+            if (lua_istable(L, -1))
+            {
+                lua_setmetatable(L, -2);
+                return 1;
+            }
+
+            // Metatable not found
+            ALE_LOG_ERROR("{} Sol2 metatable not found in registry", tname);
+            lua_pop(L, 2);
+            lua_pushnil(L);
+            return 1;
+        }
+
+        // Fall back to old metatable system (for non-migrated types)
         // Create new userdata
         ALEObject** ptrHold = static_cast<ALEObject**>(lua_newuserdata(L, sizeof(ALEObject*)));
         if (!ptrHold)
@@ -280,6 +320,59 @@ public:
 
     static T* Check(lua_State* L, int narg, bool error = true)
     {
+        // Check if this type is registered with Sol2
+        lua_getglobal(L, tname);
+        bool isSol2Type = lua_istable(L, -1);
+        lua_pop(L, 1);
+
+        if (isSol2Type)
+        {
+            // Check Sol2 usertype manually to avoid template instantiation with incomplete types
+            // Check if argument is userdata
+            if (!lua_isuserdata(L, narg))
+            {
+                if (error)
+                {
+                    std::string err_msg = std::string(tname) + " expected, got " + lua_typename(L, lua_type(L, narg));
+                    luaL_argerror(L, narg, err_msg.c_str());
+                }
+                return nullptr;
+            }
+
+            // Get its metatable and verify it matches Sol2's metatable for this type
+            if (lua_getmetatable(L, narg))
+            {
+                // Get expected metatable
+                std::string meta_key = std::string("sol.") + tname;
+                lua_getfield(L, LUA_REGISTRYINDEX, meta_key.c_str());
+                if (lua_isnil(L, -1))
+                {
+                    // Try without prefix
+                    lua_pop(L, 1);
+                    lua_getfield(L, LUA_REGISTRYINDEX, tname);
+                }
+
+                // Compare metatables
+                if (lua_rawequal(L, -1, -2))
+                {
+                    lua_pop(L, 2);  // Pop both metatables
+                    // Extract pointer from userdata
+                    T** ptr = static_cast<T**>(lua_touserdata(L, narg));
+                    return ptr ? *ptr : nullptr;
+                }
+
+                lua_pop(L, 2);  // Pop both metatables
+            }
+
+            if (error)
+            {
+                std::string err_msg = std::string(tname) + " expected";
+                luaL_argerror(L, narg, err_msg.c_str());
+            }
+            return nullptr;
+        }
+
+        // Fall back to old system (for non-migrated types)
         ALEObject* ALEObj = ALE::CHECKTYPE(L, narg, tname, error);
         if (!ALEObj)
             return NULL;

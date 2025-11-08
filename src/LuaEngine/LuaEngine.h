@@ -607,6 +607,15 @@ public:
     void OnAllCreatureRemoveFromWorld(Creature* creature);
     void OnAllCreatureSelectLevel(const CreatureTemplate* cinfo, Creature* creature);
     void OnAllCreatureBeforeSelectLevel(const CreatureTemplate* cinfo, Creature* creature, uint8& level);
+    void OnAllCreatureAuraApply(Creature* me, Aura* aura);
+    void OnAllCreatureHeal(Creature* me, Unit* target, uint32& gain);
+    void OnAllCreatureDamage(Creature* me, Unit* target, uint32& gain);
+    void OnAllCreatureAuraRemove(Creature* me, Aura* aura, AuraRemoveMode mode);
+    void OnAllCreatureModifyPeriodicDamageAurasTick(Creature* me, Unit* target, uint32& damage, SpellInfo const* spellInfo);
+    void OnAllCreatureModifyMeleeDamage(Creature* me, Unit* target, uint32& damage);
+    void OnAllCreatureModifySpellDamageTaken(Creature* me, Unit* target, int32& damage, SpellInfo const* spellInfo);
+    void OnAllCreatureModifyHealReceived(Creature* me, Unit* target, uint32& heal, SpellInfo const* spellInfo);
+    uint32 OnAllCreatureDealDamage(Creature* me, Unit* pVictim, uint32 damage, DamageEffectType damagetype);
 };
 template<> Unit* ALE::CHECKOBJ<Unit>(lua_State* L, int narg, bool error);
 template<> Object* ALE::CHECKOBJ<Object>(lua_State* L, int narg, bool error);

@@ -610,7 +610,7 @@ void ALE::GetScripts(std::string path)
     {
         lua_requirepath +=
             path + "/?.lua;" +
-            path + "/?.moon" +
+            path + "/?.moon;" +
             path + "/?.ext;";
         
         lua_requirecpath +=

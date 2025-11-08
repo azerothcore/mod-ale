@@ -1219,6 +1219,17 @@ public:
             sALE->OnCreatureAuraApply(unit->ToCreature(), aura);
     }
 
+    void OnAuraRemove(Unit* unit, AuraApplication* aurApp, AuraRemoveMode mode) override
+    {
+        if (!unit || !aurApp->GetBase()) return;
+
+        if (unit->IsPlayer())
+            sALE->OnPlayerAuraRemove(unit->ToPlayer(), aurApp->GetBase(), mode);
+
+        if (unit->IsCreature())
+            sALE->OnCreatureAuraRemove(unit->ToCreature(), aurApp->GetBase(), mode);
+    }
+
     void OnHeal(Unit* healer, Unit* receiver, uint32& gain) override
     {
         if (!receiver || !healer) return;
@@ -1239,6 +1250,63 @@ public:
 
         if (attacker->IsCreature())
             sALE->OnCreatureDamage(attacker->ToCreature(), receiver, damage);
+    }
+
+    void ModifyPeriodicDamageAurasTick(Unit* target, Unit* attacker, uint32& damage, SpellInfo const* spellInfo) override
+    {
+        if (!target || !attacker) return;
+
+        if (attacker->IsPlayer())
+            sALE->OnPlayerModifyPeriodicDamageAurasTick(attacker->ToPlayer(), target, damage, spellInfo);
+
+        if (attacker->IsCreature())
+            sALE->OnCreatureModifyPeriodicDamageAurasTick(attacker->ToCreature(), target, damage, spellInfo);
+    }
+
+    void ModifyMeleeDamage(Unit* target, Unit* attacker, uint32& damage) override
+    {
+        if (!target || !attacker) return;
+
+        if (attacker->IsPlayer())
+            sALE->OnPlayerModifyMeleeDamage(attacker->ToPlayer(), target, damage);
+
+        if (attacker->IsCreature())
+            sALE->OnCreatureModifyMeleeDamage(attacker->ToCreature(), target, damage);
+    }
+
+    void ModifySpellDamageTaken(Unit* target, Unit* attacker, int32& damage, SpellInfo const* spellInfo) override
+    {
+        if (!target || !attacker) return;
+
+        if (attacker->IsPlayer())
+            sALE->OnPlayerModifySpellDamageTaken(attacker->ToPlayer(), target, damage, spellInfo);
+
+        if (attacker->IsCreature())
+            sALE->OnCreatureModifySpellDamageTaken(attacker->ToCreature(), target, damage, spellInfo);
+    }
+
+    void ModifyHealReceived(Unit* target, Unit* healer, uint32& heal, SpellInfo const* spellInfo) override
+    {
+        if (!target || !healer) return;
+
+        if (healer->IsPlayer())
+            sALE->OnPlayerModifyHealReceived(healer->ToPlayer(), target, heal, spellInfo);
+
+        if (healer->IsCreature())
+            sALE->OnCreatureModifyHealReceived(healer->ToCreature(), target, heal, spellInfo);
+    }
+
+    uint32 DealDamage(Unit* AttackerUnit, Unit* pVictim, uint32 damage, DamageEffectType damagetype) override
+    {
+        if (!AttackerUnit || !pVictim) return damage;
+
+        if (AttackerUnit->IsPlayer())
+            return sALE->OnPlayerDealDamage(AttackerUnit->ToPlayer(), pVictim, damage, damagetype);
+
+        if (AttackerUnit->IsCreature())
+            return sALE->OnCreatureDealDamage(AttackerUnit->ToCreature(), pVictim, damage, damagetype);
+
+        return damage;
     }
 };
 

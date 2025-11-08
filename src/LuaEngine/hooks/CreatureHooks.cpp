@@ -336,6 +336,15 @@ void ALE::OnCreatureAuraApply(Creature* me, Aura* aura)
     CallAllFunctions(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
 }
 
+void ALE::OnCreatureAuraRemove(Creature* me, Aura* aura, AuraRemoveMode mode)
+{
+    START_HOOK(CREATURE_EVENT_ON_AURA_REMOVE, me);
+    Push(me);
+    Push(aura);
+    Push(mode);
+    CallAllFunctions(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+}
+
 void ALE::OnCreatureHeal(Creature* me, Unit* target, uint32& gain)
 {
     START_HOOK(CREATURE_EVENT_ON_HEAL, me);
@@ -384,4 +393,136 @@ void ALE::OnCreatureDamage(Creature* me, Unit* target, uint32& damage)
     }
 
     CleanUpStack(3);
+}
+
+void ALE::OnCreatureModifyPeriodicDamageAurasTick(Creature* me, Unit* target, uint32& damage, SpellInfo const* spellInfo)
+{
+    START_HOOK(CREATURE_EVENT_ON_MODIFY_PERIODIC_DAMAGE_AURAS_TICK, me);
+    Push(me);
+    Push(target);
+    Push(damage);
+    Push(spellInfo);
+
+    int damageIndex = lua_gettop(L) - 1;
+    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 4);
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 4, 1);
+        if (lua_isnumber(L, r))
+        {
+            damage = CHECKVAL<uint32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(damage, damageIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(4);
+}
+
+void ALE::OnCreatureModifyMeleeDamage(Creature* me, Unit* target, uint32& damage)
+{
+    START_HOOK(CREATURE_EVENT_ON_MODIFY_MELEE_DAMAGE, me);
+    Push(me);
+    Push(target);
+    Push(damage);
+
+    int damageIndex = lua_gettop(L);
+    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 3);
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 3, 1);
+        if (lua_isnumber(L, r))
+        {
+            damage = CHECKVAL<uint32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(damage, damageIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(3);
+}
+
+void ALE::OnCreatureModifySpellDamageTaken(Creature* me, Unit* target, int32& damage, SpellInfo const* spellInfo)
+{
+    START_HOOK(CREATURE_EVENT_ON_MODIFY_SPELL_DAMAGE_TAKEN, me);
+    Push(me);
+    Push(target);
+    Push(damage);
+    Push(spellInfo);
+
+    int damageIndex = lua_gettop(L) - 1;
+    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 4);
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 4, 1);
+        if (lua_isnumber(L, r))
+        {
+            damage = CHECKVAL<int32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(damage, damageIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(4);
+}
+
+void ALE::OnCreatureModifyHealReceived(Creature* me, Unit* target, uint32& heal, SpellInfo const* spellInfo)
+{
+    START_HOOK(CREATURE_EVENT_ON_MODIFY_HEAL_RECEIVED, me);
+    Push(me);
+    Push(target);
+    Push(heal);
+    Push(spellInfo);
+
+    int healIndex = lua_gettop(L) - 1;
+    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 4);
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 4, 1);
+        if (lua_isnumber(L, r))
+        {
+            heal = CHECKVAL<uint32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(heal, healIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(4);
+}
+
+uint32 ALE::OnCreatureDealDamage(Creature* me, Unit* target, uint32 damage, DamageEffectType damagetype)
+{
+    START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_DEAL_DAMAGE, me, damage);
+    uint32 result = damage;
+    Push(me);
+    Push(target);
+    Push(damage);
+    Push(damagetype);
+    int damageIndex = lua_gettop(L) - 1;
+    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 4);
+
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 4, 1);
+
+        if (lua_isnumber(L, r))
+        {
+            result = CHECKVAL<uint32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(result, damageIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(4);
+    return result;
 }

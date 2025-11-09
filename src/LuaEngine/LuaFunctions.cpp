@@ -1468,6 +1468,8 @@ ALERegister<SpellInfo> SpellInfoMethods[] =
     { "GetExplicitTargetMask", &LuaSpellInfo::GetExplicitTargetMask },
     { "GetAuraState", &LuaSpellInfo::GetAuraState },
     { "GetSpellSpecific", &LuaSpellInfo::GetSpellSpecific },
+    { "GetEffectMiscValueA", &LuaSpellInfo::GetEffectMiscValueA },
+    { "GetEffectMiscValueB", &LuaSpellInfo::GetEffectMiscValueB },
 
     // Setters
 

@@ -236,11 +236,11 @@ end
 For quick testing during development, you can reload scripts without restarting:
 
 ```
-.reload eluna
+.reload ale
 ```
 
 > [!WARNING]
-> **Development Only:** Use `.reload eluna` only for development. For production or if experiencing issues, always restart the server.
+> **Development Only:** Use `.reload ale` only for development. For production or if experiencing issues, always restart the server.
 
 **Important Limitations:**
 - Reloading doesn't trigger events like login for already-connected players

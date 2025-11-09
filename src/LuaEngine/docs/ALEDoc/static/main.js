@@ -497,7 +497,7 @@
                         '</span></td></tr>';
                 });
             } else {
-                output += 'No results - Request function at <a href="https://github.com/ElunaLuaEngine/Eluna/issues">Eluna issue tracker</a>';
+                output += 'No results - Request function at <a href="https://github.com/azerothcore/mod-ale/issues">ALE issue tracker</a>';
             }
 
             output += "</p>";

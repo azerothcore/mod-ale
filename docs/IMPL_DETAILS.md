@@ -45,7 +45,7 @@ ALE settings are located in the AzerothCore server configuration file.
 Reload scripts during development with:
 
 ```
-.reload eluna
+.reload ale
 ```
 
 > [!CAUTION]
@@ -160,7 +160,7 @@ end
 #### Safe to Store
 
 These userdata objects are Lua-managed and safe to store:
-- Query results (`ElunaQuery`)
+- Query results (`ALEQuery`)
 - World packets (`WorldPacket`)
 - 64-bit numbers (`uint64`, `int64`)
 
@@ -384,7 +384,7 @@ Check these locations for errors:
 
 Enable traceback in the server config for detailed error information:
 ```
-Eluna.TraceBack = 1
+ALE.TraceBack = 1
 ```
 
 This adds call stack information to errors.
@@ -394,7 +394,7 @@ This adds call stack information to errors.
 1. **Start Small**: Test basic functionality first
 2. **Add Gradually**: Implement features one at a time
 3. **Test Each Step**: Verify each addition works before moving on
-4. **Use Reload**: Use `.reload eluna` for quick iteration (dev only)
+4. **Use Reload**: Use `.reload ale` for quick iteration (dev only)
 5. **Full Restart**: Always do final testing with a server restart
 
 ### Common Issues

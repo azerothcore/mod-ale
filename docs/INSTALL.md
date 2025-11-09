@@ -127,23 +127,23 @@ cmake --build . --config Release
 The compilation process generates updated config files with ALE settings. Without these, ALE may not function correctly (no error messages, logging issues, etc.).
 
 **Location of config files:**
-- Usually in your server's `etc/` or `configs/` directory
-- Look for files like `worldserver.conf`
+- Usually in your server's `etc/modules` or `configs/modules` directory
+- Look for files like `mod-ale.conf`
 
 Copy the new `.conf.dist` files:
 
 ```bash
 # Example - adjust paths as needed
-cp worldserver.conf.dist worldserver.conf
+cp mod-ale.conf.dist mod-ale.conf
 ```
 
 Then edit `worldserver.conf` and configure ALE settings (see [Configuration](#-configuration) below).
 
 ## ⚙️ Configuration
 
-### ALE Settings in worldserver.conf
+### ALE Settings in mod-ale.conf
 
-After installation, configure ALE by editing your `worldserver.conf` file:
+After installation, configure ALE by editing your `mod-ale.conf` file:
 
 ```ini
 ###################################################################################################
@@ -152,24 +152,16 @@ After installation, configure ALE by editing your `worldserver.conf` file:
 
 # Enable or disable ALE
 # Default: 1 (enabled)
-Eluna.Enabled = 1
+ALE.Enabled = 1
 
 # Enable traceback for detailed error information
 # Useful for debugging but has performance overhead
 # Default: 1 (enabled)
-Eluna.TraceBack = 1
+ALE.TraceBack = 1
 
 # Script folder location (relative to server binary)
 # Default: "lua_scripts"
-Eluna.ScriptPath = "lua_scripts"
-
-# Logging level
-# 0 = Disabled
-# 1 = Errors only
-# 2 = Errors and warnings
-# 3 = All messages (debug)
-# Default: 2
-Eluna.LogLevel = 2
+ALE.ScriptPath = "lua_scripts"
 ```
 
 ### Creating the Scripts Folder
@@ -234,7 +226,7 @@ cmake --build . --config Release
 **Check these things:**
 
 1. **Config file**: Ensure you're using the new `worldserver.conf` generated after compilation
-2. **Enabled setting**: Verify `Eluna.Enabled = 1` in config
+2. **Enabled setting**: Verify `ALE.Enabled = 1` in config
 3. **Script path**: Ensure `lua_scripts` folder exists in the correct location
 4. **Logs**: Check server logs for error messages
 

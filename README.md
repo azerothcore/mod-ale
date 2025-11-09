@@ -81,8 +81,13 @@ make -j$(nproc)
 ## 📚 Documentation
 
 ### Getting Started
-- [Installation Guide](https://github.com/azerothcore/mod-ale/tree/master/docs/USAGE.md)
-- [Implementation Details](https://github.com/azerothcore/mod-ale/tree/master/docs/IMPL_DETAILS.md)
+- **[Installation Guide](docs/INSTALL.md)** - Complete installation and setup instructions
+- **[Usage Guide](docs/USAGE.md)** - Learn how to write your first Lua scripts
+- **[Implementation Details](docs/IMPL_DETAILS.md)** - Advanced features and technical details
+
+### Advanced Topics
+- **[Contributing Guide](docs/CONTRIBUTING.md)** - How to contribute to ALE development
+- **[Advanced Integration](docs/MERGING.md)** - Custom builds and maintaining modifications
 
 ### API Reference
 - **[mod-ale API Documentation](https://www.azerothcore.org/eluna/)** - Complete API reference for mod-ale
@@ -105,17 +110,20 @@ make -j$(nproc)
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Here's how you can help:
+We welcome contributions from the community! Whether you code or not, there are many ways to help improve ALE.
 
 ### Development Workflow
 ![](.github/images/workflow.svg "workflow example")
 
-### Contribution Guidelines
+### Quick Start
 1. **Fork** the repository
 2. **Create** a feature branch from `master`
 3. **Implement** your changes with proper testing
 4. **Follow** the existing code style and conventions
 5. **Submit** a pull request with a clear description
+
+### Full Contributing Guide
+For detailed information on how to contribute code, documentation, scripts, or help the community, see our **[Contributing Guide](docs/CONTRIBUTING.md)**.
 
 ## 🌟 Acknowledgements
 

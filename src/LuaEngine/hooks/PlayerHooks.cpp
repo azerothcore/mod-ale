@@ -826,3 +826,144 @@ void ALE::OnPlayerDamage(Player* player, Unit* target, uint32& damage)
 
     CleanUpStack(3);
 }
+
+void ALE::OnPlayerAuraRemove(Player* player, Aura* aura, AuraRemoveMode mode)
+{
+    START_HOOK(PLAYER_EVENT_ON_AURA_REMOVE);
+    Push(player);
+    Push(aura);
+    Push(mode);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
+void ALE::OnPlayerModifyPeriodicDamageAurasTick(Player* player, Unit* target, uint32& damage, SpellInfo const* spellInfo)
+{
+    START_HOOK(PLAYER_EVENT_ON_MODIFY_PERIODIC_DAMAGE_AURAS_TICK);
+    Push(player);
+    Push(target);
+    Push(damage);
+    Push(spellInfo);
+
+    int damageIndex = lua_gettop(L) - 1;
+    int n = SetupStack(PlayerEventBindings, key, 4);
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 4, 1);
+        if (lua_isnumber(L, r))
+        {
+            damage = CHECKVAL<uint32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(damage, damageIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(4);
+}
+
+void ALE::OnPlayerModifyMeleeDamage(Player* player, Unit* target, uint32& damage)
+{
+    START_HOOK(PLAYER_EVENT_ON_MODIFY_MELEE_DAMAGE);
+    Push(player);
+    Push(target);
+    Push(damage);
+
+    int damageIndex = lua_gettop(L);
+    int n = SetupStack(PlayerEventBindings, key, 3);
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 3, 1);
+        if (lua_isnumber(L, r))
+        {
+            damage = CHECKVAL<uint32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(damage, damageIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(3);
+}
+
+void ALE::OnPlayerModifySpellDamageTaken(Player* player, Unit* target, int32& damage, SpellInfo const* spellInfo)
+{
+    START_HOOK(PLAYER_EVENT_ON_MODIFY_SPELL_DAMAGE_TAKEN);
+    Push(player);
+    Push(target);
+    Push(damage);
+    Push(spellInfo);
+
+    int damageIndex = lua_gettop(L) - 1;
+    int n = SetupStack(PlayerEventBindings, key, 4);
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 4, 1);
+        if (lua_isnumber(L, r))
+        {
+            damage = CHECKVAL<int32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(damage, damageIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(4);
+}
+
+void ALE::OnPlayerModifyHealReceived(Player* player, Unit* target, uint32& heal, SpellInfo const* spellInfo)
+{
+    START_HOOK(PLAYER_EVENT_ON_MODIFY_HEAL_RECEIVED);
+    Push(player);
+    Push(target);
+    Push(heal);
+    Push(spellInfo);
+
+    int healIndex = lua_gettop(L) - 1;
+    int n = SetupStack(PlayerEventBindings, key, 4);
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 4, 1);
+        if (lua_isnumber(L, r))
+        {
+            heal = CHECKVAL<uint32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(heal, healIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(4);
+}
+
+uint32 ALE::OnPlayerDealDamage(Player* player, Unit* target, uint32 damage, DamageEffectType damagetype)
+{
+    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_DEAL_DAMAGE, damage);
+    Push(player);
+    Push(target);
+    Push(damage);
+    Push(damagetype);
+    int damageIndex = lua_gettop(L) - 1;
+    int n = SetupStack(PlayerEventBindings, key, 4);
+    
+    uint32 result = damage;
+    while (n > 0)
+    {
+        int r = CallOneFunction(n--, 4, 1);
+
+        if (lua_isnumber(L, r))
+        {
+            result = CHECKVAL<uint32>(L, r);
+            // Update the stack for subsequent calls.
+            ReplaceArgument(result, damageIndex);
+        }
+
+        lua_pop(L, 1);
+    }
+
+    CleanUpStack(4);
+    return result;
+}

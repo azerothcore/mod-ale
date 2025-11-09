@@ -926,5 +926,65 @@ namespace LuaSpellInfo
         ALE::Push(L, spell_info->GetSpellSpecific());
         return 1;
     }
+
+    /**
+    * Retrieves the MiscValueA of a spell effect at the specified index.
+    *
+    * MiscValueA contains additional information about the effect, such as:
+    * - Which stat is affected for stat modifiers
+    * - School mask for resistance changes
+    * - Item class for item creation effects
+    * - And more depending on the effect type
+    *
+    * @param uint8 effectIndex : The index of the effect (0, 1, or 2)
+    * @return int32 miscValueA : The MiscValueA value, or 0 if the effect doesn't exist
+    */
+    int GetEffectMiscValueA(lua_State* L, SpellInfo* spell_info)
+    {
+        uint8 effectIndex = ALE::CHECKVAL<uint8>(L, 2);
+        
+        if (effectIndex >= MAX_SPELL_EFFECTS)
+        {
+            ALE::Push(L, 0);
+            return 1;
+        }
+        
+        if (spell_info->Effects[effectIndex].Effect == 0)
+        {
+            ALE::Push(L, 0);
+            return 1;
+        }
+        
+        ALE::Push(L, spell_info->Effects[effectIndex].MiscValue);
+        return 1;
+    }
+
+    /**
+    * Retrieves the MiscValueB of a spell effect at the specified index.
+    *
+    * MiscValueB contains secondary information about the effect.
+    *
+    * @param uint8 effectIndex : The index of the effect (0, 1, or 2)
+    * @return int32 miscValueB : The MiscValueB value, or 0 if the effect doesn't exist
+    */
+    int GetEffectMiscValueB(lua_State* L, SpellInfo* spell_info)
+    {
+        uint8 effectIndex = ALE::CHECKVAL<uint8>(L, 2);
+        
+        if (effectIndex >= MAX_SPELL_EFFECTS)
+        {
+            ALE::Push(L, 0);
+            return 1;
+        }
+        
+        if (spell_info->Effects[effectIndex].Effect == 0)
+        {
+            ALE::Push(L, 0);
+            return 1;
+        }
+        
+        ALE::Push(L, spell_info->Effects[effectIndex].MiscValueB);
+        return 1;
+    }
 }
 #endif

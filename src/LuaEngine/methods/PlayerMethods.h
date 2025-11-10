@@ -4904,6 +4904,83 @@ namespace LuaPlayer
         ALE::Push(L, player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot + BANK_SLOT_ITEM_START));
         return 1;
     }
+
+    /**
+     * Returns the [Quest] ID for the quest in the specified quest log slot.
+     *
+     * @param uint16 slot : quest log slot
+     * @return uint32 questId : quest ID or 0 if slot is invalid
+     */
+    int GetQuestSlotQuestId(lua_State* L, Player* player)
+    {
+        uint16 slot = ALE::CHECKVAL<uint16>(L, 2);
+        if (slot > MAX_QUEST_LOG_SIZE)
+            return 0;
+
+        ALE::Push(L, player->GetQuestSlotQuestId(slot));
+        return 1;
+    }
+
+    /**
+     * Sets whether the [Player] can fly.
+     *
+     * @param bool activate = false : true to enable flying, false to disable
+     */
+    int SetCanFly(lua_State* L, Player* player)
+    {
+        bool activate = ALE::CHECKVAL<bool>(L, 2, false);
+        player->SetCanFly(activate);
+        return 0;
+    }
+
+    /**
+     * Applies a rating modifier to the [Player].
+     *
+     * @param int32 stat : combat rating type (see CombatRating enum)
+     * @param float value : rating value to apply
+     * @param bool apply = false : true to apply the modifier, false to remove it
+     *
+     *     enum CombatRating // 24 stat
+     *     {
+     *         CR_WEAPON_SKILL          = 0,
+     *         CR_DEFENSE_SKILL         = 1,
+     *         CR_DODGE                 = 2,
+     *         CR_PARRY                 = 3,
+     *         CR_BLOCK                 = 4,
+     *         CR_HIT_MELEE             = 5,
+     *         CR_HIT_RANGED            = 6,
+     *         CR_HIT_SPELL             = 7,
+     *         CR_CRIT_MELEE            = 8,
+     *         CR_CRIT_RANGED           = 9,
+     *         CR_CRIT_SPELL            = 10,
+     *         CR_HIT_TAKEN_MELEE       = 11,
+     *         CR_HIT_TAKEN_RANGED      = 12,
+     *         CR_HIT_TAKEN_SPELL       = 13,
+     *         CR_CRIT_TAKEN_MELEE      = 14,
+     *         CR_CRIT_TAKEN_RANGED     = 15,
+     *         CR_CRIT_TAKEN_SPELL      = 16,
+     *         CR_HASTE_MELEE           = 17,
+     *         CR_HASTE_RANGED          = 18,
+     *         CR_HASTE_SPELL           = 19,
+     *         CR_WEAPON_SKILL_MAINHAND = 20,
+     *         CR_WEAPON_SKILL_OFFHAND  = 21,
+     *         CR_WEAPON_SKILL_RANGED   = 22,
+     *         CR_EXPERTISE             = 23,
+     *         CR_ARMOR_PENETRATION     = 24
+     *     };
+     *
+     */
+
+    int ApplyRatingMod(lua_State* L, Player* player)
+    {
+        int32 stat = ALE::CHECKVAL<int32>(L, 2);
+
+        float value = ALE::CHECKVAL<float>(L, 3);
+        bool apply = ALE::CHECKVAL<bool>(L, 4, false);
+
+        player->ApplyRatingMod(CombatRating(stat), value, apply);
+        return 0;
+    }
 };
 #endif
 

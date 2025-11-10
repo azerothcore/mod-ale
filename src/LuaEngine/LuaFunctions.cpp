@@ -555,6 +555,7 @@ ALERegister<Player> PlayerMethods[] =
     { "GetTemporaryUnsummonedPetNumber", &LuaPlayer::GetTemporaryUnsummonedPetNumber },
     { "GetLastPetNumber", &LuaPlayer::GetLastPetNumber },
     { "GetLastPetSpell", &LuaPlayer::GetLastPetSpell },
+    { "GetQuestSlotQuestId", &LuaPlayer::GetQuestSlotQuestId },
 
     // Setters
     { "SetTemporaryUnsummonedPetNumber", &LuaPlayer::SetTemporaryUnsummonedPetNumber },
@@ -613,6 +614,7 @@ ALERegister<Player> PlayerMethods[] =
     { "GetInventoryItem", &LuaPlayer::GetInventoryItem },
     { "GetBankItem", &LuaPlayer::GetBankItem },
     { "GetCreationTime", &LuaPlayer::GetCreationTime },
+    { "SetCanFly", &LuaPlayer::SetCanFly },
 
     // Boolean
     { "HasTankSpec", &LuaPlayer::HasTankSpec },
@@ -829,6 +831,7 @@ ALERegister<Player> PlayerMethods[] =
     { "SetViewpoint", &LuaPlayer::SetViewpoint },
     { "ToggleInstantFlight", &LuaPlayer::ToggleInstantFlight },
     { "SetCreationTime", &LuaPlayer::SetCreationTime },
+    { "ApplyRatingMod", &LuaPlayer::ApplyRatingMod },
 
     { NULL, NULL }
 };

@@ -1415,11 +1415,10 @@ namespace LuaUnit
         uint32 type = ALE::CHECKVAL<uint32>(L, 2);
         float rate = ALE::CHECKVAL<float>(L, 3);
         bool forced = ALE::CHECKVAL<bool>(L, 4, false);
-        (void)forced; // ensure that the variable is referenced in order to pass compiler checks
         if (type >= MAX_MOVE_TYPE)
             return luaL_argerror(L, 2, "valid UnitMoveType expected");
 
-        unit->SetSpeed((UnitMoveType)type, rate);
+        unit->SetSpeed((UnitMoveType)type, rate, forced);
 
         return 0;
     }

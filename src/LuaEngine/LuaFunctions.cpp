@@ -4,11 +4,6 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-extern "C"
-{
-#include "lua.h"
-};
-
 // ALE
 #include "LuaEngine.h"
 #include "ALEEventMgr.h"

@@ -8,11 +8,7 @@
 #include "LuaEngine.h"
 #include "Object.h"
 
-extern "C"
-{
-#include "lua.h"
-#include "lauxlib.h"
-};
+#include <sol/sol.hpp>
 
 ALEEventProcessor::ALEEventProcessor(ALE** _E, WorldObject* _obj) : m_time(0), obj(_obj), E(_E)
 {

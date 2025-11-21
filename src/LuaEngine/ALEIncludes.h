@@ -53,6 +53,8 @@
 #include "ArenaTeam.h"
 #include "WorldSessionMgr.h"
 
+#include <sol/sol.hpp>
+
 typedef Opcodes                 OpcodesList;
 
 /*

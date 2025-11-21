@@ -7,14 +7,8 @@
 #ifndef _ALE_TEMPLATE_H
 #define _ALE_TEMPLATE_H
 
-extern "C"
-{
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-};
+#include <sol/sol.hpp>
 #include "LuaEngine.h"
-#include "ALECompat.h"
 #include "ALEUtility.h"
 #include "SharedDefines.h"
 

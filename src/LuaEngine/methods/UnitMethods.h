@@ -73,7 +73,7 @@ namespace LuaUnit
      * @param bool apply = false : Whether the modifier should be applied or removed
      * @return bool : Whether the stat modification was successful
      */
-    int HandleStatModifier(lua_State* L, Unit* unit)
+    int HandleStatFlatModifier(lua_State* L, Unit* unit)
     {
         int32 stat = ALE::CHECKVAL<int32>(L, 2);
         int8  type = ALE::CHECKVAL<int8>(L, 3);
@@ -81,7 +81,7 @@ namespace LuaUnit
         float value = ALE::CHECKVAL<float>(L, 4);
         bool apply = ALE::CHECKVAL<bool>(L, 5, false);
 
-        ALE::Push(L, unit->HandleStatModifier(UnitMods(UNIT_MOD_STAT_START + stat), (UnitModifierType)type, value, apply));
+        ALE::Push(L, unit->HandleStatFlatModifier(UnitMods(UNIT_MOD_STAT_START + stat), (UnitModifierFlatType)type, value, apply));
         return 1;
     }
 

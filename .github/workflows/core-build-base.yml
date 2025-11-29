@@ -74,6 +74,7 @@ jobs:
             -I src/ \
             --suppress=*:src/lualib/* \
             --suppress=*:src/LuaEngine/libs/* \
+            --suppress=*:src/sol/* \
             --output-file=report.txt \
             .
           if [ -s report.txt ]; then

@@ -81,7 +81,7 @@ namespace LuaUnit
         float value = ALE::CHECKVAL<float>(L, 4);
         bool apply = ALE::CHECKVAL<bool>(L, 5, false);
 
-        ALE::Push(L, unit->HandleStatFlatModifier(UnitMods(UNIT_MOD_STAT_START + stat), (UnitModifierFlatType)type, value, apply));
+        ALE::Push(L, unit->HandleStatModifier(UnitMods(UNIT_MOD_STAT_START + stat), (UnitModifierType)type, value, apply));
         return 1;
     }
 

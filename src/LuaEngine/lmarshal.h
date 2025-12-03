@@ -4,9 +4,7 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-extern "C" {
-#include "lua.h"
-}
+#include <sol/sol.hpp>
 
 int mar_encode(lua_State* L);
 int mar_decode(lua_State* L);

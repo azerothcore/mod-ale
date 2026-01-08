@@ -1,5 +1,5 @@
 # Documentation generation
-Eluna uses a custom made documentation generator to create it's [web documentation](http://elunaluaengine.github.io/).  
+Eluna uses a custom made documentation generator to create it's [web documentation](http://elunaluaengine.github.io/).
 The generator is written in python by Patman. It works by parsing Eluna's source files for comments and then generates the HTML and javascript for the documentation based on them.
 
 This page guides you through generating the web documentation locally and explains the standards of the documentation comments for you to help us improve our documentation. To contribute with your documentation changes, create a [pull request](https://help.github.com/articles/using-pull-requests/)
@@ -14,7 +14,7 @@ This page guides you through generating the web documentation locally and explai
   - [Jinja2](https://pypi.python.org/pypi/Jinja2)
   - [typedecorator](https://pypi.python.org/pypi/typedecorator)
   - [markdown](https://pypi.python.org/pypi/Markdown)
-- Run in cmd `python -m ElunaDoc` when at `\LuaEngine\docs\`
+- Run in cmd `python -m ALEDoc` when at `\LuaEngine\docs\`
 
 # Documenting
 You can document functions in the Eluna source code. To find examples simply open a method header file like `PlayerMethods.h` and see the comments.

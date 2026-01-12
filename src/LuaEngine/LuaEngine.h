@@ -32,10 +32,7 @@
 #include <ctime>
 #include <unordered_map>
 
-extern "C"
-{
-#include <lua.h>
-};
+#include <sol/sol.hpp>
 
 struct ItemTemplate;
 typedef BattlegroundTypeId BattleGroundTypeId;

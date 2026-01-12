@@ -8,7 +8,6 @@
 #include "LuaEngine.h"
 #include "BindingMap.h"
 #include "Chat.h"
-#include "ALECompat.h"
 #include "ALEEventMgr.h"
 #include "ALEIncludes.h"
 #include "ALETemplate.h"
@@ -30,16 +29,6 @@
 #include <ctime>
 #include <sys/stat.h>
 #include <unordered_map>
-
-extern "C"
-{
-// Base lua libraries
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-
-// Additional lua libraries
-};
 
 ALE::ScriptList ALE::lua_scripts;
 ALE::ScriptList ALE::lua_extensions;
@@ -446,7 +435,7 @@ bool ALE::CompileScriptToGlobalCache(const std::string& filepath)
     BytecodeWriter writer;
     writer.buffer = &cacheEntry.bytecode;
 
-    int dumpResult = lua_dump(tempL, BytecodeWriter::writer, &writer);
+    int dumpResult = lua_dump(tempL, BytecodeWriter::writer, &writer, 0);
     if (dumpResult != LUA_OK || cacheEntry.bytecode.empty())
     {
         globalBytecodeCache.erase(filepath);
@@ -504,7 +493,7 @@ bool ALE::CompileMoonScriptToGlobalCache(const std::string& filepath)
     BytecodeWriter writer;
     writer.buffer = &cacheEntry.bytecode;
 
-    int dumpResult = lua_dump(tempL, BytecodeWriter::writer, &writer);
+    int dumpResult = lua_dump(tempL, BytecodeWriter::writer, &writer, 0);
     if (dumpResult != LUA_OK || cacheEntry.bytecode.empty())
     {
         globalBytecodeCache.erase(filepath);

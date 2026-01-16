@@ -643,7 +643,8 @@ public:
         PLAYERHOOK_ON_CAN_UPDATE_SKILL,
         PLAYERHOOK_ON_BEFORE_UPDATE_SKILL,
         PLAYERHOOK_ON_UPDATE_SKILL,
-        PLAYERHOOK_CAN_RESURRECT
+        PLAYERHOOK_CAN_RESURRECT,
+        PLAYERHOOK_ON_PLAYER_RELEASED_GHOST
     }) { }
 
     void OnPlayerResurrect(Player* player, float /*restore_percent*/, bool /*applySickness*/) override
@@ -955,10 +956,15 @@ public:
     {
         sALE->OnPlayerUpdateSkill(player, skill_id, value, max, step, new_value);
     }
-    
+
     bool OnPlayerCanResurrect(Player* player) override
     {
         return sALE->CanPlayerResurrect(player);
+    }
+
+    void OnPlayerReleasedGhost(Player* player) override
+    {
+        sALE->OnPlayerReleasedGhost(player);
     }
 };
 

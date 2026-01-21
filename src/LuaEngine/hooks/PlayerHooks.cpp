@@ -761,6 +761,13 @@ bool ALE::CanPlayerResurrect(Player* player)
     return CallAllFunctionsBool(PlayerEventBindings, key);
 }
 
+void ALE::OnPlayerReleasedGhost(Player* player)
+{
+    START_HOOK(PLAYER_EVENT_ON_RELEASED_GHOST);
+    Push(player);
+    CallAllFunctions(PlayerEventBindings, key);
+}
+
 void ALE::OnPlayerQuestAccept(Player* player, Quest const* quest)
 {
     START_HOOK(PLAYER_EVENT_ON_QUEST_ACCEPT);

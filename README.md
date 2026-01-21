@@ -4,7 +4,7 @@
 
 *Unleash the power of Lua scripting in your AzerothCore server*
 
-[![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/invite/ZKSVREE7)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289DA?style=for-the-badge&logo=discord&logoColor=white)](https://discord.com/invite/sqkPb623)
 [![Lua](https://img.shields.io/badge/Lua-5.2-2C2D72?style=for-the-badge&logo=lua&logoColor=white)](http://www.lua.org/manual/5.2/)
 [![AzerothCore](https://img.shields.io/badge/AzerothCore-Integrated-darkgreen?style=for-the-badge)](http://www.azerothcore.org/)
 
@@ -101,7 +101,7 @@ make -j$(nproc)
 
 ### Getting Help
 - **GitHub Issues**: [Report bugs or request features](https://github.com/azerothcore/mod-ale/issues)
-- **Discord Community**: [Join our Discord server](https://discord.com/invite/bx3y5Qmy)
+- **Discord Community**: [Join our Discord server](https://discord.com/invite/sqkPb623)
 - **AzerothCore Discord**: [Official AzerothCore support](http://www.azerothcore.org/)
 
 ### Resources

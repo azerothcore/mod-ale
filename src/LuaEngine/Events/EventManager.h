@@ -501,40 +501,68 @@ namespace ALE::Core
          */
         template<typename MapType>
         size_t CancelStateHandlersInMap(MapType& handlerMap, int32 stateId);
+
+        /**
+         * @brief Core trigger logic (DRY for all Trigger*Event methods)
+         * @tparam MapType Handler map type
+         * @tparam KeyType Event key type
+         * @tparam Args Variadic argument types
+         * @param handlerMap Map to search
+         * @param key Event key
+         * @param args Arguments to forward to handlers
+         * @return Number of handlers executed
+         */
+        template<typename MapType, typename KeyType, typename... Args>
+        uint32 TriggerEventImpl(MapType& handlerMap, const KeyType& key, Args&&... args);
+
+        /**
+         * @brief Core trigger with return logic (DRY for all TriggerWithReturn methods)
+         * @tparam ReturnType Return value type
+         * @tparam MapType Handler map type
+         * @tparam KeyType Event key type
+         * @tparam Args Variadic argument types
+         * @param handlerMap Map to search
+         * @param key Event key
+         * @param defaultValue Default return value
+         * @param args Arguments to forward to handlers
+         * @return Last valid return value or defaultValue
+         */
+        template<typename ReturnType, typename MapType, typename KeyType, typename... Args>
+        ReturnType TriggerEventWithReturnImpl(MapType& handlerMap, const KeyType& key, ReturnType defaultValue, Args&&... args);
     };
 
     /**
-     * @brief Trigger global event
-     *
+     * @brief Core trigger implementation
      */
-    template<typename EventEnum, typename... Args>
-    uint32 EventManager::TriggerGlobalEvent(EventEnum eventType, Args&&... args)
+    template<typename MapType, typename KeyType, typename... Args>
+    uint32 EventManager::TriggerEventImpl(MapType& handlerMap, const KeyType& key, Args&&... args)
     {
-        GlobalEventKey key{ typeid(EventEnum).hash_code(), static_cast<uint32>(eventType) };
-
-        // Early exit: no handlers registered
-        auto it = m_globalHandlers.find(key);
-        if (it == m_globalHandlers.end())
-        {
+        auto it = handlerMap.find(key);
+        if (it == handlerMap.end())
             return 0;
-        }
 
-        // Execute all handlers for this event
         uint32 executed = 0;
         auto& handlers = it->second;
 
         for (auto& [handlerId, handler] : handlers)
         {
             if (ExecuteHandler(handler, std::forward<Args>(args)...))
-            {
                 executed++;
-            }
         }
 
-        // Batch remove expired handlers (shot limit reached)
         RemoveExpiredHandlers(handlers);
 
         return executed;
+    }
+
+    /**
+     * @brief Trigger global event
+     */
+    template<typename EventEnum, typename... Args>
+    uint32 EventManager::TriggerGlobalEvent(EventEnum eventType, Args&&... args)
+    {
+        GlobalEventKey key{ typeid(EventEnum).hash_code(), static_cast<uint32>(eventType) };
+        return TriggerEventImpl(m_globalHandlers, key, std::forward<Args>(args)...);
     }
 
     /**
@@ -544,27 +572,7 @@ namespace ALE::Core
     uint32 EventManager::TriggerEntryEvent(EventEnum eventType, uint32 entry, Args&&... args)
     {
         EntryEventKey key{ typeid(EventEnum).hash_code(), static_cast<uint32>(eventType), entry };
-
-        auto it = m_entryHandlers.find(key);
-        if (it == m_entryHandlers.end())
-        {
-            return 0;
-        }
-
-        uint32 executed = 0;
-        auto& handlers = it->second;
-
-        for (auto& [handlerId, handler] : handlers)
-        {
-            if (ExecuteHandler(handler, std::forward<Args>(args)...))
-            {
-                executed++;
-            }
-        }
-
-        RemoveExpiredHandlers(handlers);
-
-        return executed;
+        return TriggerEventImpl(m_entryHandlers, key, std::forward<Args>(args)...);
     }
 
     /**
@@ -574,25 +582,7 @@ namespace ALE::Core
     uint32 EventManager::TriggerUniqueEvent(EventEnum eventType, uint64 guid, Args&&... args)
     {
         UniqueEventKey key{ typeid(EventEnum).hash_code(), static_cast<uint32>(eventType), guid };
-
-        auto it = m_uniqueHandlers.find(key);
-        if (it == m_uniqueHandlers.end())
-            return 0;
-
-        uint32 executed = 0;
-        auto& handlers = it->second;
-
-        for (auto& [handlerId, handler] : handlers)
-        {
-            if (ExecuteHandler(handler, std::forward<Args>(args)...))
-            {
-                executed++;
-            }
-        }
-
-        RemoveExpiredHandlers(handlers);
-
-        return executed;
+        return TriggerEventImpl(m_uniqueHandlers, key, std::forward<Args>(args)...);
     }
 
     /**
@@ -768,24 +758,16 @@ namespace ALE::Core
     }
 
     /**
-     * @brief Trigger global event with return value capture
-     *
-     * Executes all handlers sequentially. If a handler returns a value,
-     * that value becomes the new returnValue (last handler wins).
+     * @brief Core trigger with return implementation
      */
-    template<typename ReturnType, typename EventEnum, typename... Args>
-    ReturnType EventManager::TriggerGlobalEventWithReturn(EventEnum eventType, ReturnType defaultValue, Args&&... args)
+    template<typename ReturnType, typename MapType, typename KeyType, typename... Args>
+    ReturnType EventManager::TriggerEventWithReturnImpl(MapType& handlerMap, const KeyType& key, ReturnType defaultValue, Args&&... args)
     {
-        GlobalEventKey key{ typeid(EventEnum).hash_code(), static_cast<uint32>(eventType) };
-
-        auto it = m_globalHandlers.find(key);
-        if (it == m_globalHandlers.end())
-        {
+        auto it = handlerMap.find(key);
+        if (it == handlerMap.end())
             return defaultValue;
-        }
 
         ReturnType returnValue = defaultValue;
-        uint32 executed = 0;
         auto& handlers = it->second;
 
         for (auto& [handlerId, handler] : handlers)
@@ -804,9 +786,8 @@ namespace ALE::Core
                 }
 
                 handler.callCount++;
-                executed++;
 
-                // Try to extract return value from Lua result
+                // Extract return value from Lua
                 if (result.return_count() > 0)
                 {
                     sol::optional<ReturnType> luaReturn = result;
@@ -826,56 +807,23 @@ namespace ALE::Core
     }
 
     /**
+     * @brief Trigger global event with return value capture
+     */
+    template<typename ReturnType, typename EventEnum, typename... Args>
+    ReturnType EventManager::TriggerGlobalEventWithReturn(EventEnum eventType, ReturnType defaultValue, Args&&... args)
+    {
+        GlobalEventKey key{ typeid(EventEnum).hash_code(), static_cast<uint32>(eventType) };
+        return TriggerEventWithReturnImpl(m_globalHandlers, key, defaultValue, std::forward<Args>(args)...);
+    }
+
+    /**
      * @brief Trigger entry event with return value capture
      */
     template<typename ReturnType, typename EventEnum, typename... Args>
     ReturnType EventManager::TriggerEntryEventWithReturn(EventEnum eventType, uint32 entry, ReturnType defaultValue, Args&&... args)
     {
         EntryEventKey key{ typeid(EventEnum).hash_code(), static_cast<uint32>(eventType), entry };
-
-        auto it = m_entryHandlers.find(key);
-        if (it == m_entryHandlers.end())
-            return defaultValue;
-
-        ReturnType returnValue = defaultValue;
-        uint32 executed = 0;
-        auto& handlers = it->second;
-
-        for (auto& [handlerId, handler] : handlers)
-        {
-            if (!handler.ShouldExecute())
-                continue;
-
-            try
-            {
-                auto result = handler.function(std::forward<Args>(args)...);
-                if (!result.valid())
-                {
-                    sol::error err = result;
-                    LOG_ERROR("ale.events", "[ALE] EventManager - Lua error in entry handler {}: {}", handlerId, err.what());
-                    continue;
-                }
-
-                handler.callCount++;
-                executed++;
-
-                // Try to extract return value from Lua result
-                if (result.return_count() > 0)
-                {
-                    sol::optional<ReturnType> luaReturn = result;
-                    if (luaReturn)
-                        returnValue = *luaReturn;
-                }
-            }
-            catch (const std::exception& e)
-            {
-                LOG_ERROR("ale.events", "[ALE] EventManager - Exception in entry handler {}: {}", handlerId, e.what());
-            }
-        }
-
-        RemoveExpiredHandlers(handlers);
-
-        return returnValue;
+        return TriggerEventWithReturnImpl(m_entryHandlers, key, defaultValue, std::forward<Args>(args)...);
     }
 
 } // namespace ALE::Core

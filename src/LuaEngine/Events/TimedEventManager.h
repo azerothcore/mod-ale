@@ -9,6 +9,7 @@
 
 #include <sol/sol.hpp>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include "ObjectGuid.h"
 #include "Object.h"
@@ -186,17 +187,24 @@ namespace ALE::Core
          */
         void ExecuteEvent(TimedEvent& event, WorldObject* obj = nullptr);
 
+        /**
+         * @brief Update a list of events
+         * @tparam Container Container type
+         * @param eventIds Event IDs to update
+         * @param obj Object context
+         * @param diff Time delta in milliseconds
+         */
+        template<typename Container>
+        void UpdateEventList(const Container& eventIds, WorldObject* obj, uint32 diff);
+
         // Storage: Events by ID for fast lookup/removal
         std::unordered_map<uint64, TimedEvent> m_events;
 
         // Index: Events by object GUID for UpdateObjectEvents
-        std::unordered_map<ObjectGuid, std::vector<uint64>> m_objectEvents;
+        std::unordered_map<ObjectGuid, std::unordered_set<uint64>> m_objectEvents;
 
-        // List: Global event IDs for Update
-        std::vector<uint64> m_globalEvents;
-
-        // Reusable buffer: Events to remove
-        std::vector<uint64> m_eventsToRemove;
+        // Set: Global event IDs for Update
+        std::unordered_set<uint64> m_globalEvents;
 
         uint64 m_nextEventId;  // < Monotonic counter for unique IDs
         int32 m_mapId;         // < Map ID this manager belongs to

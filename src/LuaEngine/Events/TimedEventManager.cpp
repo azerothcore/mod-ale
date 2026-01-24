@@ -14,8 +14,6 @@ namespace ALE::Core
 {
     TimedEventManager::TimedEventManager(int32 mapId) : m_nextEventId(1), m_mapId(mapId)
     {
-        m_globalEvents.reserve(16);
-        m_eventsToRemove.reserve(8);
     }
 
     TimedEventManager::~TimedEventManager()
@@ -28,7 +26,7 @@ namespace ALE::Core
         uint64 eventId = m_nextEventId++;
 
         m_events.emplace(eventId, TimedEvent(eventId, std::move(callback), delay, repeats));
-        m_globalEvents.push_back(eventId);
+        m_globalEvents.insert(eventId);
 
         LOG_DEBUG("scripts.ale", "Registered global event {} (delay={}ms, repeats={})",
                   eventId, delay, repeats);
@@ -42,7 +40,7 @@ namespace ALE::Core
 
         m_events.emplace(eventId, TimedEvent(eventId, std::move(callback), delay, repeats, objectGuid, objectType));
 
-        m_objectEvents[objectGuid].push_back(eventId);
+        m_objectEvents[objectGuid].insert(eventId);
 
         LOG_DEBUG("scripts.ale", "Registered object event {} for GUID {} (type={}, delay={}ms, repeats={})",
                   eventId, objectGuid.ToString(), static_cast<int>(objectType), delay, repeats);
@@ -61,29 +59,17 @@ namespace ALE::Core
         // Remove from appropriate index
         if (event.objectType == TimedEventObjectType::GLOBAL)
         {
-            // Remove from global events list
-            auto it = std::find(m_globalEvents.begin(), m_globalEvents.end(), eventId);
-            if (it != m_globalEvents.end())
-            {
-                std::swap(*it, m_globalEvents.back());
-                m_globalEvents.pop_back();
-            }
+            m_globalEvents.erase(eventId);
         }
         else
         {
-            // Remove from object events index
             auto objIt = m_objectEvents.find(event.objectGuid);
             if (objIt != m_objectEvents.end())
             {
-                auto& eventList = objIt->second;
-                auto it = std::find(eventList.begin(), eventList.end(), eventId);
-                if (it != eventList.end())
-                {
-                    std::swap(*it, eventList.back());
-                    eventList.pop_back();
-                }
+                objIt->second.erase(eventId);
 
-                if (eventList.empty())
+                // Clean up empty entry
+                if (objIt->second.empty())
                     m_objectEvents.erase(objIt);
             }
         }
@@ -122,17 +108,13 @@ namespace ALE::Core
         m_globalEvents.clear();
     }
 
-    void TimedEventManager::Update(uint32 diff)
+    template<typename Container>
+    void TimedEventManager::UpdateEventList(const Container& eventIds, WorldObject* obj, uint32 diff)
     {
-        // Early exit: No global events to update
-        if (m_globalEvents.empty())
-            return;
+        // Collect events to remove
+        std::vector<uint64> eventsToRemove;
 
-        // Clear removal buffer (reuse allocation from previous frame)
-        m_eventsToRemove.clear();
-
-        // Update only global events (object events updated via UpdateObjectEvents)
-        for (uint64 eventId : m_globalEvents)
+        for (uint64 eventId : eventIds)
         {
             auto eventIt = m_events.find(eventId);
             if (eventIt == m_events.end())
@@ -144,7 +126,7 @@ namespace ALE::Core
             // Check if ready to execute
             if (event.elapsed >= event.delay)
             {
-                ExecuteEvent(event, nullptr);  // nullptr = no object (global event)
+                ExecuteEvent(event, obj);
 
                 // Reset timer for next iteration
                 event.elapsed = 0;
@@ -154,70 +136,34 @@ namespace ALE::Core
                 {
                     event.remainingRepeats--;
                     if (event.remainingRepeats == 0)
-                        m_eventsToRemove.push_back(eventId);
+                        eventsToRemove.push_back(eventId);
                 }
             }
         }
 
         // Batch remove expired events
-        for (uint64 eventId : m_eventsToRemove)
+        for (uint64 eventId : eventsToRemove)
             RemoveEvent(eventId);
+    }
+
+    void TimedEventManager::Update(uint32 diff)
+    {
+        if (m_globalEvents.empty())
+            return;
+
+        UpdateEventList(m_globalEvents, nullptr, diff);
     }
 
     void TimedEventManager::UpdateObjectEvents(WorldObject* obj, uint32 diff)
     {
-        // Null check
         if (!obj)
             return;
 
-        // Early exit: No events for this object
-        ObjectGuid guid = obj->GetGUID();
-        auto objEventsIt = m_objectEvents.find(guid);
+        auto objEventsIt = m_objectEvents.find(obj->GetGUID());
         if (objEventsIt == m_objectEvents.end())
-        {
             return;
-        }
 
-        // Clear removal buffer
-        m_eventsToRemove.clear();
-
-        // Update events for this specific object
-        for (uint64 eventId : objEventsIt->second)
-        {
-            auto eventIt = m_events.find(eventId);
-            if (eventIt == m_events.end())
-            {
-                continue;  // Event was removed externally
-            }
-
-            TimedEvent& event = eventIt->second;
-            event.elapsed += diff;
-
-            // Check if ready to execute
-            if (event.elapsed >= event.delay)
-            {
-                ExecuteEvent(event, obj);  // Pass object to callback
-
-                // Reset timer for next iteration
-                event.elapsed = 0;
-
-                // Handle repeat count
-                if (event.repeats > 0)
-                {
-                    event.remainingRepeats--;
-                    if (event.remainingRepeats == 0)
-                    {
-                        m_eventsToRemove.push_back(eventId);
-                    }
-                }
-            }
-        }
-
-        // Batch remove expired events
-        for (uint64 eventId : m_eventsToRemove)
-        {
-            RemoveEvent(eventId);
-        }
+        UpdateEventList(objEventsIt->second, obj, diff);
     }
 
     void TimedEventManager::ExecuteEvent(TimedEvent& event, WorldObject* obj)
@@ -226,55 +172,30 @@ namespace ALE::Core
         {
             sol::protected_function_result result;
 
+            auto executeTypedEvent = [&](auto* typedObj) {
+                if (!obj || !typedObj)
+                    return;
+                result = event.callback(event.id, event.delay, event.repeats, typedObj);
+            };
+
             // Dispatch based on object type
             switch (event.objectType)
             {
                 case TimedEventObjectType::GLOBAL:
-                    // Global event: callback(eventId, delay, repeats)
                     result = event.callback(event.id, event.delay, event.repeats);
                     break;
 
                 case TimedEventObjectType::PLAYER:
-                {
-                    if (!obj)
-                        return;
-
-                    Player* player = obj->ToPlayer();
-                    if (!player)
-                        return;
-
-                    // Player event: callback(eventId, delay, repeats, player)
-                    result = event.callback(event.id, event.delay, event.repeats, player);
+                    executeTypedEvent(obj->ToPlayer());
                     break;
-                }
 
                 case TimedEventObjectType::CREATURE:
-                {
-                    if (!obj)
-                        return;
-
-                    Creature* creature = obj->ToCreature();
-                    if (!creature)
-                        return;
-
-                    // Creature event: callback(eventId, delay, repeats, creature)
-                    result = event.callback(event.id, event.delay, event.repeats, creature);
+                    executeTypedEvent(obj->ToCreature());
                     break;
-                }
 
                 case TimedEventObjectType::GAMEOBJECT:
-                {
-                    if (!obj)
-                        return;
-
-                    GameObject* gameobject = obj->ToGameObject();
-                    if (!gameobject)
-                        return;
-
-                    // GameObject event: callback(eventId, delay, repeats, gameobject)
-                    result = event.callback(event.id, event.delay, event.repeats, gameobject);
+                    executeTypedEvent(obj->ToGameObject());
                     break;
-                }
             }
 
             // Check for Lua errors
@@ -301,7 +222,6 @@ namespace ALE::Core
         m_events.clear();
         m_objectEvents.clear();
         m_globalEvents.clear();
-        m_eventsToRemove.clear();
         m_nextEventId = 1;
 
         LOG_DEBUG("scripts.ale", "Cleared all timed events (mapId={})", m_mapId);

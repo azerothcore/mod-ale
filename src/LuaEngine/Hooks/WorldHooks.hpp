@@ -82,7 +82,7 @@ namespace ALE::Hooks
 
                 // Register all Lua methods directly
                 ALE::Core::TimedEventManager* timedEventMgr = ALE::Core::StateManager::GetInstance().GetTimedEventManager(-1);
-                Methods::RegisterAllMethods(*masterState, -1, timedEventMgr);
+                Methods::RegisterAllMethods(*masterState, timedEventMgr);
 
                 try
                 {

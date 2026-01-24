@@ -8,11 +8,9 @@
 #define _ALE_METHODS_HPP
 
 #include <sol/sol.hpp>
-#include "GlobalMethods.h"
+#include "GlobalMethods.hpp"
 #include "UnitMethods.hpp"
 #include "PlayerMethods.hpp"
-#include "TimedEventMethods.h"
-#include "TimedEventManager.h"
 #include "Log.h"
 
 namespace ALE::Methods
@@ -35,7 +33,7 @@ namespace ALE::Methods
      *       Adding a new Unit method? Add it to UnitMethods.
      *       Adding a new Player method? Add it to PlayerMethods.
      */
-    inline void RegisterAllMethods(sol::state& state, int32 mapId, Core::TimedEventManager* timedEventMgr)
+    inline void RegisterAllMethods(sol::state& state, Core::TimedEventManager* timedEventMgr)
     {
         // Unit MUST be registered BEFORE Player!
         // Player uses sol::bases<Unit>() which requires Unit to be registered first
@@ -44,21 +42,11 @@ namespace ALE::Methods
         // Player inherits all Unit methods automatically
         RegisterPlayerMethods(state);
 
-        // Global functions (_G namespace)
-        GlobalMethods::RegisterGlobalEventFunctions(state);
-
-        if (timedEventMgr)
-        {
-            GlobalMethods::RegisterCreateLuaEvent(state, timedEventMgr);
-            GlobalMethods::RegisterRemoveTimedEvent(state, timedEventMgr);
-            GlobalMethods::RegisterRemoveAllTimedEvents(state, timedEventMgr);
-            GlobalMethods::RegisterGetTimedEventCount(state, timedEventMgr);
-
-            TimedEventMethods::RegisterTimedEventMethods(state, timedEventMgr);
-        }
-
-
-        LOG_INFO("ale.methods", "[ALE] RegisterAllMethods - All methods registered for map {}", mapId);
+        // Global functions (_G namespace) - includes:
+        //   - Event system (RegisterServerEvent, RegisterPlayerEvent, etc.)
+        //   - Global timed events (CreateLuaEvent, RemoveTimedEvent, etc.)
+        //   - Object timed event methods (Player:RegisterEvent, Creature:RegisterEvent, etc.)
+        RegisterGlobalMethods(state, timedEventMgr);
     }
 
 } // namespace ALE::Methods

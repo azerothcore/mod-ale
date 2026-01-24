@@ -190,14 +190,14 @@ namespace ALE::Methods
          * @param event Event ID from Lua (uint32)
          * @return Typed WorldEvent enum
          */
-        Core::WorldEvent ServerEventToType(uint32 event);
+        Hooks::WorldEvent ServerEventToType(uint32 event);
 
         /**
          * @brief Convert player event ID to internal EventType
          * @param event Event ID from Lua (uint32)
          * @return Typed PlayerEvent enum
          */
-        Core::PlayerEvent PlayerEventToType(uint32 event);
+        Hooks::PlayerEvent PlayerEventToType(uint32 event);
 
         // ========================================================================
         // TIMED EVENTS (Global)

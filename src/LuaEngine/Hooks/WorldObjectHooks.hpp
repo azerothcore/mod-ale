@@ -24,13 +24,13 @@ namespace ALE::Hooks
      * @param args Arguments to forward to Lua callbacks
      */
     template<typename... Args>
-    void TriggerWorldObjectEvent(Core::WorldObjectEvent eventType, Args&&... args)
+    void TriggerWorldObjectEvent(Hooks::WorldObjectEvent eventType, Args&&... args)
     {
         // Cast enum to uint32
         uint32 eventId = static_cast<uint32>(eventType);
 
         // Trigger event
-        uint32 executed = Core::EventManager::GetInstance().TriggerGlobalEvent(
+        Core::EventManager::GetInstance().TriggerGlobalEvent(
             eventType,
             eventId,
             std::forward<Args>(args)...

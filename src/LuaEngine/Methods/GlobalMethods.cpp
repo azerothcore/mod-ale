@@ -17,9 +17,9 @@ namespace ALE::Methods::GlobalMethods
      * Server events use range 1-50 in EventManager.
      * Direct cast from uint32 to enum for type safety.
      */
-    Core::WorldEvent ServerEventToType(uint32 event)
+    Hooks::WorldEvent ServerEventToType(uint32 event)
     {
-        return static_cast<Core::WorldEvent>(event);
+        return static_cast<Hooks::WorldEvent>(event);
     }
 
     /**
@@ -28,9 +28,9 @@ namespace ALE::Methods::GlobalMethods
      * Player events start at 100 in EventManager.
      * Direct cast from uint32 to enum for type safety.
      */
-    Core::PlayerEvent PlayerEventToType(uint32 event)
+    Hooks::PlayerEvent PlayerEventToType(uint32 event)
     {
-        return static_cast<Core::PlayerEvent>(event);
+        return static_cast<Hooks::PlayerEvent>(event);
     }
 
     // ========================================================================

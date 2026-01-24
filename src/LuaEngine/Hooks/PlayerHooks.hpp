@@ -25,13 +25,13 @@ namespace ALE::Hooks
      * @param args Arguments to forward to Lua callbacks
      */
     template<typename... Args>
-    void TriggerPlayerEvent(Core::PlayerEvent eventType, Args&&... args)
+    void TriggerPlayerEvent(Hooks::PlayerEvent eventType, Args&&... args)
     {
         // Cast enum to uint32
         uint32 eventId = static_cast<uint32>(eventType);
 
         // Trigger event
-        uint32 executed = Core::EventManager::GetInstance().TriggerGlobalEvent(
+        Core::EventManager::GetInstance().TriggerGlobalEvent(
             eventType,
             eventId,
             std::forward<Args>(args)...
@@ -61,7 +61,7 @@ namespace ALE::Hooks
          */
         void OnPlayerLogin(Player* player) override
         {
-            TriggerPlayerEvent(Core::PlayerEvent::ON_LOGIN, player);
+            TriggerPlayerEvent(Hooks::PlayerEvent::ON_LOGIN, player);
         }
 
         /**
@@ -74,7 +74,7 @@ namespace ALE::Hooks
          */
         void OnPlayerLogout(Player* player) override
         {
-            TriggerPlayerEvent(Core::PlayerEvent::ON_LOGOUT, player);
+            TriggerPlayerEvent(Hooks::PlayerEvent::ON_LOGOUT, player);
         }
 
         /**
@@ -88,7 +88,7 @@ namespace ALE::Hooks
          */
         void OnPlayerLevelChanged(Player* player, uint8 oldLevel) override
         {
-            TriggerPlayerEvent(Core::PlayerEvent::ON_LEVEL_CHANGE, player, oldLevel);
+            TriggerPlayerEvent(Hooks::PlayerEvent::ON_LEVEL_CHANGE, player, oldLevel);
         }
 
         /**
@@ -102,9 +102,9 @@ namespace ALE::Hooks
          */
         void OnPlayerMoneyChanged(Player* player, int32& amount) override
         {
-            uint32 eventId = static_cast<uint32>(Core::PlayerEvent::ON_MONEY_CHANGE);
+            uint32 eventId = static_cast<uint32>(Hooks::PlayerEvent::ON_MONEY_CHANGE);
             uint32 modifiedAmount = Core::EventManager::GetInstance().TriggerGlobalEventWithReturn<uint32>(
-                Core::PlayerEvent::ON_MONEY_CHANGE,
+                Hooks::PlayerEvent::ON_MONEY_CHANGE,
                 amount,        // Default value if no handlers
                 eventId,
                 player,
@@ -130,9 +130,9 @@ namespace ALE::Hooks
          */
         void OnPlayerGiveXP(Player* player, uint32& amount, Unit* victim, uint8 xpSource) override
         {
-            uint32 eventId = static_cast<uint32>(Core::PlayerEvent::ON_GIVE_XP);
+            uint32 eventId = static_cast<uint32>(Hooks::PlayerEvent::ON_GIVE_XP);
             uint32 modifiedAmount = Core::EventManager::GetInstance().TriggerGlobalEventWithReturn<uint32>(
-                Core::PlayerEvent::ON_GIVE_XP,
+                Hooks::PlayerEvent::ON_GIVE_XP,
                 amount,        // Default value if no handlers
                 eventId,
                 player,

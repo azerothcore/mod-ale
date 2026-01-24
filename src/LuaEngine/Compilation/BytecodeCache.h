@@ -14,7 +14,7 @@
 #include <ctime>
 #include "Common.h"
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     /**
      * @struct CompiledBytecode
@@ -116,6 +116,10 @@ namespace Eclipse::Core
          */
         size_t GetTotalMemory() const;
 
+    private:
+        std::unordered_map<std::string, std::shared_ptr<CompiledBytecode>> m_cache;      // < Bytecode storage
+        std::unordered_map<std::string, std::time_t> m_timestampCache;  // < File timestamp cache
+
         /**
          * @brief Get file modification time (with caching)
          *
@@ -125,12 +129,8 @@ namespace Eclipse::Core
          * @return Unix timestamp, 0 if file doesn't exist
          */
         std::time_t GetFileModTime(const std::string& filepath);
-
-    private:
-        std::unordered_map<std::string, std::shared_ptr<CompiledBytecode>> m_cache;      // < Bytecode storage
-        std::unordered_map<std::string, std::time_t> m_timestampCache;  // < File timestamp cache
     };
 
-} // namespace Eclipse::Core
+} // namespace ALE::Core
 
 #endif // _SOL_BYTECODE_CACHE_H

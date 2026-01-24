@@ -11,29 +11,19 @@
 #include <string>
 #include <memory>
 #include "BytecodeCache.h"
-#include "Statistics.h"
 #include "Common.h"
 
-namespace Eclipse::API
+namespace ALE::API
 {
     // Import Core types
     using Core::CompiledBytecode;
 
     /**
-     * @brief Script compilation options
-     */
-    struct CompileOptions
-    {
-        bool stripDebugInfo = false;
-        bool optimizeCode = true;
-        bool allowMoonScript = true;
-        std::string moonScriptPath;
-    };
-
-    /**
      * @class ScriptCompiler
-     * @brief Compiles Lua/MoonScript files to bytecode with caching
+     * @brief Pure script compilation (no caching)
      *
+     * Compiles Lua/MoonScript/Cout files to bytecode.
+     * Does not handle caching - that's ScriptLoader's responsibility.
      */
     class ScriptCompiler
     {
@@ -48,55 +38,28 @@ namespace Eclipse::API
         /**
          * @brief Compile a script file to bytecode
          *
-         * @param filepath Path to the script file (delegates to BytecodeCache)
-         * @param options Compilation options (currently unused, delegated to cache)
-         * @return Const pointer to compiled bytecode, or nullptr if failed
-         */
-        const CompiledBytecode* CompileFile(const std::string& filepath, const CompileOptions& options = CompileOptions());
-
-        /**
-         * @brief Check if a file is a MoonScript file (.moon extension)
+         * Routes to appropriate compiler based on file extension:
+         * - .cout → LoadCoutFile()
+         * - .moon → CompileMoonScriptFile()
+         * - .lua/.ext → CompileLuaFile()
          *
-         * @param filepath File path to check (absolute or relative)
-         * @return true if extension is ".moon", false otherwise
+         * @param filepath Path to script file
+         * @return Compiled bytecode, or nullptr if failed
          */
-        static inline bool IsMoonScriptFile(const std::string& filepath)
-        {
-            return HasExtension(filepath, ".moon");
-        }
-
-        /**
-         * @brief Check if file is .ext file
-         * @param filepath File path to check
-         * @return true if .ext extension
-         */
-        static inline bool IsExtFile(const std::string& filepath)
-        {
-            return HasExtension(filepath, ".ext");
-        }
-
-        /**
-         * @brief Check if file is .cout file
-         * @param filepath File path to check
-         * @return true if .cout extension
-         */
-        static inline bool IsCoutFile(const std::string& filepath)
-        {
-            return HasExtension(filepath, ".cout");
-        }
+        std::shared_ptr<CompiledBytecode> Compile(const std::string& filepath);
 
     private:
         /**
-         * @brief Compile Lua file to bytecode (handles both .lua and .ext files)
+         * @brief Compile Lua file to bytecode
          * @param filepath Path to .lua or .ext file
          * @return Compiled bytecode or nullptr if failed
          */
         std::shared_ptr<CompiledBytecode> CompileLuaFile(const std::string& filepath);
 
         /**
-         * @brief Load pre-compiled .cout file (bytecode)
+         * @brief Load pre-compiled .cout file
          * @param filepath Path to .cout file
-         * @return CompiledBytecode or nullptr if failed
+         * @return Loaded bytecode or nullptr if failed
          */
         std::shared_ptr<CompiledBytecode> LoadCoutFile(const std::string& filepath);
 
@@ -108,36 +71,20 @@ namespace Eclipse::API
         std::shared_ptr<CompiledBytecode> CompileMoonScriptFile(const std::string& filepath);
 
         /**
-         * @brief Create CompiledBytecode structure from bytecode
+         * @brief Create CompiledBytecode structure from sol::bytecode
          * @param bc Sol2 bytecode object
          * @param filepath Original source file path
-         * @return Populated CompiledBytecode shared_ptr
+         * @return Populated CompiledBytecode
          */
-        std::shared_ptr<CompiledBytecode> CreateBytecodeStructure(sol::bytecode&& bc, const std::string& filepath);
-
-        /**
-         * @brief Get master state with validation
-         * @param callerName Name of calling function for error logging
-         * @return Pointer to master state, or nullptr if unavailable (logs error)
-         */
-        sol::state* GetMasterStateOrNull(const char* callerName);
+        std::shared_ptr<CompiledBytecode> CreateBytecode(sol::bytecode&& bc, const std::string& filepath);
 
         /**
          * @brief Validate bytecode is non-empty
          * @param bc Bytecode to validate
          * @param filepath File path for error logging
-         * @param callerName Caller function name for error logging
-         * @return true if valid (non-empty)
+         * @return true if valid
          */
-        bool ValidateBytecode(const sol::bytecode& bc, const std::string& filepath, const char* callerName);
-
-        /**
-         * @brief Check if file has specific extension
-         * @param filepath File path to check
-         * @param extension Extension to match (e.g., ".moon")
-         * @return true if extension matches
-         */
-        static bool HasExtension(const std::string& filepath, const std::string& extension);
+        bool ValidateBytecode(const sol::bytecode& bc, const std::string& filepath);
     };
 }
 

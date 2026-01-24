@@ -4,19 +4,19 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_TIMED_EVENT_METHODS_H
-#define _ECLIPSE_TIMED_EVENT_METHODS_H
+#ifndef _ALE_TIMED_EVENT_METHODS_H
+#define _ALE_TIMED_EVENT_METHODS_H
 
 #include <sol/sol.hpp>
 #include "Player.h"
 #include "Creature.h"
 #include "GameObject.h"
 
-namespace Eclipse::Core {
+namespace ALE::Core {
     class TimedEventManager;
 }
 
-namespace Eclipse::Methods {
+namespace ALE::Methods {
 
     /**
      * @brief Global timed event methods exposed to Lua
@@ -188,6 +188,6 @@ namespace Eclipse::Methods {
         
     } // namespace TimedEventMethods
 
-} // namespace Eclipse::Methods
+} // namespace ALE::Methods
 
-#endif // _ECLIPSE_TIMED_EVENT_METHODS_H
+#endif // _ALE_TIMED_EVENT_METHODS_H

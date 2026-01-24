@@ -5,15 +5,13 @@
  */
 
 #include "BytecodeCache.h"
-#include "../State/StateManager.h"
+#include "FileSystemUtils.h"
 #include "Statistics.h"
 #include "Log.h"
-#include <fstream>
-#include <sys/stat.h>
 
-using Eclipse::Statistics::EclipseStatistics;
+using ALE::Statistics::ALEStatistics;
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     BytecodeCache& BytecodeCache::GetInstance()
     {
@@ -40,7 +38,7 @@ namespace Eclipse::Core
         auto it = m_cache.find(filepath);
         if (it == m_cache.end())
         {
-            EclipseStatistics::GetInstance().IncrementCacheMiss();
+            ALEStatistics::GetInstance().IncrementCacheMiss();
             return nullptr;
         }
 
@@ -56,11 +54,11 @@ namespace Eclipse::Core
         if (it->second->last_modified != currentModTime || currentModTime == 0)
         {
             m_cache.erase(it);
-            EclipseStatistics::GetInstance().IncrementCacheMiss();
+            ALEStatistics::GetInstance().IncrementCacheMiss();
             return nullptr;
         }
 
-        EclipseStatistics::GetInstance().IncrementCacheHit();
+        ALEStatistics::GetInstance().IncrementCacheHit();
         return it->second.get();
     }
 
@@ -71,15 +69,15 @@ namespace Eclipse::Core
     {
         if (!bytecode || !bytecode->isValid())
         {
-            LOG_ERROR("server.loading", "[Eclipse] BytecodeCache::Store - Invalid bytecode for {}", filepath);
+            LOG_ERROR("server.loading", "[ALE] BytecodeCache::Store - Invalid bytecode for {}", filepath);
             return;
         }
 
         m_cache[filepath] = bytecode;
-        EclipseStatistics::GetInstance().SetCacheTotalScripts(m_cache.size());
-        EclipseStatistics::GetInstance().SetCacheTotalMemory(GetTotalMemory());
+        ALEStatistics::GetInstance().SetCacheTotalScripts(m_cache.size());
+        ALEStatistics::GetInstance().SetCacheTotalMemory(GetTotalMemory());
 
-        LOG_DEBUG("server.loading", "[Eclipse] BytecodeCache::Store - Cached {} ({} bytes)", filepath, bytecode->size());
+        LOG_DEBUG("server.loading", "[ALE] BytecodeCache::Store - Cached {} ({} bytes)", filepath, bytecode->size());
     }
 
     /**
@@ -93,7 +91,7 @@ namespace Eclipse::Core
         size_t count = m_cache.size();
         if (count > 0)
         {
-            LOG_INFO("server.loading", "[Eclipse] BytecodeCache - Clearing {} cached entries", count);
+            LOG_INFO("server.loading", "[ALE] BytecodeCache - Clearing {} cached entries", count);
             m_cache.clear();
         }
         m_timestampCache.clear();
@@ -135,12 +133,6 @@ namespace Eclipse::Core
         return total;
     }
 
-    /**
-     * @brief Get file modification time
-     *
-     * @param filepath Path to file
-     * @return Unix timestamp, 0 if file doesn't exist
-     */
     std::time_t BytecodeCache::GetFileModTime(const std::string& filepath)
     {
         // Check timestamp cache first
@@ -148,14 +140,11 @@ namespace Eclipse::Core
         if (it != m_timestampCache.end())
             return it->second;
 
-        // Get actual file modification time via stat()
-        struct stat fileInfo;
-        std::time_t modTime = 0;
-        if (stat(filepath.c_str(), &fileInfo) == 0)
-            modTime = fileInfo.st_mtime;
+        // Get actual file modification time
+        std::time_t modTime = Utils::FileSystemUtils::GetFileModTime(filepath);
 
         // Cache the timestamp for future checks
         m_timestampCache[filepath] = modTime;
         return modTime;
     }
-} // namespace Eclipse::Core
+} // namespace ALE::Core

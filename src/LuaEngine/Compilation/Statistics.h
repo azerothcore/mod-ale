@@ -4,21 +4,21 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_STATISTICS_H
-#define _ECLIPSE_STATISTICS_H
+#ifndef _ALE_STATISTICS_H
+#define _ALE_STATISTICS_H
 
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 
-namespace Eclipse::Statistics
+namespace ALE::Statistics
 {
     /**
-     * @class EclipseStatistics
-     * @brief Centralized lock-free statistics for ALL Eclipse components
+     * @class ALEStatistics
+     * @brief Centralized lock-free statistics for ALL ALE components
      *
      */
-    class EclipseStatistics
+    class ALEStatistics
     {
     public:
         /**
@@ -62,16 +62,16 @@ namespace Eclipse::Statistics
         /**
          * @brief Get singleton instance
          */
-        static EclipseStatistics& GetInstance()
+        static ALEStatistics& GetInstance()
         {
-            static EclipseStatistics instance;
+            static ALEStatistics instance;
             return instance;
         }
 
-        EclipseStatistics(const EclipseStatistics&) = delete;
-        EclipseStatistics& operator=(const EclipseStatistics&) = delete;
-        EclipseStatistics(EclipseStatistics&&) = delete;
-        EclipseStatistics& operator=(EclipseStatistics&&) = delete;
+        ALEStatistics(const ALEStatistics&) = delete;
+        ALEStatistics& operator=(const ALEStatistics&) = delete;
+        ALEStatistics(ALEStatistics&&) = delete;
+        ALEStatistics& operator=(ALEStatistics&&) = delete;
 
         // ===== COMPILATION METRICS =====
         void IncrementCompilationSuccess() { m_compilationSuccess.fetch_add(1, std::memory_order_relaxed); }
@@ -191,8 +191,8 @@ namespace Eclipse::Statistics
         }
 
     private:
-        EclipseStatistics() = default;
-        ~EclipseStatistics() = default;
+        ALEStatistics() = default;
+        ~ALEStatistics() = default;
 
         // Compilation atomics
         std::atomic<size_t> m_compilationSuccess{0};
@@ -226,6 +226,6 @@ namespace Eclipse::Statistics
         std::atomic<uint64> m_eventsTotalHandlersExecuted{0};
     };
 
-} // namespace Eclipse::Statistics
+} // namespace ALE::Statistics
 
-#endif // _ECLIPSE_STATISTICS_H
+#endif // _ALE_STATISTICS_H

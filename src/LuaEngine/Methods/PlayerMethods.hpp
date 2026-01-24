@@ -4,8 +4,8 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_PLAYER_METHODS_H
-#define _ECLIPSE_PLAYER_METHODS_H
+#ifndef _ALE_PLAYER_METHODS_H
+#define _ALE_PLAYER_METHODS_H
 
 #include <sol/sol.hpp>
 #include "Player.h"
@@ -14,7 +14,7 @@
 #include "Group.h"
 #include "Log.h"
 
-namespace Eclipse::Methods
+namespace ALE::Methods
 {
     namespace PlayerMethods
     {
@@ -83,6 +83,6 @@ namespace Eclipse::Methods
         // playerType["SaveToDB"] = &PlayerMethods::SaveToDB;
     }
 
-} // namespace Eclipse::Methods
+} // namespace ALE::Methods
 
-#endif // _ECLIPSE_PLAYER_METHODS_H
+#endif // _ALE_PLAYER_METHODS_H

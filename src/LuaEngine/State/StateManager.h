@@ -16,7 +16,7 @@
 #include <chrono>
 #include "Common.h"
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     class ScriptCompiler;
     class BytecodeCache;
@@ -190,6 +190,6 @@ namespace Eclipse::Core
         void RegisterGlobalFunctions(sol::state& state);
     };
 
-} // namespace Eclipse::Core
+} // namespace ALE::Core
 
 #endif // _SOL_STATE_MANAGER_H

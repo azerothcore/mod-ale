@@ -24,7 +24,7 @@
 
 #include "StateManager.h"
 #include "EventManager.h"
-#include "EclipseScriptLoader.h"
+#include "ALEScriptLoader.h"
 #include "ScriptCompiler.h"
 
 #include "WorldHooks.hpp"
@@ -34,7 +34,7 @@
 void AddSC_ALE()
 {
     // new ALE_WorldScript();
-    new Eclipse::Hooks::WorldHooks();
-    new Eclipse::Hooks::PlayerHooks();
-    new Eclipse::Hooks::WorldObjectHooks();
+    new ALE::Hooks::WorldHooks();
+    new ALE::Hooks::PlayerHooks();
+    new ALE::Hooks::WorldObjectHooks();
 }

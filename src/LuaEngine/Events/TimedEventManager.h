@@ -4,8 +4,8 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_TIMED_EVENT_MANAGER_H
-#define _ECLIPSE_TIMED_EVENT_MANAGER_H
+#ifndef _ALE_TIMED_EVENT_MANAGER_H
+#define _ALE_TIMED_EVENT_MANAGER_H
 
 #include <sol/sol.hpp>
 #include <unordered_map>
@@ -13,7 +13,7 @@
 #include "ObjectGuid.h"
 #include "Object.h"
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     /**
      * @enum TimedEventObjectType
@@ -202,6 +202,6 @@ namespace Eclipse::Core
         int32 m_mapId;         // < Map ID this manager belongs to
     };
 
-} // namespace Eclipse::Core
+} // namespace ALE::Core
 
-#endif // _ECLIPSE_TIMED_EVENT_MANAGER_H
+#endif // _ALE_TIMED_EVENT_MANAGER_H

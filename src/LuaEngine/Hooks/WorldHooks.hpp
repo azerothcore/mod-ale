@@ -4,8 +4,8 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_WORLD_HOOKS_H
-#define _ECLIPSE_WORLD_HOOKS_H
+#ifndef _ALE_WORLD_HOOKS_H
+#define _ALE_WORLD_HOOKS_H
 
 #include "ScriptMgr.h"
 
@@ -13,7 +13,7 @@
 #include "EventManager.h"
 #include "Methods.hpp"
 
-namespace Eclipse::Hooks
+namespace ALE::Hooks
 {
     /**
      * @brief Trigger Server/World event helper (template implementation)
@@ -34,13 +34,13 @@ namespace Eclipse::Hooks
         );
 
         if (executed > 0)
-            LOG_DEBUG("eclipse.hooks", "[Eclipse] WorldObject event {} triggered ({} handlers executed)", eventId, executed);
+            LOG_DEBUG("ale.hooks", "[ALE] WorldObject event {} triggered ({} handlers executed)", eventId, executed);
     }
 
     /**
      * @class WorldHooks
-     * @brief AzerothCore world event interceptor for Eclipse Lua system
-     * @note Registered in EclipseScriptLoader via sScriptMgr->AddScript<WorldHooks>()
+     * @brief AzerothCore world event interceptor for ALE Lua system
+     * @note Registered in ALEScriptLoader via sScriptMgr->AddScript<WorldHooks>()
      */
     class WorldHooks : public WorldScript
     {
@@ -48,7 +48,7 @@ namespace Eclipse::Hooks
         /**
          * @brief Constructor - registers WorldHooks with AzerothCore
          */
-        WorldHooks() : WorldScript("Eclipse_WorldHooks") { }
+        WorldHooks() : WorldScript("ALE_WorldHooks") { }
 
         /**
          * @todo Document all overridden hooks
@@ -59,29 +59,29 @@ namespace Eclipse::Hooks
             if (!reload)
             {
                 // Initialize the StateManager first
-                if (!Eclipse::Core::StateManager::GetInstance().Initialize())
+                if (!ALE::Core::StateManager::GetInstance().Initialize())
                 {
-                    LOG_ERROR("eclipse", "[Eclipse] Failed to initialize StateManager!");
+                    LOG_ERROR("ale", "[ALE] Failed to initialize StateManager!");
                     return;
                 }
 
                 // Get master state
-                sol::state* masterState = Eclipse::Core::StateManager::GetInstance().GetMasterState();
+                sol::state* masterState = ALE::Core::StateManager::GetInstance().GetMasterState();
                 if (!masterState)
                 {
-                    LOG_ERROR("eclipse", "[Eclipse] Failed to create master state!");
+                    LOG_ERROR("ale", "[ALE] Failed to create master state!");
                     return;
                 }
 
                 // Initialize EventManager
-                if (!Eclipse::Core::EventManager::GetInstance().Initialize())
+                if (!ALE::Core::EventManager::GetInstance().Initialize())
                 {
-                    LOG_ERROR("eclipse", "[Eclipse] Failed to initialize EventManager!");
+                    LOG_ERROR("ale", "[ALE] Failed to initialize EventManager!");
                     return;
                 }
 
                 // Register all Lua methods directly
-                Eclipse::Core::TimedEventManager* timedEventMgr = Eclipse::Core::StateManager::GetInstance().GetTimedEventManager(-1);
+                ALE::Core::TimedEventManager* timedEventMgr = ALE::Core::StateManager::GetInstance().GetTimedEventManager(-1);
                 Methods::RegisterAllMethods(*masterState, -1, timedEventMgr);
 
                 try
@@ -90,10 +90,10 @@ namespace Eclipse::Hooks
                     auto startTime = std::chrono::high_resolution_clock::now();
 
                     // Load all scripts from lua_scripts directory
-                    LOG_INFO("eclipse", "[Eclipse] Scanning and loading scripts from lua_scripts directory...");
-                    Eclipse::Core::ScriptLoader::GetInstance().SetScriptPath("lua_scripts");
+                    LOG_INFO("ale", "[ALE] Scanning and loading scripts from lua_scripts directory...");
+                    ALE::Core::ScriptLoader::GetInstance().SetScriptPath("lua_scripts");
                     // uint32 loadedCount =
-                    Eclipse::Core::ScriptLoader::GetInstance().LoadAllScripts(-1);
+                    ALE::Core::ScriptLoader::GetInstance().LoadAllScripts(-1);
 
                     // // Calculate elapsed time
                     // auto endTime = std::chrono::high_resolution_clock::now();
@@ -101,12 +101,12 @@ namespace Eclipse::Hooks
                     // auto durationMilli = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 
                     // // Get comprehensive statistics from centralized Statistics system
-                    // auto stats = Eclipse::Statistics::EclipseStatistics::GetInstance().GetSnapshot();
+                    // auto stats = ALE::Statistics::ALEStatistics::GetInstance().GetSnapshot();
 
                     // // Display comprehensive statistics
                     // LOG_INFO("server.loading", "");
                     // LOG_INFO("server.loading", "========================================");
-                    // LOG_INFO("server.loading", "[Eclipse] Script Loading Statistics");
+                    // LOG_INFO("server.loading", "[ALE] Script Loading Statistics");
                     // LOG_INFO("server.loading", "========================================");
                     // LOG_INFO("server.loading", "Scripts Discovered : {} total", stats.loadingTotalScripts);
                     // LOG_INFO("server.loading", "  - Ext Scripts    : {} (priority)", stats.loadingExtScripts);
@@ -147,13 +147,13 @@ namespace Eclipse::Hooks
 
                     // if (stats.loadingFailed > 0)
                     // {
-                    //     LOG_WARN("server.loading", "[Eclipse] Warning: {} script(s) failed to load. Check logs above for details.", 
+                    //     LOG_WARN("server.loading", "[ALE] Warning: {} script(s) failed to load. Check logs above for details.", 
                     //         stats.loadingFailed);
                     // }
                 }
                 catch (const sol::error& e)
                 {
-                    LOG_ERROR("server.loading", "[Eclipse] Initialization failed: {}", e.what());
+                    LOG_ERROR("server.loading", "[ALE] Initialization failed: {}", e.what());
                 }
             }
         }
@@ -168,6 +168,6 @@ namespace Eclipse::Hooks
                 mgr->Update(diff);
         }
     };
-} // namespace Eclipse
+} // namespace ALE
 
-#endif // _ECLIPSE_WORLD_OBJECT_HOOKS_H
+#endif // _ALE_WORLD_OBJECT_HOOKS_H

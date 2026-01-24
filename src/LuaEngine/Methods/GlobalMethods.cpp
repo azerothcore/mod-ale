@@ -9,7 +9,7 @@
 #include "TimedEventManager.h"
 #include "Log.h"
 
-namespace Eclipse::Methods::GlobalMethods
+namespace ALE::Methods::GlobalMethods
 {
     /**
      * @brief Convert uint32 event ID to WorldEvent enum
@@ -52,7 +52,7 @@ namespace Eclipse::Methods::GlobalMethods
         state.set_function("CancelServerEvent", &CancelServerEvent);
         state.set_function("CancelPlayerEvent", &CancelPlayerEvent);
 
-        LOG_DEBUG("eclipse.methods", "[Eclipse] GlobalMethods - Registered global event functions");
+        LOG_DEBUG("ale.methods", "[ALE] GlobalMethods - Registered global event functions");
     }
 
     // ========================================================================
@@ -179,4 +179,4 @@ namespace Eclipse::Methods::GlobalMethods
         };
     }
 
-} // namespace Eclipse::Methods::GlobalMethods
+} // namespace ALE::Methods::GlobalMethods

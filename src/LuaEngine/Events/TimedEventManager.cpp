@@ -10,7 +10,7 @@
 #include "GameObject.h"
 #include "Log.h"
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     TimedEventManager::TimedEventManager(int32 mapId) : m_nextEventId(1), m_mapId(mapId)
     {
@@ -30,7 +30,7 @@ namespace Eclipse::Core
         m_events.emplace(eventId, TimedEvent(eventId, std::move(callback), delay, repeats));
         m_globalEvents.push_back(eventId);
 
-        LOG_DEBUG("scripts.eclipse", "Registered global event {} (delay={}ms, repeats={})",
+        LOG_DEBUG("scripts.ale", "Registered global event {} (delay={}ms, repeats={})",
                   eventId, delay, repeats);
 
         return eventId;
@@ -44,7 +44,7 @@ namespace Eclipse::Core
 
         m_objectEvents[objectGuid].push_back(eventId);
 
-        LOG_DEBUG("scripts.eclipse", "Registered object event {} for GUID {} (type={}, delay={}ms, repeats={})",
+        LOG_DEBUG("scripts.ale", "Registered object event {} for GUID {} (type={}, delay={}ms, repeats={})",
                   eventId, objectGuid.ToString(), static_cast<int>(objectType), delay, repeats);
 
         return eventId;
@@ -91,7 +91,7 @@ namespace Eclipse::Core
         // Remove event from main storage
         m_events.erase(eventIt);
 
-        LOG_DEBUG("scripts.eclipse", "Removed event {}", eventId);
+        LOG_DEBUG("scripts.ale", "Removed event {}", eventId);
         return true;
     }
 
@@ -105,7 +105,7 @@ namespace Eclipse::Core
         for (uint64 eventId : it->second)
             m_events.erase(eventId);
 
-        LOG_DEBUG("scripts.eclipse", "Removed {} events for object {}", it->second.size(), objectGuid.ToString());
+        LOG_DEBUG("scripts.ale", "Removed {} events for object {}", it->second.size(), objectGuid.ToString());
 
         // Remove object entry from index
         m_objectEvents.erase(it);
@@ -117,7 +117,7 @@ namespace Eclipse::Core
         for (uint64 eventId : m_globalEvents)
             m_events.erase(eventId);
 
-        LOG_DEBUG("scripts.eclipse", "Removed {} global events", m_globalEvents.size());
+        LOG_DEBUG("scripts.ale", "Removed {} global events", m_globalEvents.size());
 
         m_globalEvents.clear();
     }
@@ -281,12 +281,12 @@ namespace Eclipse::Core
             if (!result.valid())
             {
                 sol::error err = result;
-                LOG_ERROR("scripts.eclipse", "Event {} callback error: {}", event.id, err.what());
+                LOG_ERROR("scripts.ale", "Event {} callback error: {}", event.id, err.what());
             }
         }
         catch (const std::exception& e)
         {
-            LOG_ERROR("scripts.eclipse", "Event {} exception: {}", event.id, e.what());
+            LOG_ERROR("scripts.ale", "Event {} exception: {}", event.id, e.what());
         }
     }
 
@@ -304,7 +304,7 @@ namespace Eclipse::Core
         m_eventsToRemove.clear();
         m_nextEventId = 1;
 
-        LOG_DEBUG("scripts.eclipse", "Cleared all timed events (mapId={})", m_mapId);
+        LOG_DEBUG("scripts.ale", "Cleared all timed events (mapId={})", m_mapId);
     }
 
-} // namespace Eclipse::Core
+} // namespace ALE::Core

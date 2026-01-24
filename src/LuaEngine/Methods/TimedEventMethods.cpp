@@ -8,7 +8,7 @@
 #include "TimedEventManager.h"
 #include "Log.h"
 
-namespace Eclipse::Methods::TimedEventMethods {
+namespace ALE::Methods::TimedEventMethods {
 
     // NOTE: All implementations use lambda closures to capture the per-state TimedEventManager*
     // This is set up in RegisterTimedEventMethods()
@@ -26,11 +26,11 @@ namespace Eclipse::Methods::TimedEventMethods {
         
         state["Player"]["RegisterEvent"] = [mgr](Player* player, sol::function callback, uint32 delay, sol::optional<uint32> repeats) -> uint64 {
             if (!player) {
-                LOG_ERROR("scripts.eclipse", "Player_RegisterEvent: Player is null");
+                LOG_ERROR("scripts.ale", "Player_RegisterEvent: Player is null");
                 return 0;
             }
             uint32 repeatCount = repeats.value_or(1);
-            LOG_INFO("scripts.eclipse", "Player:RegisterEvent called for player {}: delay={}ms, repeats={}", 
+            LOG_INFO("scripts.ale", "Player:RegisterEvent called for player {}: delay={}ms, repeats={}", 
                      player->GetName(), delay, repeatCount);
             
             sol::protected_function pf(callback);
@@ -60,7 +60,7 @@ namespace Eclipse::Methods::TimedEventMethods {
         
         creatureType["RegisterEvent"] = [mgr](Creature* creature, sol::function callback, uint32 delay, sol::optional<uint32> repeats) -> uint64 {
             if (!creature) {
-                LOG_ERROR("scripts.eclipse", "Creature_RegisterEvent: Creature is null");
+                LOG_ERROR("scripts.ale", "Creature_RegisterEvent: Creature is null");
                 return 0;
             }
             uint32 repeatCount = repeats.value_or(1);
@@ -92,7 +92,7 @@ namespace Eclipse::Methods::TimedEventMethods {
         
         gameobjectType["RegisterEvent"] = [mgr](GameObject* gameobject, sol::function callback, uint32 delay, sol::optional<uint32> repeats) -> uint64 {
             if (!gameobject) {
-                LOG_ERROR("scripts.eclipse", "GameObject_RegisterEvent: GameObject is null");
+                LOG_ERROR("scripts.ale", "GameObject_RegisterEvent: GameObject is null");
                 return 0;
             }
             uint32 repeatCount = repeats.value_or(1);
@@ -116,7 +116,7 @@ namespace Eclipse::Methods::TimedEventMethods {
             return mgr->GetObjectEventCount(gameobject->GetGUID());
         };
 
-        LOG_DEBUG("scripts.eclipse", "Registered Player/Creature/GameObject timed event methods");
+        LOG_DEBUG("scripts.ale", "Registered Player/Creature/GameObject timed event methods");
     }
 
-} // namespace Eclipse::Methods::TimedEventMethods
+} // namespace ALE::Methods::TimedEventMethods

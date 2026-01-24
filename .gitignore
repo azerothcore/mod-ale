@@ -32,7 +32,7 @@ nbproject/
 *.kate-swp
 
 #
-# Eclipse
+# ALE
 #
 *.pydevproject
 .metadata

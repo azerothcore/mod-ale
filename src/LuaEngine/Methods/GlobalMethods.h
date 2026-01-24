@@ -4,8 +4,8 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_GLOBAL_METHODS_H
-#define _ECLIPSE_GLOBAL_METHODS_H
+#ifndef _ALE_GLOBAL_METHODS_H
+#define _ALE_GLOBAL_METHODS_H
 
 #include <sol/sol.hpp>
 #include "EventManager.h"
@@ -16,19 +16,19 @@ class Player;
 class Creature;
 class GameObject;
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     class TimedEventManager;
 }
 
-namespace Eclipse::Methods
+namespace ALE::Methods
 {
     /**
      * @class GlobalMethods
-     * @brief Global Lua functions for Eclipse event system
+     * @brief Global Lua functions for ALE event system
      * 
      * **Purpose:**
-     * Centralized namespace for ALL global Lua functions exposed by Eclipse.
+     * Centralized namespace for ALL global Lua functions exposed by ALE.
      * Keeps global API clean and organized in one place.
      * 
      * **Exported Functions:**
@@ -256,6 +256,6 @@ namespace Eclipse::Methods
 
     } // namespace GlobalMethods
 
-} // namespace Eclipse::Methods
+} // namespace ALE::Methods
 
-#endif // _ECLIPSE_GLOBAL_METHODS_H
+#endif // _ALE_GLOBAL_METHODS_H

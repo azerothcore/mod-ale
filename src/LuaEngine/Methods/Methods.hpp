@@ -4,8 +4,8 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_METHODS_HPP
-#define _ECLIPSE_METHODS_HPP
+#ifndef _ALE_METHODS_HPP
+#define _ALE_METHODS_HPP
 
 #include <sol/sol.hpp>
 #include "GlobalMethods.h"
@@ -15,7 +15,7 @@
 #include "TimedEventManager.h"
 #include "Log.h"
 
-namespace Eclipse::Methods
+namespace ALE::Methods
 {
     /**
      * @brief Register ALL Lua methods and functions to a state
@@ -58,9 +58,9 @@ namespace Eclipse::Methods
         }
 
 
-        LOG_INFO("eclipse.methods", "[Eclipse] RegisterAllMethods - All methods registered for map {}", mapId);
+        LOG_INFO("ale.methods", "[ALE] RegisterAllMethods - All methods registered for map {}", mapId);
     }
 
-} // namespace Eclipse::Methods
+} // namespace ALE::Methods
 
-#endif // _ECLIPSE_METHODS_HPP
+#endif // _ALE_METHODS_HPP

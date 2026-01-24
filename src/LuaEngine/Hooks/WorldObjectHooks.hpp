@@ -4,15 +4,15 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_WORLD_OBJECT_HOOKS_H
-#define _ECLIPSE_WORLD_OBJECT_HOOKS_H
+#ifndef _ALE_WORLD_OBJECT_HOOKS_H
+#define _ALE_WORLD_OBJECT_HOOKS_H
 
 #include "ScriptMgr.h"
 
 #include "TimedEventManager.h"
 #include "EventManager.h"
 
-namespace Eclipse::Hooks
+namespace ALE::Hooks
 {
     /**
      * @brief Trigger WorldObject event helper (template implementation)
@@ -40,7 +40,7 @@ namespace Eclipse::Hooks
     class WorldObjectHooks : public WorldObjectScript
     {
     public:
-        WorldObjectHooks() : WorldObjectScript("Eclipse_WorldObjectHooks") { }
+        WorldObjectHooks() : WorldObjectScript("ALE_WorldObjectHooks") { }
 
         /**
          * todo: Document all overridden hooks
@@ -58,6 +58,6 @@ namespace Eclipse::Hooks
                 mgr->UpdateObjectEvents(object, diff);
         }
     };
-} // namespace Eclipse
+} // namespace ALE
 
-#endif // _ECLIPSE_WORLD_OBJECT_HOOKS_H
+#endif // _ALE_WORLD_OBJECT_HOOKS_H

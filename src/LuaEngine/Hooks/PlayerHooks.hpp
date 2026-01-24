@@ -4,8 +4,8 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_PLAYER_HOOKS_H
-#define _ECLIPSE_PLAYER_HOOKS_H
+#ifndef _ALE_PLAYER_HOOKS_H
+#define _ALE_PLAYER_HOOKS_H
 
 #include "ScriptMgr.h"
 #include "Player.h"
@@ -13,7 +13,7 @@
 #include "TimedEventManager.h"
 #include "EventManager.h"
 
-namespace Eclipse::Hooks
+namespace ALE::Hooks
 {
     /**
      * @brief Trigger player event helper (template implementation)
@@ -40,8 +40,8 @@ namespace Eclipse::Hooks
 
     /**
      * @class PlayerHooks
-     * @brief AzerothCore player event interceptor for Eclipse Lua system
-     * @note Registered in EclipseScriptLoader via sScriptMgr->AddScript<PlayerHooks>()
+     * @brief AzerothCore player event interceptor for ALE Lua system
+     * @note Registered in ALEScriptLoader via sScriptMgr->AddScript<PlayerHooks>()
      */
     class PlayerHooks : public PlayerScript
     {
@@ -49,7 +49,7 @@ namespace Eclipse::Hooks
         /**
          * @brief Constructor - registers PlayerHooks with AzerothCore
          */
-        PlayerHooks() : PlayerScript("Eclipse_PlayerHooks") { }
+        PlayerHooks() : PlayerScript("ALE_PlayerHooks") { }
 
         /**
          * @brief Player login event (PlayerEvent::ON_LOGIN (ID = 2))
@@ -170,6 +170,6 @@ namespace Eclipse::Hooks
         }
     };
 
-} // namespace Eclipse::Hooks
+} // namespace ALE::Hooks
 
-#endif // _ECLIPSE_PLAYER_HOOKS_H
+#endif // _ALE_PLAYER_HOOKS_H

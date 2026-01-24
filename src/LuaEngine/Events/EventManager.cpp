@@ -8,7 +8,7 @@
 #include "StateManager.h"
 #include "Log.h"
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     /**
      * @brief Get EventManager singleton instance
@@ -37,7 +37,7 @@ namespace Eclipse::Core
     /**
      * @brief Initialize event manager
      *
-     * Called from EclipseScriptLoader during server startup.
+     * Called from ALEScriptLoader during server startup.
      *
      * @return true on success (always succeeds)
      */
@@ -45,16 +45,16 @@ namespace Eclipse::Core
     {
         if (m_initialized)
         {
-            LOG_WARN("server.loading", "[Eclipse] EventManager - Already initialized");
+            LOG_WARN("server.loading", "[ALE] EventManager - Already initialized");
             return true;
         }
 
-        LOG_INFO("server.loading", "[Eclipse] EventManager - Initializing event manager");
+        LOG_INFO("server.loading", "[ALE] EventManager - Initializing event manager");
 
         m_nextHandlerId = 1;
         m_initialized = true;
 
-        LOG_INFO("server.loading", "[Eclipse] EventManager - Initialization complete");
+        LOG_INFO("server.loading", "[ALE] EventManager - Initialization complete");
         return true;
     }
 
@@ -62,7 +62,7 @@ namespace Eclipse::Core
      * @brief Shutdown event manager
      *
      * Cancels ALL registered handlers and logs final statistics.
-     * Called from EclipseScriptLoader during server shutdown.
+     * Called from ALEScriptLoader during server shutdown.
      */
     void EventManager::Shutdown()
     {
@@ -93,7 +93,7 @@ namespace Eclipse::Core
         if (FindAndCancelHandler(m_uniqueHandlers, handlerId, "unique"))
             return true;
 
-        LOG_WARN("eclipse.events", "[Eclipse] EventManager - Handler {} not found for cancellation", handlerId);
+        LOG_WARN("ale.events", "[ALE] EventManager - Handler {} not found for cancellation", handlerId);
         return false;
     }
 
@@ -113,7 +113,7 @@ namespace Eclipse::Core
         totalCancelled += CancelStateHandlersInMap(m_entryHandlers, stateId);
         totalCancelled += CancelStateHandlersInMap(m_uniqueHandlers, stateId);
 
-        LOG_DEBUG("eclipse.events", "[Eclipse] EventManager - Cancelled {} handlers for state {}", totalCancelled, stateId);
+        LOG_DEBUG("ale.events", "[ALE] EventManager - Cancelled {} handlers for state {}", totalCancelled, stateId);
     }
 
     /**
@@ -130,7 +130,7 @@ namespace Eclipse::Core
         m_entryHandlers.clear();
         m_uniqueHandlers.clear();
 
-        LOG_DEBUG("eclipse.events", "[Eclipse] EventManager - Cancelled all event handlers (total: {})", total);
+        LOG_DEBUG("ale.events", "[ALE] EventManager - Cancelled all event handlers (total: {})", total);
     }
 
-} // namespace Eclipse::Core
+} // namespace ALE::Core

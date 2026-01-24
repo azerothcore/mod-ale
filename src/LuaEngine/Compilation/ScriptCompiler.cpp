@@ -6,19 +6,16 @@
 
 #include "ScriptCompiler.h"
 #include "StateManager.h"
+#include "FileSystemUtils.h"
 #include "Statistics.h"
 #include "Log.h"
 #include <fstream>
-#include <sstream>
-#include <filesystem>
-#include <sys/stat.h>
 
-namespace Eclipse::API
+namespace ALE::API
 {
-    using Core::BytecodeCache;
-    using Core::StateManager;
     using Core::CompiledBytecode;
-    using Statistics::EclipseStatistics;
+    using Core::StateManager;
+    using Statistics::ALEStatistics;
 
     ScriptCompiler& ScriptCompiler::GetInstance()
     {
@@ -28,98 +25,56 @@ namespace Eclipse::API
 
     ScriptCompiler::ScriptCompiler() { }
 
-    ScriptCompiler::~ScriptCompiler()
+    ScriptCompiler::~ScriptCompiler() { }
+
+    std::shared_ptr<CompiledBytecode> ScriptCompiler::Compile(const std::string& filepath)
     {
-        auto stats = EclipseStatistics::GetInstance().GetSnapshot();
-        LOG_INFO("server.loading", "Eclipse::ScriptCompiler - Shutting down. Stats: {} successful, {} failed", stats.compilationSuccess, stats.compilationFailed);
-    }
-
-    const CompiledBytecode* ScriptCompiler::CompileFile(const std::string& filepath, const CompileOptions& options)
-    {
-        auto& cache = BytecodeCache::GetInstance();
-        auto& stats = EclipseStatistics::GetInstance();
-
-        // Try to get from cache first
-        const auto* cached = cache.Get(filepath);
-        if (cached)
-            return cached;
-
         // Determine file type and compile accordingly
-        // Priority: .ext > .cout > .moon > .lua
-        std::shared_ptr<CompiledBytecode> bytecode;
-
-        if (IsCoutFile(filepath))
-        {
-            bytecode = LoadCoutFile(filepath);
-        }
-        else if (IsMoonScriptFile(filepath))
-        {
-            bytecode = CompileMoonScriptFile(filepath);
-        }
-        else  // Both .lua and .ext use CompileLuaFile (Lua syntax)
-        {
-            bytecode = CompileLuaFile(filepath);
-        }
-
-        if (bytecode && bytecode->isValid())
-        {
-            // Store in cache
-            cache.Store(filepath, bytecode);
-
-            // Update statistics
-            stats.IncrementCompilationSuccess();
-            stats.AddCompilationBytecodeSize(bytecode->size());
-
-            return bytecode.get();
-        }
-
-        stats.IncrementCompilationFailed();
-        return nullptr;
+        if (Utils::FileSystemUtils::IsCoutFile(filepath))
+            return LoadCoutFile(filepath);
+        else if (Utils::FileSystemUtils::IsMoonScriptFile(filepath))
+            return CompileMoonScriptFile(filepath);
+        else // .lua and .ext both use Lua syntax
+            return CompileLuaFile(filepath);
     }
 
     std::shared_ptr<CompiledBytecode> ScriptCompiler::CompileLuaFile(const std::string& filepath)
     {
         try
         {
-            sol::state* masterState = GetMasterStateOrNull("CompileLuaFile");
-            if (!masterState)
-                return nullptr;
-
-            // Load Lua file
-            sol::load_result loadResult = masterState->load_file(filepath);
-
-            if (!loadResult.valid())
+            sol::state* state = StateManager::GetInstance().GetMasterState();
+            if (!state)
             {
-                sol::error err = loadResult;
-                LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::CompileLuaFile - Failed to load {}: {}",
-                    filepath, err.what());
+                LOG_ERROR("ale.compiler", "[ALE] Master state not available");
                 return nullptr;
             }
 
-            // Convert to protected_function and dump to bytecode
+            sol::load_result loadResult = state->load_file(filepath);
+            if (!loadResult.valid())
+            {
+                sol::error err = loadResult;
+                LOG_ERROR("ale.compiler", "[ALE] Failed to load {}: {}", filepath, err.what());
+                return nullptr;
+            }
+
             sol::protected_function pf = std::move(loadResult).get<sol::protected_function>();
             sol::bytecode bc = pf.dump();
 
-            // Validate bytecode
-            if (!ValidateBytecode(bc, filepath, "CompileLuaFile"))
+            if (!ValidateBytecode(bc, filepath))
                 return nullptr;
 
-            // Create bytecode structure
-            auto bytecode = CreateBytecodeStructure(std::move(bc), filepath);
+            auto bytecode = CreateBytecode(std::move(bc), filepath);
 
-            LOG_DEBUG("server.loading", "[Eclipse] ScriptCompiler::CompileLuaFile - Compiled {} ({} bytes)",
-                filepath, bytecode->size());
+            LOG_DEBUG("ale.compiler", "[ALE] Compiled Lua {} ({} bytes)", filepath, bytecode->size());
 
-            // Track statistics (.ext files are priority Lua)
-            if (IsExtFile(filepath))
-                EclipseStatistics::GetInstance().IncrementCompilationExtFile();
+            if (Utils::FileSystemUtils::IsExtFile(filepath))
+                ALEStatistics::GetInstance().IncrementCompilationExtFile();
 
             return bytecode;
         }
         catch (const std::exception& e)
         {
-            LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::CompileLuaFile - Exception compiling {}: {}",
-                filepath, e.what());
+            LOG_ERROR("ale.compiler", "[ALE] Exception compiling {}: {}", filepath, e.what());
             return nullptr;
         }
     }
@@ -128,49 +83,48 @@ namespace Eclipse::API
     {
         try
         {
-            sol::state* masterState = GetMasterStateOrNull("CompileMoonScriptFile");
-            if (!masterState)
+            sol::state* state = StateManager::GetInstance().GetMasterState();
+            if (!state)
+            {
+                LOG_ERROR("ale.compiler", "[ALE] Master state not available");
                 return nullptr;
+            }
 
             std::string moonLoader = "return require('moonscript').loadfile([[" + filepath + "]])";
-            sol::load_result moonLoadResult = masterState->load(moonLoader);
+            sol::load_result moonLoadResult = state->load(moonLoader);
 
             if (!moonLoadResult.valid())
             {
                 sol::error err = moonLoadResult;
-                LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::CompileMoonScriptFile - Failed to load MoonScript {}: {}", filepath, err.what());
+                LOG_ERROR("ale.compiler", "[ALE] Failed to load MoonScript {}: {}", filepath, err.what());
                 return nullptr;
             }
 
-            // Execute moonscript.loadfile to get compiled function
             sol::protected_function_result pfr = moonLoadResult();
             if (!pfr.valid())
             {
                 sol::error err = pfr;
-                LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::CompileMoonScriptFile - Failed to compile MoonScript {}: {}", filepath, err.what());
+                LOG_ERROR("ale.compiler", "[ALE] Failed to compile MoonScript {}: {}", filepath, err.what());
                 return nullptr;
             }
 
-            // Extract compiled function and dump to bytecode
             sol::protected_function pf = pfr;
             sol::bytecode bc = pf.dump();
 
-            // Validate bytecode
-            if (!ValidateBytecode(bc, filepath, "CompileMoonScriptFile"))
+            if (!ValidateBytecode(bc, filepath))
                 return nullptr;
 
-            // Create bytecode structure
-            auto bytecode = CreateBytecodeStructure(std::move(bc), filepath);
+            auto bytecode = CreateBytecode(std::move(bc), filepath);
 
-            LOG_DEBUG("server.loading", "[Eclipse] ScriptCompiler::CompileMoonScriptFile - Compiled {} ({} bytes)", filepath, bytecode->size());
+            LOG_DEBUG("ale.compiler", "[ALE] Compiled MoonScript {} ({} bytes)", filepath, bytecode->size());
 
-            EclipseStatistics::GetInstance().IncrementCompilationMoonScript();
+            ALEStatistics::GetInstance().IncrementCompilationMoonScript();
 
             return bytecode;
         }
         catch (const std::exception& e)
         {
-            LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::CompileMoonScriptFile - Exception compiling {}: {}", filepath, e.what());
+            LOG_ERROR("ale.compiler", "[ALE] Exception compiling {}: {}", filepath, e.what());
             return nullptr;
         }
     }
@@ -179,15 +133,13 @@ namespace Eclipse::API
     {
         try
         {
-            // Read the bytecode file
             std::ifstream file(filepath, std::ios::binary);
             if (!file.is_open())
             {
-                LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::LoadCoutFile - Failed to open: {}", filepath);
+                LOG_ERROR("ale.compiler", "[ALE] Failed to open: {}", filepath);
                 return nullptr;
             }
 
-            // Get file size
             file.seekg(0, std::ios::end);
             size_t fileSize = file.tellg();
             file.seekg(0, std::ios::beg);
@@ -195,81 +147,50 @@ namespace Eclipse::API
             if (fileSize == 0)
             {
                 file.close();
-                LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::LoadCoutFile - Empty bytecode file: {}", filepath);
+                LOG_ERROR("ale.compiler", "[ALE] Empty bytecode file: {}", filepath);
                 return nullptr;
             }
 
-            // Read directly into std::byte buffer (native bytecode format)
             std::vector<std::byte> byteBuffer(fileSize);
             file.read(reinterpret_cast<char*>(byteBuffer.data()), fileSize);
             file.close();
 
-            // Create bytecode from buffer (zero-copy from file to sol::bytecode)
             sol::bytecode bc(byteBuffer.begin(), byteBuffer.end());
 
-            // Validate bytecode
-            if (!ValidateBytecode(bc, filepath, "LoadCoutFile"))
+            if (!ValidateBytecode(bc, filepath))
                 return nullptr;
 
-            // Create bytecode structure
-            auto bytecode = CreateBytecodeStructure(std::move(bc), filepath);
+            auto bytecode = CreateBytecode(std::move(bc), filepath);
 
-            LOG_DEBUG("server.loading", "[Eclipse] ScriptCompiler::LoadCoutFile - Loaded {} ({} bytes)", filepath, bytecode->size());
+            LOG_DEBUG("ale.compiler", "[ALE] Loaded Cout {} ({} bytes)", filepath, bytecode->size());
 
-            EclipseStatistics::GetInstance().IncrementCompilationCoutFile();
+            ALEStatistics::GetInstance().IncrementCompilationCoutFile();
 
             return bytecode;
         }
         catch (const std::exception& e)
         {
-            LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::LoadCoutFile - Exception loading {}: {}", filepath, e.what());
+            LOG_ERROR("ale.compiler", "[ALE] Exception loading {}: {}", filepath, e.what());
             return nullptr;
         }
     }
 
-    sol::state* ScriptCompiler::GetMasterStateOrNull(const char* callerName)
-    {
-        auto& stateManager = StateManager::GetInstance();
-        sol::state* masterState = stateManager.GetMasterState();
-
-        if (!masterState)
-        {
-            LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::{} - Master state not available", callerName);
-            return nullptr;
-        }
-
-        return masterState;
-    }
-
-    bool ScriptCompiler::ValidateBytecode(const sol::bytecode& bc, const std::string& filepath, const char* callerName)
+    bool ScriptCompiler::ValidateBytecode(const sol::bytecode& bc, const std::string& filepath)
     {
         if (bc.as_string_view().empty())
         {
-            LOG_ERROR("server.loading", "[Eclipse] ScriptCompiler::{} - Failed to dump bytecode: {}", callerName, filepath);
+            LOG_ERROR("ale.compiler", "[ALE] Failed to dump bytecode: {}", filepath);
             return false;
         }
         return true;
     }
 
-    bool ScriptCompiler::HasExtension(const std::string& filepath, const std::string& extension)
+    std::shared_ptr<CompiledBytecode> ScriptCompiler::CreateBytecode(sol::bytecode&& bc, const std::string& filepath)
     {
-        std::filesystem::path path(filepath);
-        return path.extension() == extension;
-    }
-
-    std::shared_ptr<CompiledBytecode> ScriptCompiler::CreateBytecodeStructure(sol::bytecode&& bc, const std::string& filepath)
-    {
-        auto& cache = BytecodeCache::GetInstance();
-
-        // Get file modification time
-        std::time_t modTime = cache.GetFileModTime(filepath);
-
-        // Create and populate bytecode structure
         auto bytecode = std::make_shared<CompiledBytecode>();
         bytecode->bytecode = std::move(bc);
         bytecode->filepath = filepath;
-        bytecode->last_modified = modTime;
-
+        bytecode->last_modified = Utils::FileSystemUtils::GetFileModTime(filepath);
         return bytecode;
     }
 

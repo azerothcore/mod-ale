@@ -4,8 +4,8 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_UNIT_METHODS_HPP
-#define _ECLIPSE_UNIT_METHODS_HPP
+#ifndef _ALE_UNIT_METHODS_HPP
+#define _ALE_UNIT_METHODS_HPP
 
 #include <sol/sol.hpp>
 #include "Unit.h"
@@ -14,7 +14,7 @@
 #include "Log.h"
 #include "SpellMgr.h"
 
-namespace Eclipse::Methods
+namespace ALE::Methods
 {
     namespace UnitMethods
     {
@@ -317,6 +317,6 @@ namespace Eclipse::Methods
         unitType["ClearVictim"] = &UnitMethods::ClearVictim;
     }
 
-} // namespace Eclipse::Methods
+} // namespace ALE::Methods
 
-#endif // _ECLIPSE_UNIT_METHODS_HPP
+#endif // _ALE_UNIT_METHODS_HPP

@@ -4,8 +4,8 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_SCRIPT_LOADER_H
-#define _ECLIPSE_SCRIPT_LOADER_H
+#ifndef _ALE_SCRIPT_LOADER_H
+#define _ALE_SCRIPT_LOADER_H
 
 #include <sol/sol.hpp>
 #include <string>
@@ -13,8 +13,10 @@
 #include <boost/filesystem.hpp>
 #include "Common.h"
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
+    // Forward declarations
+    struct CompiledBytecode;
     /**
      * @struct ScriptFile
      * @brief Metadata for discovered script files
@@ -66,48 +68,7 @@ namespace Eclipse::Core
 
     /**
      * @class ScriptLoader
-     * @brief Discovers, compiles, and executes Lua/MoonScript files
-     * 
-     * **Purpose:**
-     * Scans lua_scripts directory, compiles scripts to bytecode via BytecodeCache,
-     * and executes them in the appropriate Lua state.
-     * 
-     * **Architecture:**
-     * - Singleton for global script management
-     * - Recursive directory scanning (finds scripts in subdirectories)
-     * - Bytecode caching for fast reload
-     * - Package.path/cpath configuration for require()
-     * 
-     * **Workflow:**
-     * 1. ScanScripts(): Recursively scan lua_scripts directory
-     * 2. SetupRequirePaths(): Configure Lua package paths
-     * 3. LoadScript(): Compile via BytecodeCache, load, execute
-     * 4. ReloadAllScripts(): Clear cache, reload all
-     * 
-     * **Current Behavior (State -1):**
-     * - All scripts loaded into master state (-1)
-     * - Called once during server startup
-     * - No runtime script loading
-     * 
-     * **Future Behavior (Multistate):**
-     * - Master state: Shared libraries/utilities
-     * - Per-map states: Map-specific scripts
-     * - Dynamic loading when maps created
-     * 
-     * **Performance:**
-     * - ScanScripts: O(n) where n = files in directory tree
-     * - LoadScript: O(1) if bytecode cached, O(m) if compiling (m = script size)
-     * - ReloadAllScripts: O(n*m) full recompilation
-     * 
-     * **Hidden File Handling:**
-     * - Windows: Skips FILE_ATTRIBUTE_HIDDEN files
-     * - Unix: Skips files starting with '.'
-     * 
-     * **Thread-Safety:**
-     * - NOT thread-safe (initialization only)
-     * - Called from single thread during server startup
-     * 
-     * @note Uses boost::filesystem for cross-platform file operations
+     * @brief Orchestrates script discovery, caching, compilation, and execution
      */
     class ScriptLoader
     {
@@ -122,7 +83,6 @@ namespace Eclipse::Core
          */
         ~ScriptLoader();
 
-        // Non-copyable, non-movable (singleton pattern)
         ScriptLoader(const ScriptLoader&) = delete;
         ScriptLoader& operator=(const ScriptLoader&) = delete;
         ScriptLoader(ScriptLoader&&) = delete;
@@ -136,10 +96,10 @@ namespace Eclipse::Core
 
         /**
          * @brief Set script directory path
-         * 
+         *
          * Sets the root directory for script scanning.
          * Default: "lua_scripts"
-         * 
+         *
          * @param path Path to lua_scripts directory (absolute or relative)
          */
         void SetScriptPath(const std::string& path);
@@ -152,28 +112,17 @@ namespace Eclipse::Core
 
         /**
          * @brief Scan directory for .lua and .moon files
-         * 
-         * Recursively scans lua_scripts directory tree.
-         * Skips hidden files (Windows: FILE_ATTRIBUTE_HIDDEN, Unix: starts with '.').
-         * 
-         * Performance: O(n) where n = total files in directory tree.
-         * 
+         *
          * @return Vector of discovered script files
          */
         std::vector<ScriptFile> ScanScripts();
 
         /**
          * @brief Load all scripts from directory
-         * 
-         * Workflow:
-         * 1. Get or create Lua state
-         * 2. Setup require paths
-         * 3. Scan for scripts
-         * 4. Load each script (compile + execute)
-         * 
+         *
          * Current: Loads all into master state (-1).
          * Future: Can specify per-map state ID.
-         * 
+         *
          * @param stateId State ID to load scripts into (-1 for master, >=0 for per-map)
          * @return Number of scripts successfully loaded
          */
@@ -181,14 +130,7 @@ namespace Eclipse::Core
 
         /**
          * @brief Load a specific script file
-         * 
-         * Loads single script:
-         * 1. Get bytecode from BytecodeCache (compile if needed)
-         * 2. Load bytecode into state
-         * 3. Execute loaded function
-         * 
-         * Performance: O(1) if bytecode cached, O(n) if compiling.
-         * 
+         *
          * @param scriptFile Script file metadata
          * @param stateId State ID to load into (-1 for master)
          * @return true if loaded and executed successfully
@@ -197,14 +139,7 @@ namespace Eclipse::Core
 
         /**
          * @brief Reload all scripts (clear cache + reload)
-         * 
-         * Full reload workflow:
-         * 1. Clear BytecodeCache (force recompilation)
-         * 2. Destroy and recreate state (if per-map state)
-         * 3. LoadAllScripts()
-         * 
-         * Performance: O(n*m) where n = scripts, m = avg script size.
-         * 
+         *
          * @param stateId State ID to reload scripts for (-1 for master)
          * @return Number of scripts successfully reloaded
          */
@@ -212,56 +147,34 @@ namespace Eclipse::Core
 
         /**
          * @brief Setup require paths for a Lua state
-         * 
+         *
          * Configures package.path and package.cpath for require().
          * Adds all subdirectories recursively to search paths.
-         * 
-         * Example paths added:
-         * - lua_scripts/?.lua
-         * - lua_scripts/?/init.lua
-         * - lua_scripts/subdir/?.lua
-         * - lua_scripts/?.dll (Windows) or ?.so (Unix)
-         * 
+         *
          * @param state Lua state to configure
          */
         void SetupRequirePaths(sol::state& state);
 
     private:
         std::string m_scriptPath;   ///< Root script directory path
-        std::string m_requirePath;  ///< Cached Lua require path (unused currently)
-        std::string m_requireCPath; ///< Cached Lua require cpath (unused currently)
-        // NOTE: All statistics tracked in Eclipse::Statistics::EclipseStatistics
 
         /**
          * @brief Recursively scan directory for scripts
-         * 
-         * Internal recursive helper for ScanScripts().
-         * 
          * @param directory Directory to scan
          * @param scripts Output vector (appended to)
          */
         void ScanDirectory(const std::string& directory, std::vector<ScriptFile>& scripts);
 
         /**
-         * @brief Check if file is a valid script file
-         * 
-         * Accepts: .ext, .lua, .moon, .cout
-         * 
-         * @param filename Filename to check
-         * @param extension Output: extracted extension if valid
-         * @return true if valid script file extension
+         * @brief Execute compiled bytecode in a state
+         * @param bytecode Compiled bytecode to execute
+         * @param filename Script filename (for error logging)
+         * @param stateId State ID to execute in
+         * @return true if execution successful
          */
-        bool IsScriptFile(const std::string& filename, std::string& extension);
-
-        /**
-         * @brief Get Lua state with validation
-         * @param stateId State ID (-1 for master, >=0 for per-map)
-         * @param callerName Caller function name for error logging
-         * @return Pointer to state, or nullptr if unavailable (logs error)
-         */
-        sol::state* GetStateOrNull(int32 stateId, const char* callerName);
+        bool ExecuteBytecode(const CompiledBytecode* bytecode, const std::string& filename, int32 stateId);
     };
 
-} // namespace Eclipse::Core
+} // namespace ALE::Core
 
-#endif // _ECLIPSE_SCRIPT_LOADER_H
+#endif // _ALE_SCRIPT_LOADER_H

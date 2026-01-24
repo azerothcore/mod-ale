@@ -10,7 +10,7 @@
 #include "Log.h"
 #include <chrono>
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     /**
      * @brief Singleton getter for StateManager
@@ -30,7 +30,7 @@ namespace Eclipse::Core
      */
     StateManager::StateManager()
     {
-        LOG_INFO("server.loading", "[Eclipse] StateManager - Creating state manager");
+        LOG_INFO("server.loading", "[ALE] StateManager - Creating state manager");
     }
 
     /**
@@ -45,7 +45,7 @@ namespace Eclipse::Core
      * @brief Initialize state manager and create master state
      * 
      * Creates master state (-1) with its TimedEventManager.
-     * Called from EclipseScriptLoader during server startup.
+     * Called from ALEScriptLoader during server startup.
      * 
      * @return true on success
      */
@@ -55,11 +55,11 @@ namespace Eclipse::Core
 
         if (m_initialized)
         {
-            LOG_WARN("server.loading", "[Eclipse] StateManager - Already initialized");
+            LOG_WARN("server.loading", "[ALE] StateManager - Already initialized");
             return true;
         }
 
-        LOG_INFO("server.loading", "[Eclipse] StateManager - Initializing state manager");
+        LOG_INFO("server.loading", "[ALE] StateManager - Initializing state manager");
 
         try
         {
@@ -67,17 +67,17 @@ namespace Eclipse::Core
             sol::state* masterState = GetOrCreateState(MASTER_STATE_ID);
             if (!masterState)
             {
-                LOG_ERROR("server.loading", "[Eclipse] StateManager - Failed to create master state");
+                LOG_ERROR("server.loading", "[ALE] StateManager - Failed to create master state");
                 return false;
             }
 
             m_initialized = true;
-            LOG_INFO("server.loading", "[Eclipse] StateManager - Initialization complete");
+            LOG_INFO("server.loading", "[ALE] StateManager - Initialization complete");
             return true;
         }
         catch (const std::exception& e)
         {
-            LOG_ERROR("server.loading", "[Eclipse] StateManager - Initialization failed: {}", e.what());
+            LOG_ERROR("server.loading", "[ALE] StateManager - Initialization failed: {}", e.what());
             return false;
         }
     }
@@ -95,13 +95,13 @@ namespace Eclipse::Core
         if (!m_initialized)
             return;
 
-        LOG_INFO("server.loading", "[Eclipse] StateManager - Shutting down {} states", m_states.size());
+        LOG_INFO("server.loading", "[ALE] StateManager - Shutting down {} states", m_states.size());
 
         // Clear all states (unique_ptr auto-destruction)
         m_states.clear();
         m_initialized = false;
 
-        LOG_INFO("server.loading", "[Eclipse] StateManager - Shutdown complete");
+        LOG_INFO("server.loading", "[ALE] StateManager - Shutdown complete");
     }
 
     /**
@@ -162,14 +162,14 @@ namespace Eclipse::Core
         // Don't allow removing the master state
         if (mapId == MASTER_STATE_ID)
         {
-            LOG_WARN("server.loading", "[Eclipse] StateManager - Cannot remove master state");
+            LOG_WARN("server.loading", "[ALE] StateManager - Cannot remove master state");
             return;
         }
 
         auto it = m_states.find(mapId);
         if (it != m_states.end())
         {
-            LOG_DEBUG("server.loading", "[Eclipse] StateManager - Removing state for map {}", mapId);
+            LOG_DEBUG("server.loading", "[ALE] StateManager - Removing state for map {}", mapId);
             m_states.erase(it); // Unique_ptr auto-destructs state + managers
         }
     }
@@ -285,7 +285,7 @@ namespace Eclipse::Core
         {
             bool isMasterState = (mapId == MASTER_STATE_ID);
 
-            LOG_DEBUG("server.loading", "[Eclipse] StateManager - Creating {} state for map {}",
+            LOG_DEBUG("server.loading", "[ALE] StateManager - Creating {} state for map {}",
                 isMasterState ? "master" : "map", mapId);
 
             // Create new state entry
@@ -298,20 +298,20 @@ namespace Eclipse::Core
             // Setup standard Lua libraries
             SetupStateLibraries(*entry.state, isMasterState);
 
-            // Register global functions (Eclipse API)
+            // Register global functions (ALE API)
             RegisterGlobalFunctions(*entry.state);
 
             // Store the state and return pointer
             sol::state* statePtr = entry.state.get();
             m_states[mapId] = std::move(entry);
 
-            LOG_DEBUG("server.loading", "[Eclipse] StateManager - State {} created successfully with dedicated TimedEventManager", mapId);
+            LOG_DEBUG("server.loading", "[ALE] StateManager - State {} created successfully with dedicated TimedEventManager", mapId);
 
             return statePtr;
         }
         catch (const std::exception& e)
         {
-            LOG_ERROR("server.loading", "[Eclipse] StateManager - Failed to create state for map {}: {}", 
+            LOG_ERROR("server.loading", "[ALE] StateManager - Failed to create state for map {}: {}", 
                 mapId, e.what());
             return nullptr;
         }
@@ -355,21 +355,21 @@ namespace Eclipse::Core
         // state["package"]["path"] = "./lua/?.lua;./lua/?/init.lua";
         // state["package"]["cpath"] = "./lua/?.dll;./lua/?/init.dll";
 
-        LOG_DEBUG("server.loading", "[Eclipse] StateManager - Libraries setup complete for {} state",
+        LOG_DEBUG("server.loading", "[ALE] StateManager - Libraries setup complete for {} state",
             isMasterState ? "master" : "map");
     }
 
     /**
      * @brief Register global functions exposed to Lua
      * 
-     * Registers Eclipse API functions:
+     * Registers ALE API functions:
      * - RegisterPlayerEvent(eventId, callback)
      * - RegisterCreatureGossipEvent(entry, eventId, callback)
      * - RegisterTimedEvent(delay, callback, repeats)
      * - CancelTimedEvent(eventId)
      * - print(...) - custom Lua print logging
      * 
-     * Additional APIs registered by EclipseScriptLoader after state creation.
+     * Additional APIs registered by ALEScriptLoader after state creation.
      * 
      * @param state Lua state to register functions in
      */
@@ -378,10 +378,10 @@ namespace Eclipse::Core
         // Custom global functions registered here
         // Example:
         // state.set_function("PrintInfo", [](const std::string& msg) {
-        //     LOG_INFO("eclipse.lua", "{}", msg);
+        //     LOG_INFO("ale.lua", "{}", msg);
         // });
 
-        // Core Eclipse API registered by EclipseScriptLoader:
+        // Core ALE API registered by ALEScriptLoader:
         // - Player usertype
         // - Creature usertype
         // - GameObject usertype
@@ -391,4 +391,4 @@ namespace Eclipse::Core
         // Additional registration happens in RegisterLuaFunctions()
     }
 
-} // namespace Eclipse::Core
+} // namespace ALE::Core

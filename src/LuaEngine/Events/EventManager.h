@@ -4,8 +4,8 @@
  * Please see the included DOCS/LICENSE.md for more information
  */
 
-#ifndef _ECLIPSE_EVENT_MANAGER_H
-#define _ECLIPSE_EVENT_MANAGER_H
+#ifndef _ALE_EVENT_MANAGER_H
+#define _ALE_EVENT_MANAGER_H
 
 #include <sol/sol.hpp>
 #include <unordered_map>
@@ -13,7 +13,7 @@
 #include "Common.h"
 #include "Log.h"
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     /**
      * @enum PlayerEvent
@@ -177,18 +177,18 @@ namespace Eclipse::Core
 namespace std
 {
     template<>
-    struct hash<Eclipse::Core::GlobalEventKey>
+    struct hash<ALE::Core::GlobalEventKey>
     {
-        size_t operator()(const Eclipse::Core::GlobalEventKey& key) const noexcept
+        size_t operator()(const ALE::Core::GlobalEventKey& key) const noexcept
         {
             return key.eventCategory ^ (hash<uint32>()(key.eventType) << 1);
         }
     };
 
     template<>
-    struct hash<Eclipse::Core::EntryEventKey>
+    struct hash<ALE::Core::EntryEventKey>
     {
-        size_t operator()(const Eclipse::Core::EntryEventKey& key) const noexcept
+        size_t operator()(const ALE::Core::EntryEventKey& key) const noexcept
         {
             return key.eventCategory 
                 ^ (hash<uint32>()(key.eventType) << 1) 
@@ -197,9 +197,9 @@ namespace std
     };
 
     template<>
-    struct hash<Eclipse::Core::UniqueEventKey>
+    struct hash<ALE::Core::UniqueEventKey>
     {
-        size_t operator()(const Eclipse::Core::UniqueEventKey& key) const noexcept
+        size_t operator()(const ALE::Core::UniqueEventKey& key) const noexcept
         {
             return key.eventCategory 
                 ^ (hash<uint32>()(key.eventType) << 1) 
@@ -209,7 +209,7 @@ namespace std
 }
 
 
-namespace Eclipse::Core
+namespace ALE::Core
 {
     /**
      * @class EventManager
@@ -739,7 +739,7 @@ namespace Eclipse::Core
             if (it != handlers.end())
             {
                 handlers.erase(it);
-                LOG_INFO("eclipse.events", "[Eclipse] EventManager - Cancelled {} event handler {}", logType, handlerId);
+                LOG_INFO("ale.events", "[ALE] EventManager - Cancelled {} event handler {}", logType, handlerId);
                 return true;
             }
         }
@@ -799,7 +799,7 @@ namespace Eclipse::Core
                 if (!result.valid())
                 {
                     sol::error err = result;
-                    LOG_ERROR("eclipse.events", "[Eclipse] EventManager - Lua error in handler {}: {}", handlerId, err.what());
+                    LOG_ERROR("ale.events", "[ALE] EventManager - Lua error in handler {}: {}", handlerId, err.what());
                     continue;
                 }
 
@@ -816,7 +816,7 @@ namespace Eclipse::Core
             }
             catch (const std::exception& e)
             {
-                LOG_ERROR("eclipse.events", "[Eclipse] EventManager - Exception in handler {}: {}", handlerId, e.what());
+                LOG_ERROR("ale.events", "[ALE] EventManager - Exception in handler {}: {}", handlerId, e.what());
             }
         }
 
@@ -852,7 +852,7 @@ namespace Eclipse::Core
                 if (!result.valid())
                 {
                     sol::error err = result;
-                    LOG_ERROR("eclipse.events", "[Eclipse] EventManager - Lua error in entry handler {}: {}", handlerId, err.what());
+                    LOG_ERROR("ale.events", "[ALE] EventManager - Lua error in entry handler {}: {}", handlerId, err.what());
                     continue;
                 }
 
@@ -869,7 +869,7 @@ namespace Eclipse::Core
             }
             catch (const std::exception& e)
             {
-                LOG_ERROR("eclipse.events", "[Eclipse] EventManager - Exception in entry handler {}: {}", handlerId, e.what());
+                LOG_ERROR("ale.events", "[ALE] EventManager - Exception in entry handler {}: {}", handlerId, e.what());
             }
         }
 
@@ -878,6 +878,6 @@ namespace Eclipse::Core
         return returnValue;
     }
 
-} // namespace Eclipse::Core
+} // namespace ALE::Core
 
-#endif // _ECLIPSE_EVENT_MANAGER_H
+#endif // _ALE_EVENT_MANAGER_H

@@ -10,12 +10,26 @@
 #include <sol/sol.hpp>
 #include <unordered_map>
 #include <vector>
+#include <tuple>
+#include <type_traits>
 #include "Common.h"
 #include "Log.h"
 #include "Hooks.hpp"
 
 namespace ALE::Core
 {
+    /**
+     * @brief Type trait to detect std::tuple types
+     * @tparam T Type to check
+     */
+    template<typename T>
+    struct is_tuple : std::false_type {};
+
+    template<typename... Ts>
+    struct is_tuple<std::tuple<Ts...>> : std::true_type {};
+
+    template<typename T>
+    inline constexpr bool is_tuple_v = is_tuple<T>::value;
     /**
      * @struct EventHandler
      * @brief Lua callback wrapper with execution tracking
@@ -366,9 +380,8 @@ namespace ALE::Core
          * @brief Trigger global event with return value capture
          *
          * Executes all handlers and captures return value from LAST successful handler.
-         * Use case: Events that modify values (e.g., OnGiveXP returning modified amount).
          *
-         * @tparam ReturnType Type of return value to capture
+         * @tparam ReturnType Type of return value (simple type or std::tuple<...>)
          * @tparam EventEnum Event type enum
          * @tparam Args Variadic argument types for Lua callback
          * @param eventType Event enum value
@@ -382,7 +395,8 @@ namespace ALE::Core
         /**
          * @brief Trigger entry event with return value capture
          *
-         * @tparam ReturnType Type of return value to capture
+         *
+         * @tparam ReturnType Type of return value (simple type or std::tuple<...>)
          * @tparam EventEnum Event type enum
          * @tparam Args Variadic argument types for Lua callback
          * @param eventType Event enum value
@@ -737,12 +751,28 @@ namespace ALE::Core
 
                 handler.callCount++;
 
-                // Extract return value from Lua
+                // Extract return value(s) from Lua
                 if (result.return_count() > 0)
                 {
-                    sol::optional<ReturnType> luaReturn = result;
-                    if (luaReturn)
-                        returnValue = *luaReturn;
+                    if constexpr (is_tuple_v<ReturnType>)
+                    {
+                        // Multi-return case: extract tuple
+                        // Check if Lua returned enough values for the tuple
+                        constexpr size_t tupleSize = std::tuple_size_v<ReturnType>;
+                        if (result.return_count() >= tupleSize)
+                        {
+                            sol::optional<ReturnType> luaReturn = result;
+                            if (luaReturn)
+                                returnValue = *luaReturn;
+                        }
+                    }
+                    else
+                    {
+                        // Single-return case: extract simple type
+                        sol::optional<ReturnType> luaReturn = result;
+                        if (luaReturn)
+                            returnValue = *luaReturn;
+                    }
                 }
             }
             catch (const std::exception& e)

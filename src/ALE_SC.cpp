@@ -30,6 +30,7 @@
 #include "WorldHooks.hpp"
 #include "PlayerHooks.hpp"
 #include "WorldObjectHooks.hpp"
+#include "UnitHooks.hpp"
 
 void AddSC_ALE()
 {
@@ -37,4 +38,5 @@ void AddSC_ALE()
     new ALE::Hooks::WorldHooks();
     new ALE::Hooks::PlayerHooks();
     new ALE::Hooks::WorldObjectHooks();
+    new ALE::Hooks::UnitHooks();
 }

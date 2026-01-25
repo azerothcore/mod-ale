@@ -390,7 +390,7 @@ namespace ALE::Core
          * @return Last valid return value from Lua, or defaultValue if none
          */
         template<typename ReturnType, typename EventEnum, typename... Args>
-        ReturnType TriggerGlobalEventWithReturn(EventEnum eventType, ReturnType defaultValue, Args&&... args);
+        ReturnType TriggerGlobalEventWithReturn(EventEnum eventType, const ReturnType& defaultValue, Args&&... args);
 
         /**
          * @brief Trigger entry event with return value capture
@@ -406,7 +406,7 @@ namespace ALE::Core
          * @return Last valid return value from Lua, or defaultValue if none
          */
         template<typename ReturnType, typename EventEnum, typename... Args>
-        ReturnType TriggerEntryEventWithReturn(EventEnum eventType, uint32 entry, ReturnType defaultValue, Args&&... args);
+        ReturnType TriggerEntryEventWithReturn(EventEnum eventType, uint32 entry, const ReturnType& defaultValue, Args&&... args);
 
     private:
         // Handler storage: vector for cache locality, pair<id, handler> for tracking
@@ -492,7 +492,7 @@ namespace ALE::Core
          * @return Last valid return value or defaultValue
          */
         template<typename ReturnType, typename MapType, typename KeyType, typename... Args>
-        ReturnType TriggerEventWithReturnImpl(MapType& handlerMap, const KeyType& key, ReturnType defaultValue, Args&&... args);
+        ReturnType TriggerEventWithReturnImpl(MapType& handlerMap, const KeyType& key, const ReturnType& defaultValue, Args&&... args);
     };
 
     /**
@@ -723,9 +723,15 @@ namespace ALE::Core
 
     /**
      * @brief Core trigger with return implementation
+     *
+     * Behavior:
+     * - Simple types (uint32, int, etc.): Value chaining - each handler receives
+     *   the value returned by the previous handler (last argument is updated)
+     * - Tuples: Value chaining on last element, other elements passed as-is
+     *   The hook C++ code decides what to do with bool/other values
      */
     template<typename ReturnType, typename MapType, typename KeyType, typename... Args>
-    ReturnType EventManager::TriggerEventWithReturnImpl(MapType& handlerMap, const KeyType& key, ReturnType defaultValue, Args&&... args)
+    ReturnType EventManager::TriggerEventWithReturnImpl(MapType& handlerMap, const KeyType& key, const ReturnType& defaultValue, Args&&... args)
     {
         auto it = handlerMap.find(key);
         if (it == handlerMap.end())
@@ -734,6 +740,10 @@ namespace ALE::Core
         ReturnType returnValue = defaultValue;
         auto& handlers = it->second;
 
+        // Store arguments in a mutable tuple for chaining
+        auto argsTuple = std::make_tuple(args...);
+        constexpr size_t argsCount = sizeof...(Args);
+
         for (auto& [handlerId, handler] : handlers)
         {
             if (!handler.ShouldExecute())
@@ -741,7 +751,11 @@ namespace ALE::Core
 
             try
             {
-                auto result = handler.function(std::forward<Args>(args)...);
+                // Call handler with current arguments (using std::apply for chaining)
+                auto result = std::apply([&handler](auto&&... a) {
+                    return handler.function(std::forward<decltype(a)>(a)...);
+                }, argsTuple);
+
                 if (!result.valid())
                 {
                     sol::error err = result;
@@ -756,22 +770,45 @@ namespace ALE::Core
                 {
                     if constexpr (is_tuple_v<ReturnType>)
                     {
-                        // Multi-return case: extract tuple
-                        // Check if Lua returned enough values for the tuple
+                        // Tuple case: extract and chain the last element
                         constexpr size_t tupleSize = std::tuple_size_v<ReturnType>;
-                        if (result.return_count() >= tupleSize)
+                        if (static_cast<size_t>(result.return_count()) >= tupleSize)
                         {
                             sol::optional<ReturnType> luaReturn = result;
                             if (luaReturn)
+                            {
                                 returnValue = *luaReturn;
+
+                                // Chain last tuple element to last argument for next handler
+                                if constexpr (argsCount > 0 && tupleSize > 0)
+                                {
+                                    using LastArgType = std::decay_t<std::tuple_element_t<argsCount - 1, decltype(argsTuple)>>;
+                                    using LastTupleType = std::decay_t<std::tuple_element_t<tupleSize - 1, ReturnType>>;
+                                    if constexpr (std::is_same_v<LastArgType, LastTupleType>)
+                                    {
+                                        std::get<argsCount - 1>(argsTuple) = std::get<tupleSize - 1>(*luaReturn);
+                                    }
+                                }
+                            }
                         }
                     }
                     else
                     {
-                        // Single-return case: extract simple type
                         sol::optional<ReturnType> luaReturn = result;
                         if (luaReturn)
+                        {
                             returnValue = *luaReturn;
+
+                            // Update last argument for next handler
+                            if constexpr (argsCount > 0)
+                            {
+                                using LastArgType = std::decay_t<std::tuple_element_t<argsCount - 1, decltype(argsTuple)>>;
+                                if constexpr (std::is_same_v<LastArgType, ReturnType>)
+                                {
+                                    std::get<argsCount - 1>(argsTuple) = *luaReturn;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -790,7 +827,7 @@ namespace ALE::Core
      * @brief Trigger global event with return value capture
      */
     template<typename ReturnType, typename EventEnum, typename... Args>
-    ReturnType EventManager::TriggerGlobalEventWithReturn(EventEnum eventType, ReturnType defaultValue, Args&&... args)
+    ReturnType EventManager::TriggerGlobalEventWithReturn(EventEnum eventType, const ReturnType& defaultValue, Args&&... args)
     {
         GlobalEventKey key{ typeid(EventEnum).hash_code(), static_cast<uint32>(eventType) };
         return TriggerEventWithReturnImpl(m_globalHandlers, key, defaultValue, std::forward<Args>(args)...);
@@ -800,7 +837,7 @@ namespace ALE::Core
      * @brief Trigger entry event with return value capture
      */
     template<typename ReturnType, typename EventEnum, typename... Args>
-    ReturnType EventManager::TriggerEntryEventWithReturn(EventEnum eventType, uint32 entry, ReturnType defaultValue, Args&&... args)
+    ReturnType EventManager::TriggerEntryEventWithReturn(EventEnum eventType, uint32 entry, const ReturnType& defaultValue, Args&&... args)
     {
         EntryEventKey key{ typeid(EventEnum).hash_code(), static_cast<uint32>(eventType), entry };
         return TriggerEventWithReturnImpl(m_entryHandlers, key, defaultValue, std::forward<Args>(args)...);

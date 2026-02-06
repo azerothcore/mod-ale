@@ -4983,6 +4983,29 @@ namespace LuaPlayer
         player->ApplyRatingMod(CombatRating(stat), value, apply);
         return 0;
     }
+
+    /**
+     * Returns `true` if the [Player] knows the given taxi node, `false` otherwise.
+     *
+     * @param uint32 nodeId
+     * @return bool known
+     */
+    int HasKnownTaxiNode(lua_State* L, Player* player)
+    {
+        if (!player)
+            return 0;
+
+        uint32 nodeId = ALE::CHECKVAL<uint32>(L, 2);
+
+        if (nodeId == 0)
+        {
+            ALE::Push(L, false);
+            return 1;
+        }
+
+        ALE::Push(L, player->m_taxi.IsTaximaskNodeKnown(nodeId));
+        return 1;
+    }
 };
 #endif
 

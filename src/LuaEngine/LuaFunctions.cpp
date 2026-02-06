@@ -707,6 +707,7 @@ ALERegister<Player> PlayerMethods[] =
     { "IsAtLootRewardDistance", &LuaPlayer::IsAtLootRewardDistance },
     { "CanTeleport", &LuaPlayer::CanTeleport },
     { "IsSpectator", &LuaPlayer::IsSpectator },
+    { "HasKnownTaxiNode", &LuaPlayer::HasKnownTaxiNode },
     // { "HasSpellMod", &LuaPlayer::HasSpellMod },
 
     // Gossip

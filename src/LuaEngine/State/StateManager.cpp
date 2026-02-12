@@ -30,7 +30,6 @@ namespace ALE::Core
      */
     StateManager::StateManager()
     {
-        LOG_INFO("server.loading", "[ALE] StateManager - Creating state manager");
     }
 
     /**
@@ -51,19 +50,11 @@ namespace ALE::Core
      */
     bool StateManager::Initialize()
     {
-        // NO LOCK: State -1 is single-threaded
-
         if (m_initialized)
-        {
-            LOG_WARN("server.loading", "[ALE] StateManager - Already initialized");
             return true;
-        }
-
-        LOG_INFO("server.loading", "[ALE] StateManager - Initializing state manager");
 
         try
         {
-            // Create the master state first
             sol::state* masterState = GetOrCreateState(MASTER_STATE_ID);
             if (!masterState)
             {
@@ -72,7 +63,6 @@ namespace ALE::Core
             }
 
             m_initialized = true;
-            LOG_INFO("server.loading", "[ALE] StateManager - Initialization complete");
             return true;
         }
         catch (const std::exception& e)
@@ -90,18 +80,11 @@ namespace ALE::Core
      */
     void StateManager::Shutdown()
     {
-        // NO LOCK: State -1 is single-threaded
-
         if (!m_initialized)
             return;
 
-        LOG_INFO("server.loading", "[ALE] StateManager - Shutting down {} states", m_states.size());
-
-        // Clear all states (unique_ptr auto-destruction)
         m_states.clear();
         m_initialized = false;
-
-        LOG_INFO("server.loading", "[ALE] StateManager - Shutdown complete");
     }
 
     /**
@@ -298,9 +281,6 @@ namespace ALE::Core
             // Setup standard Lua libraries
             SetupStateLibraries(*entry.state, isMasterState);
 
-            // Register global functions (ALE API)
-            RegisterGlobalFunctions(*entry.state);
-
             // Store the state and return pointer
             sol::state* statePtr = entry.state.get();
             m_states[mapId] = std::move(entry);
@@ -357,38 +337,6 @@ namespace ALE::Core
 
         LOG_DEBUG("server.loading", "[ALE] StateManager - Libraries setup complete for {} state",
             isMasterState ? "master" : "map");
-    }
-
-    /**
-     * @brief Register global functions exposed to Lua
-     * 
-     * Registers ALE API functions:
-     * - RegisterPlayerEvent(eventId, callback)
-     * - RegisterCreatureGossipEvent(entry, eventId, callback)
-     * - RegisterTimedEvent(delay, callback, repeats)
-     * - CancelTimedEvent(eventId)
-     * - print(...) - custom Lua print logging
-     * 
-     * Additional APIs registered by ALEScriptLoader after state creation.
-     * 
-     * @param state Lua state to register functions in
-     */
-    void StateManager::RegisterGlobalFunctions(sol::state& state)
-    {
-        // Custom global functions registered here
-        // Example:
-        // state.set_function("PrintInfo", [](const std::string& msg) {
-        //     LOG_INFO("ale.lua", "{}", msg);
-        // });
-
-        // Core ALE API registered by ALEScriptLoader:
-        // - Player usertype
-        // - Creature usertype
-        // - GameObject usertype
-        // - Event registration functions
-        // - Timed event functions
-
-        // Additional registration happens in RegisterLuaFunctions()
     }
 
 } // namespace ALE::Core

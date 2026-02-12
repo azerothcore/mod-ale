@@ -22,6 +22,8 @@
 
 #include "TimedEventManager.h"
 #include "EventManager.h"
+#include "ALEManager.h"
+#include "ALEConfig.h"
 
 namespace ALE::Hooks
 {
@@ -47,6 +49,49 @@ namespace ALE::Hooks
             std::forward<Args>(args)...
         );
     }
+
+    class CommandHooks : public CommandSC
+    {
+    public:
+        CommandHooks() : CommandSC("ALE_CommandHooks") { }
+
+        bool OnTryExecuteCommand(ChatHandler& handler, std::string_view cmdStr) override
+        {
+            std::string text = std::string(cmdStr).c_str();
+            Player* player = handler.IsConsole() ? nullptr : handler.GetSession()->GetPlayer();
+
+            // Check for "reload ale" command (admin only)
+            if (!player || player->GetSession()->GetSecurity() >= SEC_ADMINISTRATOR)
+            {
+                std::string command = text;
+                std::transform(command.begin(), command.end(), command.begin(), ::tolower);
+
+                if (command.find("reload ale") == 0)
+                {
+                    if (ALE::Core::ALEManager::GetInstance().Reload())
+                    {
+                        if (ALEConfig::GetInstance().IsPlayerAnnounceReloadEnabled())
+                        {
+                            // Todo: Send Message to all player
+                        }
+                    }
+
+                    return false; // Prevent command from continuing
+                }
+            }
+
+            // Trigger ON_COMMAND event for Lua scripts
+            uint32 eventId = static_cast<uint32>(Hooks::PlayerEvent::ON_COMMAND);
+            return Core::EventManager::GetInstance().TriggerGlobalEventWithReturn<bool>(
+                Hooks::PlayerEvent::ON_COMMAND,
+                false,
+                eventId,
+                player,
+                handler,
+                text
+            );
+        }
+    };
 
     /**
      * @class PlayerHooks

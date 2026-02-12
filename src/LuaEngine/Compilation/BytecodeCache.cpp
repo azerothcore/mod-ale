@@ -5,6 +5,7 @@
  */
 
 #include "BytecodeCache.h"
+#include "ALEConfig.h"
 #include "FileSystemUtils.h"
 #include "Statistics.h"
 #include "Log.h"
@@ -34,13 +35,14 @@ namespace ALE::Core
      */
     const CompiledBytecode* BytecodeCache::Get(const std::string& filepath)
     {
+        // Check if cache is enabled
+        if (!ALEConfig::GetInstance().IsByteCodeCacheEnabled())
+            return nullptr;
+
         // Check if entry exists
         auto it = m_cache.find(filepath);
         if (it == m_cache.end())
-        {
-            ALEStatistics::GetInstance().IncrementCacheMiss();
             return nullptr;
-        }
 
         // Validate bytecode is non-empty
         if (it->second->bytecode.empty() || !it->second->isValid())
@@ -54,7 +56,6 @@ namespace ALE::Core
         if (it->second->last_modified != currentModTime || currentModTime == 0)
         {
             m_cache.erase(it);
-            ALEStatistics::GetInstance().IncrementCacheMiss();
             return nullptr;
         }
 
@@ -67,6 +68,10 @@ namespace ALE::Core
      */
     void BytecodeCache::Store(const std::string& filepath, std::shared_ptr<CompiledBytecode> bytecode)
     {
+        // Check if cache is enabled
+        if (!ALEConfig::GetInstance().IsByteCodeCacheEnabled())
+            return;
+
         if (!bytecode || !bytecode->isValid())
         {
             LOG_ERROR("server.loading", "[ALE] BytecodeCache::Store - Invalid bytecode for {}", filepath);

@@ -5,6 +5,7 @@
  */
 
 #include "TimedEventManager.h"
+#include "LuaGuard.h"
 #include "Player.h"
 #include "Creature.h"
 #include "GameObject.h"
@@ -168,6 +169,8 @@ namespace ALE::Core
 
     void TimedEventManager::ExecuteEvent(TimedEvent& event, WorldObject* obj)
     {
+        LuaGuard guard;
+
         try
         {
             sol::protected_function_result result;

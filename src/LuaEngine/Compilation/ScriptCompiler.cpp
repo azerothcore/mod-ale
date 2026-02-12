@@ -67,9 +67,6 @@ namespace ALE::API
 
             LOG_DEBUG("ale.compiler", "[ALE] Compiled Lua {} ({} bytes)", filepath, bytecode->size());
 
-            if (Utils::FileSystemUtils::IsExtFile(filepath))
-                ALEStatistics::GetInstance().IncrementCompilationExtFile();
-
             return bytecode;
         }
         catch (const std::exception& e)
@@ -118,8 +115,6 @@ namespace ALE::API
 
             LOG_DEBUG("ale.compiler", "[ALE] Compiled MoonScript {} ({} bytes)", filepath, bytecode->size());
 
-            ALEStatistics::GetInstance().IncrementCompilationMoonScript();
-
             return bytecode;
         }
         catch (const std::exception& e)
@@ -163,8 +158,6 @@ namespace ALE::API
             auto bytecode = CreateBytecode(std::move(bc), filepath);
 
             LOG_DEBUG("ale.compiler", "[ALE] Loaded Cout {} ({} bytes)", filepath, bytecode->size());
-
-            ALEStatistics::GetInstance().IncrementCompilationCoutFile();
 
             return bytecode;
         }

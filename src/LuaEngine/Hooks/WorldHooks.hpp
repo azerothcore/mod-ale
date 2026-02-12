@@ -12,9 +12,8 @@
 
 #include "TimedEventManager.h"
 #include "EventManager.h"
-#include "Methods.hpp"
-#include "Statistics.h"
-#include "ALEScriptLoader.h"
+#include "ALEManager.h"
+#include "ALEConfig.h"
 
 namespace ALE::Hooks
 {
@@ -50,62 +49,21 @@ namespace ALE::Hooks
          */
         WorldHooks() : WorldScript("ALE_WorldHooks") { }
 
-        /**
-         * @todo Document all overridden hooks
-         */
-
         void OnBeforeConfigLoad(bool reload) override
         {
             if (!reload)
             {
-                // Initialize the StateManager first
-                if (!ALE::Core::StateManager::GetInstance().Initialize())
-                {
-                    LOG_ERROR("ale", "[ALE] Failed to initialize StateManager!");
-                    return;
-                }
-
-                // Get master state
-                sol::state* masterState = ALE::Core::StateManager::GetInstance().GetMasterState();
-                if (!masterState)
-                {
-                    LOG_ERROR("ale", "[ALE] Failed to create master state!");
-                    return;
-                }
-
-                // Initialize EventManager
-                if (!ALE::Core::EventManager::GetInstance().Initialize())
-                {
-                    LOG_ERROR("ale", "[ALE] Failed to initialize EventManager!");
-                    return;
-                }
-
-                // Register all Lua methods directly
-                ALE::Core::TimedEventManager* timedEventMgr = ALE::Core::StateManager::GetInstance().GetTimedEventManager(-1);
-                Methods::RegisterAllMethods(*masterState, timedEventMgr);
-
-                try
-                {
-                    // Start timing script loading
-                    auto startTime = std::chrono::high_resolution_clock::now();
-
-                    // Load all scripts from lua_scripts directory
-                    LOG_INFO("server.loading", "[ALE] Scanning and loading scripts from lua_scripts directory...");
-                    ALE::Core::ScriptLoader::GetInstance().SetScriptPath("lua_scripts");
-                    ALE::Core::ScriptLoader::GetInstance().LoadAllScripts(-1);
-
-                }
-                catch (const sol::error& e)
-                {
-                    LOG_ERROR("server.loading", "[ALE] Initialization failed: {}", e.what());
-                }
+                ALE::Core::ALEManager::GetInstance().Initialize();
+            }
+            else
+            {
+                ALE::Core::ALEManager::GetInstance().ReloadConfig();
             }
         }
 
         void OnUpdate(uint32 diff) override
         {
             auto& stateMgr = Core::StateManager::GetInstance();
-            auto stateIds = stateMgr.GetAllStateIds();
 
             Core::TimedEventManager* mgr = stateMgr.GetTimedEventManager(-1);
             if (mgr)
@@ -116,7 +74,13 @@ namespace ALE::Hooks
         {
             TriggerWorldEvent(static_cast<uint32>(Hooks::WorldEvent::ON_STARTUP));
         }
+
+        void OnShutdown() override
+        {
+            TriggerWorldEvent(static_cast<uint32>(Hooks::WorldEvent::ON_SHUTDOWN));
+            ALE::Core::ALEManager::GetInstance().Shutdown();
+        }
     };
-} // namespace ALE
+} // namespace ALE::Hooks
 
 #endif // _ALE_WORLD_OBJECT_HOOKS_H

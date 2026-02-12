@@ -62,7 +62,7 @@ namespace ALE::Hooks
         ON_LEARN_TALENTS                        =    39,        // (event, player, talentId, talentRank, spellid)
         ON_CALCULATE_TALENTS_POINTS             =    40,        // (event, player, talentPointsForLevel) - Can return new talent points amount
         // UNUSED                               =    41,        // (event, player)
-        // ON_COMMAND                              =    42,        // (event, player, command, chatHandler) - player is nil if command used from console. Can return false
+        ON_COMMAND                              =    42,        // (event, player, command, chatHandler) - player is nil if command used from console. Can return false
         // ON_PET_ADDED_TO_WORLD                  =    43,        // (event, player, pet)
         ON_LEARN_SPELL                          =    44,        // (event, player, spellId)
         ON_ACHIEVEMENT_COMPLETE                 =    45,        // (event, player, achievement)

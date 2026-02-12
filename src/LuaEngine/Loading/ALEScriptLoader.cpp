@@ -5,6 +5,7 @@
  */
 
 #include "ALEScriptLoader.h"
+#include "ALEConfig.h"
 #include "StateManager.h"
 #include "FileSystemUtils.h"
 #include "ScriptCompiler.h"
@@ -24,9 +25,7 @@ namespace ALE::Core
 {
     /**
      * @brief Get ScriptLoader singleton instance
-     * 
-     * Thread-safe initialization (C++11 magic statics).
-     * 
+     *
      * @return Reference to the global ScriptLoader
      */
     ScriptLoader& ScriptLoader::GetInstance()
@@ -35,8 +34,7 @@ namespace ALE::Core
         return instance;
     }
 
-    ScriptLoader::ScriptLoader()
-        : m_scriptPath("lua_scripts")
+    ScriptLoader::ScriptLoader() : m_scriptPath("lua_scripts")
     {
         LOG_DEBUG("ale.loader", "[ALE] ScriptLoader initialized");
     }
@@ -50,9 +48,9 @@ namespace ALE::Core
 
     /**
      * @brief Set script directory path
-     * 
+     *
      * Changes the root directory for script scanning.
-     * 
+     *
      * @param path Path to lua_scripts directory
      */
     void ScriptLoader::SetScriptPath(const std::string& path)
@@ -115,26 +113,7 @@ namespace ALE::Core
         // Sort by priority: .ext > .cout > .moon > .lua
         std::sort(scripts.begin(), scripts.end());
 
-        // Update statistics
-        uint32 extScripts = 0, coutScripts = 0, luaScripts = 0, moonScripts = 0;
-        for (const auto& script : scripts)
-        {
-            if (script.extension == ".ext") extScripts++;
-            else if (script.extension == ".cout") coutScripts++;
-            else if (script.extension == ".lua") luaScripts++;
-            else if (script.extension == ".moon") moonScripts++;
-        }
-
-        auto& stats = Statistics::ALEStatistics::GetInstance();
-        stats.SetLoadingExtScripts(extScripts);
-        stats.SetLoadingCoutScripts(coutScripts);
-        stats.SetLoadingLuaScripts(luaScripts);
-        stats.SetLoadingMoonScripts(moonScripts);
-        stats.SetLoadingTotalScripts(scripts.size());
-
-        LOG_INFO("ale.loader", "[ALE] Found {} scripts ({} Ext, {} Cout, {} Lua, {} Moon)",
-            scripts.size(), extScripts, coutScripts, luaScripts, moonScripts);
-
+        LOG_DEBUG("ale.loader", "[ALE] Found {} scripts", scripts.size());
         return scripts;
     }
 
@@ -148,6 +127,16 @@ namespace ALE::Core
 
         try
         {
+            auto& config = ALEConfig::GetInstance();
+            std::string_view configRequirePath = config.GetRequirePath();
+            std::string_view configRequireCPath = config.GetRequireCPath();
+
+            if (!configRequirePath.empty())
+                luaPath = std::string(configRequirePath) + ";";
+
+            if (!configRequireCPath.empty())
+                luaCPath = std::string(configRequireCPath) + ";";
+
             fs::recursive_directory_iterator end_iter;
             for (fs::recursive_directory_iterator dir_iter(m_scriptPath); dir_iter != end_iter; ++dir_iter)
             {
@@ -164,14 +153,13 @@ namespace ALE::Core
             }
 
             // Add base path
-            luaPath = m_scriptPath + "/?.lua;" + m_scriptPath + "/?.moon;" + m_scriptPath + "/?.ext;" + luaPath;
+            luaPath += m_scriptPath + "/?.lua;" + m_scriptPath + "/?.moon;" + m_scriptPath + "/?.ext;";
 #ifdef _WIN32
-            luaCPath = m_scriptPath + "/?.dll;" + luaCPath;
+            luaCPath += m_scriptPath + "/?.dll;";
 #else
-            luaCPath = m_scriptPath + "/?.so;" + luaCPath;
+            luaCPath += m_scriptPath + "/?.so;";
 #endif
 
-            // Append to existing paths
             sol::optional<std::string> currentPath = state["package"]["path"];
             if (currentPath)
                 luaPath += *currentPath;
@@ -202,12 +190,9 @@ namespace ALE::Core
         const auto* cached = cache.Get(scriptFile.filepath);
         if (cached)
         {
+            stats.AddCompilationBytecodeSize(cached->size());
             if (ExecuteBytecode(cached, scriptFile.filename, stateId))
-            {
-                stats.IncrementLoadingSuccessful();
                 return true;
-            }
-            stats.IncrementLoadingFailed();
             return false;
         }
 
@@ -216,8 +201,6 @@ namespace ALE::Core
         if (!bytecode || !bytecode->isValid())
         {
             LOG_ERROR("ale.loader", "[ALE] Failed to compile: {}", scriptFile.filepath);
-            stats.IncrementCompilationFailed();
-            stats.IncrementLoadingFailed();
             return false;
         }
 
@@ -230,11 +213,9 @@ namespace ALE::Core
         if (ExecuteBytecode(bytecode.get(), scriptFile.filename, stateId))
         {
             LOG_INFO("ale.loader", "[ALE] Loaded: {}", scriptFile.filename);
-            stats.IncrementLoadingSuccessful();
             return true;
         }
 
-        stats.IncrementLoadingFailed();
         return false;
     }
 
@@ -301,10 +282,6 @@ namespace ALE::Core
             if (LoadScript(script, stateId))
                 successCount++;
         }
-
-        auto stats = Statistics::ALEStatistics::GetInstance().GetSnapshot();
-        LOG_INFO("ale.loader", "[ALE] Loaded {}/{} scripts ({} failed)",
-            stats.loadingSuccessful, scripts.size(), stats.loadingFailed);
 
         return successCount;
     }

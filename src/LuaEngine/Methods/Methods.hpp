@@ -17,17 +17,17 @@ namespace ALE::Methods
 {
     /**
      * @brief Register ALL Lua methods and functions to a state
-     * 
+     *
      * @param state Lua state to bind all functions to
      * @param mapId Map ID for this state (-1 = master, 0+ = specific map)
      * @param timedEventMgr TimedEventManager for this state (per-map isolation)
-     * 
+     *
      * @note CRITICAL ORDER: Base classes MUST be registered BEFORE derived classes!
      *       1. Unit      (base class)
      *       2. Player    (inherits Unit via sol::bases<Unit>())
      *       3. Creature  (future - will also inherit Unit)
      *       4. Global functions & timed events
-     * 
+     *
      * @note This is the ONLY place where Lua bindings should be registered.
      *       Adding a new global function? Add it to GlobalMethods.
      *       Adding a new Unit method? Add it to UnitMethods.

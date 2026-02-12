@@ -179,15 +179,6 @@ namespace ALE::Core
          * @param isMasterState Whether this is master state (affects library restrictions)
          */
         void SetupStateLibraries(sol::state& state, bool isMasterState);
-
-        /**
-         * @brief Register global functions exposed to Lua
-         *
-         * Registers: print, RegisterPlayerEvent, RegisterTimedEvent, etc.
-         *
-         * @param state Lua state to register functions in
-         */
-        void RegisterGlobalFunctions(sol::state& state);
     };
 
 } // namespace ALE::Core

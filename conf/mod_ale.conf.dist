@@ -8,12 +8,6 @@
 #       Default:    true  - (enabled)
 #                   false - (disabled)
 #
-#   ALE.TraceBack
-#       Description: Sets whether to use debug.traceback function on a lua error or not.
-#                    Notice that you can redefine the function.
-#       Default:    false - (use default error output)
-#                   true  - (use debug.traceback function)
-#
 #   ALE.ScriptPath
 #       Description: Sets the location of the script folder to load scripts from
 #                    The path can be relative or absolute.
@@ -59,9 +53,17 @@
 #                    Cache is cleared only when files are modified or server restarts.
 #       Default:    true  - (enabled)
 #                   false - (disabled)
+#
+#   ALE.MigrationPath
+#       Description: Sets the location of the migration scripts folder.
+#                    SQL files in this directory are automatically applied on startup.
+#                    Migrations are tracked in the ALE database to prevent re-execution.
+#                    Convention: YYYY_MM_DD_NN_description.sql
+#                    The path can be relative or absolute.
+#       Default:    "lua_scripts/migrations"
+#
 
 ALE.Enabled = true
-ALE.TraceBack = false
 ALE.ScriptPath = "lua_scripts"
 ALE.PlayerAnnounceReload = false
 ALE.RequirePaths = ""
@@ -69,6 +71,29 @@ ALE.RequireCPaths = ""
 ALE.AutoReload = false
 ALE.AutoReloadInterval = 1
 ALE.BytecodeCache = true
+ALE.MigrationPath = "lua_scripts/migrations"
+
+###################################################################################################
+#  ALE DATABASE SETTINGS
+#
+#   ALE.DatabaseInfo
+#       Description: Connection info for the ALE custom database.
+#                    This database is managed entirely by ALE with automatic migrations.
+#       Format:      "host;port;user;password;database"
+#       Default:     "127.0.0.1;3306;acore;acore;acore_ale"
+#
+#   ALE.DatabaseWorkerThreads
+#       Description: Number of async worker threads for the ALE database.
+#       Default:     1
+#
+#   ALE.DatabaseSynchThreads
+#       Description: Number of synchronous threads for the ALE database.
+#       Default:     1
+#
+
+ALE.DatabaseInfo = "127.0.0.1;3306;acore;acore;acore_ale"
+ALE.DatabaseWorkerThreads = 1
+ALE.DatabaseSynchThreads  = 1
 
 ###################################################################################################
 # LOGGING SYSTEM SETTINGS

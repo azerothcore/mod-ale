@@ -37,6 +37,7 @@ void AddSC_ALE()
     // new ALE_WorldScript();
     new ALE::Hooks::WorldHooks();
     new ALE::Hooks::PlayerHooks();
+    new ALE::Hooks::CommandHooks();
     new ALE::Hooks::WorldObjectHooks();
     new ALE::Hooks::UnitHooks();
 }

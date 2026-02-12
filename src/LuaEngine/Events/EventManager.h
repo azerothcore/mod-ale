@@ -15,6 +15,7 @@
 #include "Common.h"
 #include "Log.h"
 #include "Hooks.hpp"
+#include "LuaGuard.h"
 
 namespace ALE::Core
 {
@@ -505,6 +506,8 @@ namespace ALE::Core
         if (it == handlerMap.end())
             return 0;
 
+        LuaGuard guard;
+
         uint32 executed = 0;
         auto& handlers = it->second;
 
@@ -736,6 +739,8 @@ namespace ALE::Core
         auto it = handlerMap.find(key);
         if (it == handlerMap.end())
             return defaultValue;
+
+        LuaGuard guard;
 
         ReturnType returnValue = defaultValue;
         auto& handlers = it->second;

@@ -9,6 +9,7 @@
 
 #include <sol/sol.hpp>
 #include "EventManager.h"
+#include "TimedEventManager.h"
 #include "Common.h"
 #include "Player.h"
 #include "Creature.h"
@@ -16,7 +17,6 @@
 
 namespace ALE::Core
 {
-    class TimedEventManager;
     enum class TimedEventObjectType : uint8;
 }
 

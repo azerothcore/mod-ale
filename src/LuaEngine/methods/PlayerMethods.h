@@ -1643,7 +1643,7 @@ namespace LuaPlayer
 
             for (uint8 bit = 0; bit < 32; bit++)
             {
-                if (mask & (1 << bit))
+                if (mask & (1u << bit))
                 {
                     uint32 nodeId = (i * 32) + bit + 1;
                     lua_pushinteger(L, nodeId);
@@ -4993,7 +4993,10 @@ namespace LuaPlayer
     int HasKnownTaxiNode(lua_State* L, Player* player)
     {
         if (!player)
-            return 0;
+        {
+            ALE::Push(L, false);
+            return 1;
+        }
 
         uint32 nodeId = ALE::CHECKVAL<uint32>(L, 2);
 

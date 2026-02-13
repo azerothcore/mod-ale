@@ -1634,6 +1634,8 @@ namespace LuaPlayer
         ByteBuffer data;
         player->m_taxi.AppendTaximaskTo(data, false);
 
+        uint32 idx = 1;
+
         for (uint8 i = 0; i < TaxiMaskSize; i++)
         {
             uint32 mask;
@@ -1641,11 +1643,11 @@ namespace LuaPlayer
 
             for (uint8 bit = 0; bit < 32; bit++)
             {
-                if (mask & (1 << bit))
+                if (mask & (1u << bit))
                 {
                     uint32 nodeId = (i * 32) + bit + 1;
                     lua_pushinteger(L, nodeId);
-                    lua_rawseti(L, -2, lua_rawlen(L, -2) + 1);
+                    lua_rawseti(L, -2, idx++);
                 }
             }
         }
@@ -4980,6 +4982,32 @@ namespace LuaPlayer
 
         player->ApplyRatingMod(CombatRating(stat), value, apply);
         return 0;
+    }
+
+    /**
+     * Returns `true` if the [Player] knows the given taxi node, `false` otherwise.
+     *
+     * @param uint32 nodeId
+     * @return bool known
+     */
+    int HasKnownTaxiNode(lua_State* L, Player* player)
+    {
+        if (!player)
+        {
+            ALE::Push(L, false);
+            return 1;
+        }
+
+        uint32 nodeId = ALE::CHECKVAL<uint32>(L, 2);
+
+        if (nodeId == 0)
+        {
+            ALE::Push(L, false);
+            return 1;
+        }
+
+        ALE::Push(L, player->m_taxi.IsTaximaskNodeKnown(nodeId));
+        return 1;
     }
 };
 #endif

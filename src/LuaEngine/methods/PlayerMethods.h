@@ -5020,6 +5020,7 @@ namespace LuaPlayer
     #if defined(MOD_PLAYERBOTS)
         ALE::Push(L, player->GetSession()->IsBot());
     #else
+        (void)player;
         ALE::Push(L, false);
     #endif
         return 1;

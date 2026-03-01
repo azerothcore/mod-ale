@@ -5009,6 +5009,22 @@ namespace LuaPlayer
         ALE::Push(L, player->m_taxi.IsTaximaskNodeKnown(nodeId));
         return 1;
     }
+
+    /**
+     * Returns `true` if the [Player] is a Playerbot/RNDBot, `false` otherwise.
+     *
+     * @return bool isBot
+     */
+    int IsBot(lua_State* L, Player* player)
+    {
+    #if defined(MOD_PLAYERBOTS)
+        ALE::Push(L, player->GetSession()->IsBot());
+    #else
+        (void)player;
+        ALE::Push(L, false);
+    #endif
+        return 1;
+    }
 };
 #endif
 

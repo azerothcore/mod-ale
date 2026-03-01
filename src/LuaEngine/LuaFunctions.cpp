@@ -1954,6 +1954,9 @@ void RegisterFunctions(ALE* E)
 
     ALETemplate<CreatureTemplate>::Register(E, "CreatureTemplate");
 
+    ALETemplate<Loot>::Register(E, "Loot");
+    ALETemplate<Loot>::SetMethods(E, LootMethods);
+
     ALETemplate<long long>::Register(E, "long long", true);
 
     ALETemplate<unsigned long long>::Register(E, "unsigned long long", true);

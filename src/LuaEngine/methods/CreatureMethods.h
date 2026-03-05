@@ -1158,6 +1158,15 @@ namespace LuaCreature
     }
 
     /**
+     * Handles this [Creature]'s corpse state after all loot is removed.
+     */
+    int AllLootRemovedFromCorpse(lua_State* /*L*/, Creature* creature)
+    {
+        creature->AllLootRemovedFromCorpse();
+        return 0;
+    }
+
+    /**
      * Sets the time it takes for the [Creature]'s corpse to despawn when killed.
      *
      * @param uint32 delay : the delay, in seconds

@@ -812,6 +812,28 @@ namespace LuaPlayer
     }
 
     /**
+     * Returns the [Player]s today Honor points.
+     *
+     * @return uint32 todayHonorPoints
+     */
+    int GetTodayHonorPoints(lua_State* L, Player* player)
+    {
+        ALE::Push(L, player->GetUInt32Value(PLAYER_FIELD_TODAY_CONTRIBUTION));
+        return 1;
+    }
+
+    /**
+     * Returns the [Player]s yesterday Honor points.
+     *
+     * @return uint32 yesterdayHonorPoints
+     */
+    int GetYesterdayHonorPoints(lua_State* L, Player* player)
+    {
+        ALE::Push(L, player->GetUInt32Value(PLAYER_FIELD_YESTERDAY_CONTRIBUTION));
+        return 1;
+    }
+
+    /**
      * Returns the [Player]s current shield block value
      *
      * @return uint32 blockValue
@@ -1491,6 +1513,28 @@ namespace LuaPlayer
     int GetLifetimeKills(lua_State* L, Player* player)
     {
         ALE::Push(L, player->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS));
+        return 1;
+    }
+
+    /**
+     * Returns the [Player]s today Honorable Kills
+     *
+     * @return uint32 todayKills
+     */
+    int GetTodayKills(lua_State* L, Player* player)
+    {
+        ALE::Push(L, uint32(player->GetUInt16Value(PLAYER_FIELD_KILLS, 0)));
+        return 1;
+    }
+
+    /**
+     * Returns the [Player]s yesterday Honorable Kills
+     *
+     * @return uint32 yesterdayKills
+     */
+    int GetYesterdayKills(lua_State* L, Player* player)
+    {
+        ALE::Push(L, uint32(player->GetUInt16Value(PLAYER_FIELD_KILLS, 1)));
         return 1;
     }
 

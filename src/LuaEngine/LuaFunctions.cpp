@@ -489,7 +489,11 @@ ALERegister<Player> PlayerMethods[] =
     { "GetCompletedQuestsCount", &LuaPlayer::GetCompletedQuestsCount },
     { "GetArenaPoints", &LuaPlayer::GetArenaPoints },
     { "GetHonorPoints", &LuaPlayer::GetHonorPoints },
+    { "GetTodayHonorPoints", &LuaPlayer::GetTodayHonorPoints },
+    { "GetYesterdayHonorPoints", &LuaPlayer::GetYesterdayHonorPoints },
     { "GetLifetimeKills", &LuaPlayer::GetLifetimeKills },
+    { "GetTodayKills", &LuaPlayer::GetTodayKills },
+    { "GetYesterdayKills", &LuaPlayer::GetYesterdayKills },
     { "GetPlayerIP", &LuaPlayer::GetPlayerIP },
     { "GetLevelPlayedTime", &LuaPlayer::GetLevelPlayedTime },
     { "GetTotalPlayedTime", &LuaPlayer::GetTotalPlayedTime },
@@ -1954,6 +1958,9 @@ void RegisterFunctions(ALE* E)
     ALETemplate<SpellEntry>::SetMethods(E, SpellEntryMethods);
 
     ALETemplate<CreatureTemplate>::Register(E, "CreatureTemplate");
+
+    ALETemplate<Loot>::Register(E, "Loot");
+    ALETemplate<Loot>::SetMethods(E, LootMethods);
 
     ALETemplate<long long>::Register(E, "long long", true);
 

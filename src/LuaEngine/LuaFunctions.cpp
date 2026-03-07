@@ -932,6 +932,7 @@ ALERegister<Creature> CreatureMethods[] =
     { "CallForHelp", &LuaCreature::CallForHelp },
     { "CallAssistance", &LuaCreature::CallAssistance },
     { "RemoveCorpse", &LuaCreature::RemoveCorpse },
+    { "AllLootRemovedFromCorpse", &LuaCreature::AllLootRemovedFromCorpse },
     { "DespawnOrUnsummon", &LuaCreature::DespawnOrUnsummon },
     { "Respawn", &LuaCreature::Respawn },
     { "AttackStart", &LuaCreature::AttackStart },

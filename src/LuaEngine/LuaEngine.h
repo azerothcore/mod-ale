@@ -451,9 +451,9 @@ public:
     bool OnPacketSend(WorldSession* session, const WorldPacket& packet);
     void OnPacketSendAny(Player* player, const WorldPacket& packet, bool& result);
     void OnPacketSendOne(Player* player, const WorldPacket& packet, bool& result);
-    bool OnPacketReceive(WorldSession* session, WorldPacket& packet);
-    void OnPacketReceiveAny(Player* player, WorldPacket& packet, bool& result);
-    void OnPacketReceiveOne(Player* player, WorldPacket& packet, bool& result);
+    bool OnPacketReceive(WorldSession* session, WorldPacket const& packet);
+    void OnPacketReceiveAny(Player* player, WorldPacket const& packet, bool& result);
+    void OnPacketReceiveOne(Player* player, WorldPacket const& packet, bool& result);
 
     /* Player */
     void OnPlayerEnterCombat(Player* pPlayer, Unit* pEnemy);

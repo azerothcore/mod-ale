@@ -44,6 +44,7 @@ extern "C"
 #include "SpellInfoMethods.h"
 #include "PetMethods.h"
 #include "LootMethods.h"
+#include "TransportMethods.h"
 
 // DBCStores includes
 #include "GemPropertiesEntryMethods.h"
@@ -258,6 +259,7 @@ ALERegister<WorldObject> WorldObjectMethods[] =
     { "GetExactDistance2d", &LuaWorldObject::GetExactDistance2d },
     { "GetRelativePoint", &LuaWorldObject::GetRelativePoint },
     { "GetAngle", &LuaWorldObject::GetAngle },
+    { "GetTransport", &LuaWorldObject::GetTransport },
 
     // Boolean
     { "IsWithinLoS", &LuaWorldObject::IsWithinLoS },
@@ -1315,6 +1317,7 @@ ALERegister<Map> MapMethods[] =
     { "GetWorldObject", &LuaMap::GetWorldObject },
     { "GetCreatures", &LuaMap::GetCreatures },
     { "GetCreaturesByAreaId", &LuaMap::GetCreaturesByAreaId },
+    { "GetTransports", &LuaMap::GetTransports },
 
 
     // Setters
@@ -1800,6 +1803,22 @@ ALERegister<Loot> LootMethods[] =
     { NULL, NULL }
 };
 
+ALERegister<Transport> TransportMethods[] =
+{
+    // Getters
+    { "GetPassengers", &LuaTransport::GetPassengers },
+
+    // Boolean
+    { "IsMotionTransport", &LuaTransport::IsMotionTransport },
+
+    // Other
+    { "AddPassenger", &LuaTransport::AddPassenger },
+    { "RemovePassenger", &LuaTransport::RemovePassenger },
+    { "EnableMovement", &LuaTransport::EnableMovement },
+
+    { NULL, NULL }
+};
+
 // fix compile error about accessing vehicle destructor
 template<> int ALETemplate<Vehicle>::CollectGarbage(lua_State* L)
 {
@@ -1891,6 +1910,12 @@ void RegisterFunctions(ALE* E)
     ALETemplate<GameObject>::SetMethods(E, WorldObjectMethods);
     ALETemplate<GameObject>::SetMethods(E, GameObjectMethods);
 
+    ALETemplate<Transport>::Register(E, "Transport");
+    ALETemplate<Transport>::SetMethods(E, ObjectMethods);
+    ALETemplate<Transport>::SetMethods(E, WorldObjectMethods);
+    ALETemplate<Transport>::SetMethods(E, GameObjectMethods);
+    ALETemplate<Transport>::SetMethods(E, TransportMethods);
+    
     ALETemplate<Corpse>::Register(E, "Corpse");
     ALETemplate<Corpse>::SetMethods(E, ObjectMethods);
     ALETemplate<Corpse>::SetMethods(E, WorldObjectMethods);

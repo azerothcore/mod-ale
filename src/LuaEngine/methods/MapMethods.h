@@ -379,5 +379,24 @@ namespace LuaMap
         lua_settop(L, tbl);
         return 1;
     }
+
+    
+    /**
+     * Returns a table of all [Transport]s on the [Map]
+     *
+     * @return table transports
+     */
+    int GetTransports(lua_State* L, Map* map)
+    {
+        TransportsContainer const& transports = map->GetAllTransports();
+        lua_createtable(L, transports.size(), 0);
+        int i = 1;
+        for (Transport* transport : transports)
+        {
+            ALE::Push(L, transport);
+            lua_rawseti(L, -2, i++);
+        }
+        return 1;
+    }
 };
 #endif

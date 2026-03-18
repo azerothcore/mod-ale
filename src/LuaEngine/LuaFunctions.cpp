@@ -478,6 +478,8 @@ ALERegister<Unit> UnitMethods[] =
 ALERegister<Player> PlayerMethods[] =
 {
     // Getters
+    { "GetInventoryFreeSlots", &LuaPlayer::GetInventoryFreeSlots },
+    { "GetBankFreeSlots", &LuaPlayer::GetBankFreeSlots },
     { "GetSelection", &LuaPlayer::GetSelection },
     { "GetGMRank", &LuaPlayer::GetGMRank },
     { "GetGuildId", &LuaPlayer::GetGuildId },

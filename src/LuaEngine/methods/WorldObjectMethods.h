@@ -611,7 +611,7 @@ namespace LuaWorldObject
 
         return 1;
     }
-    
+
     /**
      * Returns the transport the [WorldObject] is on, or nil if not on a transport
      *

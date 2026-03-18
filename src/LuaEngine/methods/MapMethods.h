@@ -389,7 +389,7 @@ namespace LuaMap
     int GetTransports(lua_State* L, Map* map)
     {
         TransportsContainer const& transports = map->GetAllTransports();
-        lua_newtable(L);
+        lua_createtable(L, transports.size(), 0);
         int i = 1;
         for (Transport* transport : transports)
         {

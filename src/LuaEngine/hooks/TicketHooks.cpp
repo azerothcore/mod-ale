@@ -21,14 +21,6 @@ using namespace Hooks;
         return;\
     LOCK_ALE
 
-#define START_HOOK(EVENT) \
-    if (!ALEConfig::GetInstance().IsALEEnabled())\
-        return;\
-    auto key = EventKey<TicketEvents>(EVENT);\
-    if (!TicketEventBindings->HasBindingsFor(key))\
-        return;\
-    LOCK_ALE
-
 void ALE::OnTicketCreate(GmTicket* ticket)
 {
     START_HOOK(TICKET_EVENT_ON_CREATE);

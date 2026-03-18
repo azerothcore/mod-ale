@@ -24,7 +24,7 @@ namespace LuaTransport
     int GetPassengers(lua_State* L, Transport* transport)
     {
         Transport::PassengerSet const& passengers = transport->GetPassengers();
-        lua_newtable(L);
+        lua_createtable(L, static_cast<int>(passengers.size()), 0);
         int i = 1;
         for (WorldObject* passenger : passengers)
         {

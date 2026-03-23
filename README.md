@@ -33,7 +33,7 @@ ALE is a powerful, AzerothCore-specific implementation of a Lua scripting engine
 
 If you need to use standard Eluna scripts or maintain compatibility with the original Eluna project, please use the dedicated AzerothCore port available at:
 
-**🔗 [ElunaAzerothCore](https://github.com/Eluna-Ports/ElunaAzerothCore)**
+**🔗 [ElunaAzerothCore](https://github.com/ElunaLuaEngine/ElunaAzerothcore)**
 
 This repository maintains compatibility with the original Eluna API and supports standard Eluna scripts.
 

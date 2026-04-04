@@ -36,6 +36,7 @@
 #include "SpellInfo.h"
 #include "SpellMgr.h"
 #include "TemporarySummon.h"
+#include "Transport.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
 #include "MapMgr.h"

@@ -613,6 +613,17 @@ namespace LuaWorldObject
     }
 
     /**
+     * Returns the transport the [WorldObject] is on, or nil if not on a transport
+     *
+     * @return [Transport] transport
+     */
+    int GetTransport(lua_State* L, WorldObject* obj)
+    {
+        ALE::Push(L, static_cast<Transport*>(obj->GetTransport()));
+        return 1;
+    }
+
+    /**
      * Sends a [WorldPacket] to [Player]s in sight of the [WorldObject].
      *
      * @param [WorldPacket] packet

@@ -976,7 +976,7 @@ public:
         SERVERHOOK_CAN_PACKET_RECEIVE
     }) { }
 
-    bool CanPacketSend(WorldSession* session, WorldPacket& packet) override
+    bool CanPacketSend(WorldSession* session, WorldPacket const& packet) override
     {
         if (!sALE->OnPacketSend(session, packet))
             return false;
@@ -984,7 +984,7 @@ public:
         return true;
     }
 
-    bool CanPacketReceive(WorldSession* session, WorldPacket& packet) override
+    bool CanPacketReceive(WorldSession* session, WorldPacket const& packet) override
     {
         if (!sALE->OnPacketReceive(session, packet))
             return false;

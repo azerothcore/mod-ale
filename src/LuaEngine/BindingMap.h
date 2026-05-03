@@ -191,6 +191,7 @@ public:
             return;
 
         BindingList& list = result->second;
+        lua_checkstack(L, list.size());
         for (auto i = list.begin(); i != list.end();)
         {
             std::unique_ptr<Binding>& binding = (*i);

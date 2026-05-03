@@ -44,7 +44,7 @@ private:
         { }
 
         ~Binding()
-        {
+        {luaL_checkstack
             luaL_unref(L, LUA_REGISTRYINDEX, functionReference);
         }
     };
@@ -191,7 +191,7 @@ public:
             return;
 
         BindingList& list = result->second;
-        lua_checkstack(L, list.size());
+        luaL_checkstack(L, static_cast<int>(list.size()), "not enough stack space to push function bindings");
         for (auto i = list.begin(); i != list.end();)
         {
             std::unique_ptr<Binding>& binding = (*i);

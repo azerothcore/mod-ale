@@ -44,7 +44,7 @@ private:
         { }
 
         ~Binding()
-        {luaL_checkstack
+        {
             luaL_unref(L, LUA_REGISTRYINDEX, functionReference);
         }
     };

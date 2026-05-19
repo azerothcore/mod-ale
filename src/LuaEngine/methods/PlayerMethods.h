@@ -2390,6 +2390,7 @@ namespace LuaPlayer
      * Sends a vendor window to the [Player] from the [WorldObject] specified.
      *
      * @param [WorldObject] sender
+     * @param uint32 vendorId = 0 : optional entry ID to use for the vendor item list, overriding the sender's default inventory
      */
     int SendListInventory(lua_State* L, Player* player)
     {

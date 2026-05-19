@@ -2396,7 +2396,19 @@ namespace LuaPlayer
         WorldObject* obj = ALE::CHECKOBJ<WorldObject>(L, 2);
         uint32 vendorId = ALE::CHECKVAL<uint32>(L, 3, 0);
 
+        Creature* creature = obj->ToCreature();
+        bool addedVendorFlag = false;
+        if (vendorId && creature && !creature->HasNpcFlag(UNIT_NPC_FLAG_VENDOR))
+        {
+            creature->SetNpcFlag(UNIT_NPC_FLAG_VENDOR);
+            addedVendorFlag = true;
+        }
+
         player->GetSession()->SendListInventory(obj->GET_GUID(), vendorId);
+
+        if (addedVendorFlag)
+            creature->RemoveNpcFlag(UNIT_NPC_FLAG_VENDOR);
+
         return 0;
     }
 

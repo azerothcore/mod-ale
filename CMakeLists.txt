@@ -19,3 +19,12 @@ if (LUA_VERSION MATCHES "luajit")
 else()
   add_subdirectory(src/lualib/lua)
 endif()
+
+# sol (C++ <-> Lua binding library, header-only) is bundled in src/lualib/sol.
+# Attaching it to lualib as INTERFACE propagates <sol/sol.hpp> and its compile
+# definitions to every consumer of lualib, whichever Lua backend is selected.
+target_include_directories(lualib INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src/lualib")
+
+# Keep sol runtime safety checks enabled in every build type: script errors must
+# surface as catchable Lua errors, never as undefined behaviour in the server.
+target_compile_definitions(lualib INTERFACE SOL_ALL_SAFETIES_ON=1)

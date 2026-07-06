@@ -14,6 +14,7 @@
 #include "ObjectAccessor.h"
 #include "Pet.h"
 #include "Player.h"
+#include "Transport.h"
 
 namespace ALEHandleEpoch
 {

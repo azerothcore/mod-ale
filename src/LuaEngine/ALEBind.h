@@ -14,6 +14,18 @@
 #include <type_traits>
 #include <utility>
 
+struct AuctionEntry;
+class AuctionHouseObject;
+class Aura;
+class Battleground;
+class ChatHandler;
+class GmTicket;
+struct Loot;
+class Roll;
+class Spell;
+class Vehicle;
+class Weather;
+
 /*
  * Adapters that turn plain C++ functions into Lua-callable methods.
  *
@@ -43,7 +55,8 @@
  *   - every parameter typed as a game object pointer (Player*, Unit*, ...) is
  *     received as a handle from Lua and resolved the same way;
  *   - every game object pointer you return is wrapped back into a handle, and
- *     nullptr becomes nil;
+ *     nullptr becomes nil. Pointers to Unit, WorldObject or Object are wrapped
+ *     into the most-derived handle, so Lua always sees the concrete type;
  *   - all other types (numbers, strings, bools, enums, ...) pass through with
  *     sol's usual conversions.
  *
@@ -67,6 +80,7 @@ namespace ALEBind
     {
     };
 
+    // Object hierarchy: guid-resolved handles
     template<> struct HandleFor<Object>      { using type = ObjectRef; };
     template<> struct HandleFor<WorldObject> { using type = WorldObjectRef; };
     template<> struct HandleFor<Unit>        { using type = UnitRef; };
@@ -75,6 +89,24 @@ namespace ALEBind
     template<> struct HandleFor<GameObject>  { using type = GameObjectRef; };
     template<> struct HandleFor<Corpse>      { using type = CorpseRef; };
     template<> struct HandleFor<Item>        { using type = ItemRef; };
+
+    // Manager-resolved handles
+    template<> struct HandleFor<Map>         { using type = MapRef; };
+    template<> struct HandleFor<Group>       { using type = GroupRef; };
+    template<> struct HandleFor<Guild>       { using type = GuildRef; };
+
+    // Transient objects: only valid during the event that provided them
+    template<> struct HandleFor<Aura>               { using type = ScopedRef<Aura>; };
+    template<> struct HandleFor<Spell>              { using type = ScopedRef<Spell>; };
+    template<> struct HandleFor<Vehicle>            { using type = ScopedRef<Vehicle>; };
+    template<> struct HandleFor<GmTicket>           { using type = ScopedRef<GmTicket>; };
+    template<> struct HandleFor<Battleground>       { using type = ScopedRef<Battleground>; };
+    template<> struct HandleFor<Weather>            { using type = ScopedRef<Weather>; };
+    template<> struct HandleFor<AuctionHouseObject> { using type = ScopedRef<AuctionHouseObject>; };
+    template<> struct HandleFor<AuctionEntry>       { using type = ScopedRef<AuctionEntry>; };
+    template<> struct HandleFor<Roll>               { using type = ScopedRef<Roll>; };
+    template<> struct HandleFor<Loot>               { using type = ScopedRef<Loot>; };
+    template<> struct HandleFor<ChatHandler>        { using type = ScopedRef<ChatHandler>; };
 
     template<typename T>
     using HandleForT = typename HandleFor<std::remove_const_t<T>>::type;
@@ -86,6 +118,14 @@ namespace ALEBind
     // Whether P is a (possibly const) pointer to a handled game class.
     template<typename P>
     concept HandledPtr = std::is_pointer_v<P> && Handled<std::remove_pointer_t<P>>;
+
+    // Whether P points to a polymorphic base (Object, WorldObject, Unit):
+    // those are wrapped into the most-derived handle at runtime.
+    template<typename P>
+    concept PolymorphicBasePtr = std::is_pointer_v<P>
+        && (std::is_same_v<std::remove_const_t<std::remove_pointer_t<P>>, Object>
+            || std::is_same_v<std::remove_const_t<std::remove_pointer_t<P>>, WorldObject>
+            || std::is_same_v<std::remove_const_t<std::remove_pointer_t<P>>, Unit>);
 
     // ---------------------------------------------------------------------
     // Parameter and return value conversions
@@ -119,14 +159,20 @@ namespace ALEBind
             return static_cast<P>(value);
     }
 
+    // Wraps a pointer to a polymorphic base into the most-derived handle, so
+    // a Unit that is really a Player arrives in Lua as a Player.
+    sol::object ToLuaDynamic(sol::state_view lua, Object const* obj);
+
     // Converts a native return value to what Lua receives.
     // Game object pointers become handles, nullptr becomes nil.
     template<typename R>
-    decltype(auto) ToLua(R&& value)
+    decltype(auto) ToLua(sol::state_view lua, R&& value)
     {
         using Bare = std::remove_cvref_t<R>;
 
-        if constexpr (HandledPtr<Bare>)
+        if constexpr (PolymorphicBasePtr<Bare>)
+            return ToLuaDynamic(lua, value);
+        else if constexpr (HandledPtr<Bare>)
         {
             using Ref = HandleForT<std::remove_pointer_t<Bare>>;
             return value ? sol::optional<Ref>(Ref(value)) : sol::optional<Ref>(sol::nullopt);
@@ -143,14 +189,14 @@ namespace ALEBind
     template<typename R, typename T, typename... Args, typename F>
     auto MakeMethod(F&& fn)
     {
-        return [fn = std::forward<F>(fn)](HandleForT<T> const& self, LuaParamT<Args>... args) -> decltype(auto)
+        return [fn = std::forward<F>(fn)](sol::this_state state, HandleForT<T> const& self, LuaParamT<Args>... args) -> decltype(auto)
         {
             T* obj = self.Require();
 
             if constexpr (std::is_void_v<R>)
                 fn(obj, FromLua<Args>(args)...);
             else
-                return ToLua(fn(obj, FromLua<Args>(args)...));
+                return ToLua(sol::state_view(state), fn(obj, FromLua<Args>(args)...));
         };
     }
 
@@ -158,12 +204,12 @@ namespace ALEBind
     template<typename R, typename... Args, typename F>
     auto MakeFunction(F&& fn)
     {
-        return [fn = std::forward<F>(fn)](LuaParamT<Args>... args) -> decltype(auto)
+        return [fn = std::forward<F>(fn)](sol::this_state state, LuaParamT<Args>... args) -> decltype(auto)
         {
             if constexpr (std::is_void_v<R>)
                 fn(FromLua<Args>(args)...);
             else
-                return ToLua(fn(FromLua<Args>(args)...));
+                return ToLua(sol::state_view(state), fn(FromLua<Args>(args)...));
         };
     }
 
@@ -247,5 +293,18 @@ namespace ALEBind
         });
     }
 }
+
+// Lua-visible names of transient types, used in stale-handle error messages.
+template<> struct ALETypeName<Aura>               { static constexpr char const* value = "Aura"; };
+template<> struct ALETypeName<Spell>              { static constexpr char const* value = "Spell"; };
+template<> struct ALETypeName<Vehicle>            { static constexpr char const* value = "Vehicle"; };
+template<> struct ALETypeName<GmTicket>           { static constexpr char const* value = "Ticket"; };
+template<> struct ALETypeName<Battleground>       { static constexpr char const* value = "BattleGround"; };
+template<> struct ALETypeName<Weather>            { static constexpr char const* value = "Weather"; };
+template<> struct ALETypeName<AuctionHouseObject> { static constexpr char const* value = "AuctionHouseEntry"; };
+template<> struct ALETypeName<AuctionEntry>       { static constexpr char const* value = "AuctionEntry"; };
+template<> struct ALETypeName<Roll>               { static constexpr char const* value = "Roll"; };
+template<> struct ALETypeName<Loot>               { static constexpr char const* value = "Loot"; };
+template<> struct ALETypeName<ChatHandler>        { static constexpr char const* value = "ChatHandler"; };
 
 #endif // _ALE_BIND_H

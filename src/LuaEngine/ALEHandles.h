@@ -14,7 +14,10 @@
 
 class Corpse;
 class GameObject;
+class Group;
+class Guild;
 class Item;
+class Map;
 class Object;
 class Player;
 class Unit;
@@ -189,6 +192,106 @@ public:
 
     Item* Resolve() const;
     Item* Require() const;
+};
+
+/*
+ * Handles for game objects outside the Object hierarchy that still have a
+ * stable identity: they resolve through their manager on every use, with the
+ * same guarantees as the handles above.
+ */
+
+class MapRef
+{
+public:
+    MapRef() = default;
+    explicit MapRef(Map const* map);
+
+    bool IsValid() const { return Resolve() != nullptr; }
+    bool operator==(MapRef const& other) const { return _mapId == other._mapId && _instanceId == other._instanceId; }
+
+    Map* Resolve() const;
+    Map* Require() const;
+
+private:
+    uint32 _mapId = 0;
+    uint32 _instanceId = 0;
+};
+
+class GroupRef
+{
+public:
+    GroupRef() = default;
+    explicit GroupRef(Group const* group);
+
+    bool IsValid() const { return Resolve() != nullptr; }
+    bool operator==(GroupRef const& other) const { return _guid == other._guid; }
+
+    Group* Resolve() const;
+    Group* Require() const;
+
+private:
+    ObjectGuid _guid;
+};
+
+class GuildRef
+{
+public:
+    GuildRef() = default;
+    explicit GuildRef(Guild const* guild);
+
+    bool IsValid() const { return Resolve() != nullptr; }
+    bool operator==(GuildRef const& other) const { return _guildId == other._guildId; }
+
+    Guild* Resolve() const;
+    Guild* Require() const;
+
+private:
+    uint32 _guildId = 0;
+};
+
+// Lua-visible type name of a scoped type, used in error messages.
+template<typename T>
+struct ALETypeName;
+
+/*
+ * Handle for transient game objects with no way to look them up again
+ * (Aura, Spell, Vehicle, ...).
+ *
+ * The wrapped pointer is only trusted during the Lua call stack that created
+ * it: exactly the window the core guarantees the object stays alive for.
+ * Using it later raises a Lua error instead of touching freed memory.
+ */
+template<typename T>
+class ScopedRef
+{
+public:
+    ScopedRef() = default;
+
+    explicit ScopedRef(T const* ptr) :
+        _ptr(const_cast<T*>(ptr)), _epoch(ALEHandleEpoch::GetEpoch())
+    {
+    }
+
+    bool IsValid() const { return Resolve() != nullptr; }
+    bool operator==(ScopedRef const& other) const { return Resolve() == other.Resolve(); }
+
+    T* Resolve() const
+    {
+        return _epoch == ALEHandleEpoch::GetEpoch() ? _ptr : nullptr;
+    }
+
+    T* Require() const
+    {
+        if (T* ptr = Resolve())
+            return ptr;
+
+        throw std::runtime_error(std::string(ALETypeName<T>::value)
+            + " is only valid during the event that provided it; it cannot be stored and used later");
+    }
+
+private:
+    T* _ptr = nullptr;
+    uint64 _epoch = 0;
 };
 
 #endif // _ALE_HANDLES_H

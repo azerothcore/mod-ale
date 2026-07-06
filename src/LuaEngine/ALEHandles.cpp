@@ -8,6 +8,10 @@
 
 #include "Corpse.h"
 #include "GameObject.h"
+#include "Group.h"
+#include "GroupMgr.h"
+#include "Guild.h"
+#include "GuildMgr.h"
 #include "Item.h"
 #include "Map.h"
 #include "MapMgr.h"
@@ -253,4 +257,58 @@ Item* ItemRef::Require() const
         return item;
 
     throw ALEStaleObjectError("Item");
+}
+
+MapRef::MapRef(Map const* map) :
+    _mapId(map->GetId()), _instanceId(map->GetInstanceId())
+{
+}
+
+Map* MapRef::Resolve() const
+{
+    return sMapMgr->FindMap(_mapId, _instanceId);
+}
+
+Map* MapRef::Require() const
+{
+    if (Map* map = Resolve())
+        return map;
+
+    throw ALEStaleObjectError("Map");
+}
+
+GroupRef::GroupRef(Group const* group) :
+    _guid(group->GetGUID())
+{
+}
+
+Group* GroupRef::Resolve() const
+{
+    return sGroupMgr->GetGroupByGUID(_guid.GetCounter());
+}
+
+Group* GroupRef::Require() const
+{
+    if (Group* group = Resolve())
+        return group;
+
+    throw ALEStaleObjectError("Group");
+}
+
+GuildRef::GuildRef(Guild const* guild) :
+    _guildId(guild->GetId())
+{
+}
+
+Guild* GuildRef::Resolve() const
+{
+    return sGuildMgr->GetGuildById(_guildId);
+}
+
+Guild* GuildRef::Require() const
+{
+    if (Guild* guild = Resolve())
+        return guild;
+
+    throw ALEStaleObjectError("Guild");
 }

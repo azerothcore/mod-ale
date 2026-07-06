@@ -217,7 +217,7 @@ public:
     sol::protected_function_result Call(sol::protected_function const& callback, E event_id, Args&&... args)
     {
         EnterDispatch();
-        sol::protected_function_result result = callback(event_id, ALEBind::ToLua(std::forward<Args>(args))...);
+        sol::protected_function_result result = callback(event_id, ALEBind::ToLua(lua, std::forward<Args>(args))...);
         LeaveDispatch();
 
         if (!result.valid())

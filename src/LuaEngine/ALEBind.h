@@ -292,6 +292,43 @@ namespace ALEBind
             return f(std::forward<Args>(args)...);
         });
     }
+
+    // ---------------------------------------------------------------------
+    // Usertype creation
+    // ---------------------------------------------------------------------
+
+    /*
+     * Creates the Lua usertype for a handle class:
+     *
+     *     sol::usertype<PlayerRef> type =
+     *         ALEBind::NewHandleType<PlayerRef, UnitRef, WorldObjectRef, ObjectRef>(lua, "Player");
+     *
+     * `Bases` lists the handle's base classes so Lua can call, for example,
+     * Unit methods on a Player. Every handle type also receives:
+     *
+     *   - IsValid()       - whether the object is currently reachable;
+     *   - GetObjectType() - the type name as a string ("Player", ...);
+     *   - tostring()      - "TypeName (guid)" for guid-based handles.
+     */
+    template<typename Ref, typename... Bases>
+    sol::usertype<Ref> NewHandleType(sol::state& lua, char const* name)
+    {
+        sol::usertype<Ref> type = lua.new_usertype<Ref>(name,
+            sol::no_constructor,
+            sol::base_classes, sol::bases<Bases...>());
+
+        type["IsValid"] = &Ref::IsValid;
+        type["GetObjectType"] = [name](Ref const&) { return name; };
+        type[sol::meta_function::to_string] = [name](Ref const& ref)
+        {
+            if constexpr (requires { ref.GetGuid(); })
+                return std::string(name) + " (" + ref.GetGuid().ToString() + ")";
+            else
+                return std::string(name);
+        };
+
+        return type;
+    }
 }
 
 // Lua-visible names of transient types, used in stale-handle error messages.

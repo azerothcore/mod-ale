@@ -8,6 +8,17 @@
 #include "ALEUtility.h"
 #include "lmarshal.h"
 
+#include <memory>
+
+namespace
+{
+    // Wraps one of lmarshal's C functions (mar_encode / mar_decode) so it can
+    // be called safely through sol.
+    sol::protected_function WrapMarshalFunction(sol::state& lua, lua_CFunction fn)
+    {
+        return sol::make_object(lua, fn).as<sol::protected_function>();
+    }
+}
 
 void ALEInstanceAI::Initialize()
 {
@@ -16,9 +27,7 @@ void ALEInstanceAI::Initialize()
     ASSERT(!sALE->HasInstanceData(instance));
 
     // Create a new table for instance data.
-    lua_State* L = sALE->L;
-    lua_newtable(L);
-    sALE->CreateInstanceData(instance);
+    sALE->CreateInstanceData(instance, sALE->lua.create_table());
 
     sALE->OnInitialize(this);
 }
@@ -30,115 +39,79 @@ void ALEInstanceAI::Load(const char* data)
     // If we get passed NULL (i.e. `Reload` was called) then use
     //   the last known save data (or maybe just an empty string).
     if (!data)
-    {
         data = lastSaveData.c_str();
-    }
     else // Otherwise, copy the new data into our buffer.
-    {
         lastSaveData.assign(data);
-    }
 
     if (data[0] == '\0')
     {
         ASSERT(!sALE->HasInstanceData(instance));
 
         // Create a new table for instance data.
-        lua_State* L = sALE->L;
-        lua_newtable(L);
-        sALE->CreateInstanceData(instance);
+        sALE->CreateInstanceData(instance, sALE->lua.create_table());
 
         sALE->OnLoad(this);
-        // Stack: (empty)
         return;
     }
 
     size_t decodedLength;
-    const unsigned char* decodedData = ALEUtil::DecodeData(data, &decodedLength);
-    lua_State* L = sALE->L;
+    std::unique_ptr<unsigned char const[]> decodedData(ALEUtil::DecodeData(data, &decodedLength));
 
-    if (decodedData)
-    {
-        // Stack: (empty)
-
-        lua_pushcfunction(L, mar_decode);
-        lua_pushlstring(L, (const char*)decodedData, decodedLength);
-        // Stack: mar_decode, decoded_data
-
-        // Call `mar_decode` and check for success.
-        if (lua_pcall(L, 1, 1, 0) == 0)
-        {
-            // Stack: data
-            // Only use the data if it's a table.
-            if (lua_istable(L, -1))
-            {
-                sALE->CreateInstanceData(instance);
-                // Stack: (empty)
-                sALE->OnLoad(this);
-                // WARNING! lastSaveData might be different after `OnLoad` if the Lua code saved data.
-            }
-            else
-            {
-                ALE_LOG_ERROR("Error while loading instance data: Expected data to be a table (type 5), got type {} instead", lua_type(L, -1));
-                lua_pop(L, 1);
-                // Stack: (empty)
-
-                Initialize();
-            }
-        }
-        else
-        {
-            // Stack: error_message
-            ALE_LOG_ERROR("Error while parsing instance data with lua-marshal: {}", lua_tostring(L, -1));
-            lua_pop(L, 1);
-            // Stack: (empty)
-
-            Initialize();
-        }
-
-        delete[] decodedData;
-    }
-    else
+    if (!decodedData)
     {
         ALE_LOG_ERROR("Error while decoding instance data: Data is not valid base-64");
-
         Initialize();
+        return;
     }
+
+    sol::protected_function decode = WrapMarshalFunction(sALE->lua, &mar_decode);
+    sol::protected_function_result result = decode(std::string_view(reinterpret_cast<char const*>(decodedData.get()), decodedLength));
+
+    if (!result.valid())
+    {
+        sol::error error = result;
+        ALE_LOG_ERROR("Error while parsing instance data with lua-marshal: {}", error.what());
+        Initialize();
+        return;
+    }
+
+    sol::object decoded = result.get<sol::object>(0);
+    if (!decoded.is<sol::table>())
+    {
+        ALE_LOG_ERROR("Error while loading instance data: Expected data to be a table, got a {} instead",
+            sol::type_name(sALE->lua.lua_state(), decoded.get_type()));
+        Initialize();
+        return;
+    }
+
+    sALE->CreateInstanceData(instance, decoded.as<sol::table>());
+    // WARNING! lastSaveData might be different after `OnLoad` if the Lua code saved data.
+    sALE->OnLoad(this);
 }
 
 const char* ALEInstanceAI::Save() const
 {
     LOCK_ALE;
-    lua_State* L = sALE->L;
-    // Stack: (empty)
 
     /*
      * Need to cheat because this method actually does modify this instance,
      *   even though it's declared as `const`.
-     *
-     * Declaring virtual methods as `const` is BAD!
-     * Don't dictate to children that their methods must be pure.
      */
     ALEInstanceAI* self = const_cast<ALEInstanceAI*>(this);
 
-    lua_pushcfunction(L, mar_encode);
-    sALE->PushInstanceData(L, self, false);
-    // Stack: mar_encode, instance_data
+    sol::protected_function encode = WrapMarshalFunction(sALE->lua, &mar_encode);
+    sol::protected_function_result result = encode(sALE->GetInstanceData(self));
 
-    if (lua_pcall(L, 1, 1, 0) != 0)
+    if (!result.valid())
     {
-        // Stack: error_message
-        ALE_LOG_ERROR("Error while saving: {}", lua_tostring(L, -1));
-        lua_pop(L, 1);
-        return NULL;
+        sol::error error = result;
+        ALE_LOG_ERROR("Error while saving: {}", error.what());
+        return nullptr;
     }
 
-    // Stack: data
-    size_t dataLength;
-    const unsigned char* data = (const unsigned char*)lua_tolstring(L, -1, &dataLength);
-    ALEUtil::EncodeData(data, dataLength, self->lastSaveData);
-
-    lua_pop(L, 1);
-    // Stack: (empty)
+    // The marshalled table is a binary string; store it base-64 encoded.
+    std::string encoded = result.get<std::string>(0);
+    ALEUtil::EncodeData(reinterpret_cast<unsigned char const*>(encoded.data()), encoded.size(), self->lastSaveData);
 
     return lastSaveData.c_str();
 }
@@ -146,83 +119,31 @@ const char* ALEInstanceAI::Save() const
 uint32 ALEInstanceAI::GetData(uint32 key) const
 {
     LOCK_ALE;
-    lua_State* L = sALE->L;
-    // Stack: (empty)
 
-    sALE->PushInstanceData(L, const_cast<ALEInstanceAI*>(this), false);
-    // Stack: instance_data
-
-    ALE::Push(L, key);
-    // Stack: instance_data, key
-
-    lua_gettable(L, -2);
-    // Stack: instance_data, value
-
-    uint32 value = ALE::CHECKVAL<uint32>(L, -1, 0);
-    lua_pop(L, 2);
-    // Stack: (empty)
-
-    return value;
+    sol::table data = sALE->GetInstanceData(const_cast<ALEInstanceAI*>(this));
+    return data.get_or(key, 0u);
 }
 
 void ALEInstanceAI::SetData(uint32 key, uint32 value)
 {
     LOCK_ALE;
-    lua_State* L = sALE->L;
-    // Stack: (empty)
 
-    sALE->PushInstanceData(L, this, false);
-    // Stack: instance_data
-
-    ALE::Push(L, key);
-    ALE::Push(L, value);
-    // Stack: instance_data, key, value
-
-    lua_settable(L, -3);
-    // Stack: instance_data
-
-    lua_pop(L, 1);
-    // Stack: (empty)
+    sol::table data = sALE->GetInstanceData(this);
+    data[key] = value;
 }
 
 uint64 ALEInstanceAI::GetData64(uint32 key) const
 {
     LOCK_ALE;
-    lua_State* L = sALE->L;
-    // Stack: (empty)
 
-    sALE->PushInstanceData(L, const_cast<ALEInstanceAI*>(this), false);
-    // Stack: instance_data
-
-    ALE::Push(L, key);
-    // Stack: instance_data, key
-
-    lua_gettable(L, -2);
-    // Stack: instance_data, value
-
-    uint64 value = ALE::CHECKVAL<uint64>(L, -1, 0);
-    lua_pop(L, 2);
-    // Stack: (empty)
-
-    return value;
+    sol::table data = sALE->GetInstanceData(const_cast<ALEInstanceAI*>(this));
+    return data.get_or(key, uint64(0));
 }
 
 void ALEInstanceAI::SetData64(uint32 key, uint64 value)
 {
     LOCK_ALE;
-    lua_State* L = sALE->L;
-    // Stack: (empty)
 
-    sALE->PushInstanceData(L, this, false);
-    // Stack: instance_data
-
-    ALE::Push(L, key);
-    ALE::Push(L, value);
-    // Stack: instance_data, key, value
-
-    lua_settable(L, -3);
-    // Stack: instance_data
-
-    lua_pop(L, 1);
-    // Stack: (empty)
+    sol::table data = sALE->GetInstanceData(this);
+    data[key] = value;
 }

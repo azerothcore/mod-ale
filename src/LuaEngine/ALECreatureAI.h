@@ -45,7 +45,7 @@ struct ALECreatureAI : ScriptedAI
 
         if (!sALE->UpdateAI(me, diff))
         {
-            if (!me->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC))
+            if (!me->HasUnitFlag(UNIT_FLAG_IMMUNE_TO_NPC))
                 ScriptedAI::UpdateAI(diff);
         }
     }

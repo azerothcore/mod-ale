@@ -8,13 +8,7 @@
 #include "LuaEngine.h"
 #include "Object.h"
 
-extern "C"
-{
-#include "lua.h"
-#include "lauxlib.h"
-};
-
-ALEEventProcessor::ALEEventProcessor(ALE** _E, WorldObject* _obj) : m_time(0), obj(_obj), E(_E)
+ALEEventProcessor::ALEEventProcessor(ALE** _E, WorldObject* _obj) : obj(_obj), E(_E)
 {
     // can be called from multiple threads
     if (obj)
@@ -48,7 +42,7 @@ void ALEEventProcessor::Update(uint32 diff)
         eventList.erase(it);
 
         if (luaEvent->state != LUAEVENT_STATE_ERASE)
-            eventMap.erase(luaEvent->funcRef);
+            eventMap.erase(luaEvent->id);
 
         if (luaEvent->state == LUAEVENT_STATE_RUN)
         {
@@ -58,45 +52,41 @@ void ALEEventProcessor::Update(uint32 diff)
                 AddEvent(luaEvent); // Reschedule before calling incase RemoveEvents used
 
             // Call the timed event
-            (*E)->OnTimedEvent(luaEvent->funcRef, delay, luaEvent->repeats ? luaEvent->repeats-- : luaEvent->repeats, obj);
+            (*E)->OnTimedEvent(luaEvent->callback, luaEvent->id, delay, luaEvent->repeats ? luaEvent->repeats-- : luaEvent->repeats, obj);
 
             if (!remove)
                 continue;
         }
 
         // Event should be deleted (executed last time or set to be aborted)
-        RemoveEvent(luaEvent);
+        delete luaEvent;
     }
 }
 
 void ALEEventProcessor::SetStates(LuaEventState state)
 {
-    for (EventList::iterator it = eventList.begin(); it != eventList.end(); ++it)
-        it->second->SetState(state);
+    for (auto& [time, luaEvent] : eventList)
+        luaEvent->SetState(state);
+
     if (state == LUAEVENT_STATE_ERASE)
         eventMap.clear();
 }
 
 void ALEEventProcessor::RemoveEvents_internal()
 {
-    //if (!final)
-    //{
-    //    for (EventList::iterator it = eventList.begin(); it != eventList.end(); ++it)
-    //        it->second->to_Abort = true;
-    //    return;
-    //}
-
-    for (EventList::iterator it = eventList.begin(); it != eventList.end(); ++it)
-        RemoveEvent(it->second);
+    for (auto& [time, luaEvent] : eventList)
+        delete luaEvent;
 
     eventList.clear();
     eventMap.clear();
 }
 
-void ALEEventProcessor::SetState(int eventId, LuaEventState state)
+void ALEEventProcessor::SetState(uint64 eventId, LuaEventState state)
 {
-    if (eventMap.find(eventId) != eventMap.end())
-        eventMap[eventId]->SetState(state);
+    auto iter = eventMap.find(eventId);
+    if (iter != eventMap.end())
+        iter->second->SetState(state);
+
     if (state == LUAEVENT_STATE_ERASE)
         eventMap.erase(eventId);
 }
@@ -104,27 +94,18 @@ void ALEEventProcessor::SetState(int eventId, LuaEventState state)
 void ALEEventProcessor::AddEvent(LuaEvent* luaEvent)
 {
     luaEvent->GenerateDelay();
-    eventList.insert(std::pair<uint64, LuaEvent*>(m_time + luaEvent->delay, luaEvent));
-    eventMap[luaEvent->funcRef] = luaEvent;
+    eventList.insert({ m_time + luaEvent->delay, luaEvent });
+    eventMap[luaEvent->id] = luaEvent;
 }
 
-void ALEEventProcessor::AddEvent(int funcRef, uint32 min, uint32 max, uint32 repeats)
+uint64 ALEEventProcessor::AddEvent(sol::protected_function callback, uint32 min, uint32 max, uint32 repeats)
 {
-    AddEvent(new LuaEvent(funcRef, min, max, repeats));
+    uint64 id = (*E)->eventMgr->NextEventId();
+    AddEvent(new LuaEvent(id, std::move(callback), min, max, repeats));
+    return id;
 }
 
-void ALEEventProcessor::RemoveEvent(LuaEvent* luaEvent)
-{
-    // Unreference if should and if ALE was not yet uninitialized and if the lua state still exists
-    if (luaEvent->state != LUAEVENT_STATE_ERASE && ALE::IsInitialized() && (*E)->HasLuaState())
-    {
-        // Free lua function ref
-        luaL_unref((*E)->L, LUA_REGISTRYINDEX, luaEvent->funcRef);
-    }
-    delete luaEvent;
-}
-
-EventMgr::EventMgr(ALE** _E) : globalProcessor(new ALEEventProcessor(_E, NULL)), E(_E)
+EventMgr::EventMgr(ALE** _E) : globalProcessor(new ALEEventProcessor(_E, nullptr)), E(_E)
 {
 }
 
@@ -132,29 +113,26 @@ EventMgr::~EventMgr()
 {
     {
         Guard guard(GetLock());
-        if (!processors.empty())
-            for (ProcessorSet::const_iterator it = processors.begin(); it != processors.end(); ++it) // loop processors
-                (*it)->RemoveEvents_internal();
+        for (ALEEventProcessor* processor : processors)
+            processor->RemoveEvents_internal();
         globalProcessor->RemoveEvents_internal();
     }
     delete globalProcessor;
-    globalProcessor = NULL;
+    globalProcessor = nullptr;
 }
 
 void EventMgr::SetStates(LuaEventState state)
 {
     Guard guard(GetLock());
-    if (!processors.empty())
-        for (ProcessorSet::const_iterator it = processors.begin(); it != processors.end(); ++it) // loop processors
-            (*it)->SetStates(state);
+    for (ALEEventProcessor* processor : processors)
+        processor->SetStates(state);
     globalProcessor->SetStates(state);
 }
 
-void EventMgr::SetState(int eventId, LuaEventState state)
+void EventMgr::SetState(uint64 eventId, LuaEventState state)
 {
     Guard guard(GetLock());
-    if (!processors.empty())
-        for (ProcessorSet::const_iterator it = processors.begin(); it != processors.end(); ++it) // loop processors
-            (*it)->SetState(eventId, state);
+    for (ALEEventProcessor* processor : processors)
+        processor->SetState(eventId, state);
     globalProcessor->SetState(eventId, state);
 }

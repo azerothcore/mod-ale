@@ -280,6 +280,43 @@ public:
     }
 
     /*
+     * Calls every handler bound to `key` and threads `value` through them:
+     * a handler that returns a value of type V replaces it for the handlers
+     * after it. Returns the final value.
+     *
+     * `invoke` receives (handler, current value) and performs the call, so
+     * the caller decides where the value sits among the arguments:
+     *
+     *     damage = CallAllFold(*bindings, key, damage, [&](auto const& callback, uint32 current)
+     *     {
+     *         return Call(callback, key.event_id, me, target, current, spellInfo);
+     *     });
+     */
+    template<typename K, typename V, typename Invoker>
+    V CallAllFold(BindingMap<K>& bindings, K const& key, V value, Invoker&& invoke)
+    {
+        return FoldCallbacks(bindings.GetCallbacksFor(key), value, std::forward<Invoker>(invoke));
+    }
+
+    // Same fold over an explicit handler snapshot, for events bound in two
+    // maps (see GetCreatureCallbacks).
+    template<typename V, typename Invoker>
+    V FoldCallbacks(std::vector<sol::protected_function> const& callbacks, V value, Invoker&& invoke)
+    {
+        for (sol::protected_function const& callback : callbacks)
+        {
+            sol::protected_function_result result = invoke(callback, value);
+            if (!result.valid())
+                continue;
+
+            if (sol::optional<V> newValue = result.get<sol::optional<V>>(0))
+                value = *newValue;
+        }
+
+        return value;
+    }
+
+    /*
      * Returns the merged handler snapshot for a creature event bound by entry
      * and/or by unique spawn, for hooks that need to inspect each handler's
      * results themselves (modified damage, multiple return values, ...).
@@ -318,7 +355,7 @@ public:
     void FreeInstanceId(uint32 instanceId);
 
     /* Custom */
-    void OnTimedEvent(sol::protected_function callback, uint32 delay, uint32 calls, WorldObject* obj);
+    void OnTimedEvent(sol::protected_function const& callback, uint64 eventId, uint32 delay, uint32 calls, WorldObject* obj);
     bool OnCommand(ChatHandler& handler, const char* text);
     void OnWorldUpdate(uint32 diff);
     void OnLootItem(Player* pPlayer, Item* pItem, uint32 count, ObjectGuid guid);
@@ -434,6 +471,8 @@ public:
     bool OnChat(Player* pPlayer, uint32 type, uint32 lang, std::string& msg, Guild* pGuild);
     bool OnChat(Player* pPlayer, uint32 type, uint32 lang, std::string& msg, Channel* pChannel);
     bool OnChat(Player* pPlayer, uint32 type, uint32 lang, std::string& msg, Player* pReceiver);
+    bool DispatchChatEvent(EventKey<Hooks::PlayerEvents> const& key, Player* pPlayer, std::string& msg,
+        uint32 type, uint32 lang, sol::optional<sol::object> extra);
     void OnEmote(Player* pPlayer, uint32 emote);
     void OnTextEmote(Player* pPlayer, uint32 textEmote, uint32 emoteNum, ObjectGuid guid);
     void OnPlayerSpellCast(Player* pPlayer, Spell* pSpell, bool skipCheck);

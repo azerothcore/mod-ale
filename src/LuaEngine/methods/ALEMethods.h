@@ -11,8 +11,8 @@
 
 /*
  * One registration function per Lua-visible type, each implemented in its own
- * methods/*.cpp file. RegisterFunctions (LuaFunctions.cpp) calls them all when
- * a Lua state opens.
+ * file under methods/. RegisterFunctions (LuaFunctions.cpp) calls them all
+ * when a Lua state opens.
  */
 
 void RegisterAchievementMethods(sol::state& lua);

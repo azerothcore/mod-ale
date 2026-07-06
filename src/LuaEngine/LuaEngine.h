@@ -226,6 +226,21 @@ public:
         return result;
     }
 
+    // Calls a plain Lua callback (no event id prepended); reports errors.
+    // Used for timed events, HTTP responses, async query results, ...
+    template<typename... Args>
+    sol::protected_function_result CallFunction(sol::protected_function const& callback, Args&&... args)
+    {
+        EnterDispatch();
+        sol::protected_function_result result = callback(ALEBind::ToLua(lua, std::forward<Args>(args))...);
+        LeaveDispatch();
+
+        if (!result.valid())
+            Report(sol::error(result));
+
+        return result;
+    }
+
     // Calls every handler bound to `key`, ignoring their results.
     template<typename K, typename... Args>
     void CallAll(BindingMap<K>& bindings, K const& key, Args&&... args)

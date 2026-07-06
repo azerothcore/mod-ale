@@ -18,24 +18,24 @@
 #include "Weather.h"
 #include "World.h"
 #include "Hooks.h"
-#include "LFG.h"
-#include "ALEUtility.h"
-#include "HttpManager.h"
-#include "EventEmitter.h"
-#include "TicketMgr.h"
-#include "LootMgr.h"
-#include "ALEFileWatcher.h"
+#include "ALEBind.h"
 #include "ALEConfig.h"
-#include <mutex>
-#include <memory>
-#include <vector>
-#include <ctime>
-#include <unordered_map>
+#include "ALEFileWatcher.h"
+#include "ALEHandles.h"
+#include "ALEUtility.h"
+#include "BindingMap.h"
+#include "EventEmitter.h"
+#include "HttpManager.h"
+#include "LFG.h"
+#include "LootMgr.h"
+#include "TicketMgr.h"
 
-extern "C"
-{
-#include <lua.h>
-};
+#include <sol/sol.hpp>
+
+#include <memory>
+#include <mutex>
+#include <unordered_map>
+#include <vector>
 
 struct ItemTemplate;
 typedef BattlegroundTypeId BattleGroundTypeId;
@@ -49,7 +49,6 @@ class Corpse;
 class Creature;
 class CreatureAI;
 class GameObject;
-class GameObjectAI;
 class Guild;
 class Group;
 class InstanceScript;
@@ -62,36 +61,12 @@ class Quest;
 class Spell;
 class SpellCastTargets;
 class TempSummon;
-// class Transport;
 class Unit;
 class Weather;
 class WorldPacket;
 class Vehicle;
 
-struct lua_State;
 class EventMgr;
-class ALEObject;
-template<typename T> class ALETemplate;
-
-template<typename K> class BindingMap;
-template<typename T> struct EventKey;
-template<typename T> struct EntryKey;
-template<typename T> struct UniqueObjectKey;
-
-// Type definition for bytecode buffer
-typedef std::vector<uint8> BytecodeBuffer;
-
-// Global bytecode cache entry
-struct GlobalCacheEntry
-{
-    BytecodeBuffer bytecode;
-    std::time_t last_modified;
-    std::string filepath;
-    
-    GlobalCacheEntry() : last_modified(0) {}
-    GlobalCacheEntry(const BytecodeBuffer& code, std::time_t modTime, const std::string& path)
-        : bytecode(code), last_modified(modTime), filepath(path) {}
-};
 
 struct LuaScript
 {
@@ -99,12 +74,9 @@ struct LuaScript
     std::string filename;
     std::string filepath;
     std::string modulepath;
-    LuaScript() {}
 };
 
-#define ALE_STATE_PTR "ALE State Ptr"
 #define LOCK_ALE ALE::Guard __guard(ALE::GetLock())
-
 #define ALE_GAME_API AC_GAME_API
 
 class ALE_GAME_API ALE
@@ -130,27 +102,23 @@ private:
 
     // Lua script folder path
     static std::string lua_folderpath;
-    // lua path variable for require() function
+    // lua path variables for the require() function
     static std::string lua_requirepath;
     static std::string lua_requirecpath;
 
-    // A counter for lua event stacks that occur (see event_level).
-    // This is used to determine whether an object belongs to the current call stack or not.
-    // 0 is reserved for always belonging to the call stack
-    // 1 is reserved for a non valid callstackid
-    uint64 callstackid = 2;
-    // A counter for the amount of nested events. When the event_level
-    // reaches 0 we are about to return back to C++. At this point the
-    // objects used during the event stack are invalidated.
-    uint32 event_level;
-    // When a hook pushes arguments to be passed to event handlers,
-    //  this is used to keep track of how many arguments were pushed.
-    uint8 push_counter;
+    // Depth of nested event dispatches. When it drops back to 0 the engine
+    // returns to C++ and the handle pointer caches are retired
+    // (see ALEHandleEpoch in ALEHandles.h).
+    uint32 event_level = 0;
 
-    // Map from instance ID -> Lua table ref
-    std::unordered_map<uint32, int> instanceDataRefs;
-    // Map from map ID -> Lua table ref
-    std::unordered_map<uint32, int> continentDataRefs;
+    // Whether OpenLua() ran: a sol::state member always exists, but scripts
+    // and bindings are only loaded into it while the engine is enabled.
+    bool stateOpened = false;
+
+    // Per-map instance data tables, kept alive by sol references.
+    std::unordered_map<uint32, sol::table> instanceDataRefs;
+    // Per-continent data tables (map id -> table).
+    std::unordered_map<uint32, sol::table> continentDataRefs;
 
     ALE();
     ~ALE();
@@ -163,7 +131,6 @@ private:
     void CloseLua();
     void DestroyBindStores();
     void CreateBindStores();
-    void InvalidateObjects();
 
     // Use ReloadALE() to make ALE reload
     // This is called on world update to reload ALE
@@ -171,96 +138,52 @@ private:
     static void LoadScriptPaths();
     static void GetScripts(std::string path);
     static void AddScriptPath(std::string filename, const std::string& fullpath);
-    static int LoadCompiledScript(lua_State* L, const std::string& filepath);
-    static std::time_t GetFileModTime(const std::string& filepath);
-    static std::time_t GetFileModTimeWithCache(const std::string& filepath);
-    
-    // Global cache management
-    static bool CompileScriptToGlobalCache(const std::string& filepath);
-    static bool CompileMoonScriptToGlobalCache(const std::string& filepath);
-    static int TryLoadFromGlobalCache(lua_State* L, const std::string& filepath);
-    static int LoadScriptWithCache(lua_State* L, const std::string& filepath, bool isMoonScript, uint32* compiledCount = nullptr, uint32* cachedCount = nullptr);
-    static void ClearGlobalCache();
-    static void ClearTimestampCache();
-    static size_t GetGlobalCacheSize();
 
-    static int StackTrace(lua_State *_L);
-    static void Report(lua_State* _L);
-
-    // Some helpers for hooks to call event handlers.
-    // The bodies of the templates are in HookHelpers.h, so if you want to use them you need to #include "HookHelpers.h".
-    template<typename K1, typename K2> int SetupStack(BindingMap<K1>* bindings1, BindingMap<K2>* bindings2, const K1& key1, const K2& key2, int number_of_arguments);
-                                       int CallOneFunction(int number_of_functions, int number_of_arguments, int number_of_results);
-                                       void CleanUpStack(int number_of_arguments);
-    template<typename T>               void ReplaceArgument(T value, uint8 index);
-    template<typename K1, typename K2> void CallAllFunctions(BindingMap<K1>* bindings1, BindingMap<K2>* bindings2, const K1& key1, const K2& key2);
-    template<typename K1, typename K2> bool CallAllFunctionsBool(BindingMap<K1>* bindings1, BindingMap<K2>* bindings2, const K1& key1, const K2& key2, bool default_value = false);
-
-    // Same as above but for only one binding instead of two.
-    // `key` is passed twice because there's no NULL for references, but it's not actually used if `bindings2` is NULL.
-    template<typename K> int SetupStack(BindingMap<K>* bindings, const K& key, int number_of_arguments)
+    // Marks the end of one nested dispatch level; retires handle caches when
+    // the outermost handler returns.
+    void EnterDispatch() { ++event_level; }
+    void LeaveDispatch()
     {
-        return SetupStack<K, K>(bindings, NULL, key, key, number_of_arguments);
-    }
-    template<typename K> void CallAllFunctions(BindingMap<K>* bindings, const K& key)
-    {
-        CallAllFunctions<K, K>(bindings, NULL, key, key);
-    }
-    template<typename K> bool CallAllFunctionsBool(BindingMap<K>* bindings, const K& key, bool default_value = false)
-    {
-        return CallAllFunctionsBool<K, K>(bindings, NULL, key, key, default_value);
+        if (--event_level == 0)
+            ALEHandleEpoch::Bump();
     }
 
-    // Non-static pushes, to be used in hooks.
-    // These just call the correct static version with the main thread's Lua state.
-    void Push()                                 { Push(L); ++push_counter; }
-    void Push(const long long value)            { Push(L, value); ++push_counter; }
-    void Push(const unsigned long long value)   { Push(L, value); ++push_counter; }
-    void Push(const long value)                 { Push(L, value); ++push_counter; }
-    void Push(const unsigned long value)        { Push(L, value); ++push_counter; }
-    void Push(const int value)                  { Push(L, value); ++push_counter; }
-    void Push(const unsigned int value)         { Push(L, value); ++push_counter; }
-    void Push(const bool value)                 { Push(L, value); ++push_counter; }
-    void Push(const float value)                { Push(L, value); ++push_counter; }
-    void Push(const double value)               { Push(L, value); ++push_counter; }
-    void Push(const std::string& value)         { Push(L, value); ++push_counter; }
-    void Push(const char* value)                { Push(L, value); ++push_counter; }
-    void Push(ObjectGuid const value)           { Push(L, value); ++push_counter; }
-    void Push(const CreatureTemplate* value)    { Push(L, value); ++push_counter; }
-    template<typename T>
-    void Push(T const* ptr)                     { Push(L, ptr); ++push_counter; }
+    // Reports a failed handler call to the log and the OnError emitter.
+    void Report(sol::error const& error);
 
 public:
     static ALE* GALE;
 
-    lua_State* L;
+    // The Lua state. Bindings and hooks go through sol, never the raw C API.
+    sol::state lua;
+
     EventMgr* eventMgr;
     HttpManager httpManager;
     QueryCallbackProcessor queryProcessor;
     EventEmitter<void(std::string)> OnError;
 
-    BindingMap< EventKey<Hooks::ServerEvents> >*        ServerEventBindings;
-    BindingMap< EventKey<Hooks::PlayerEvents> >*        PlayerEventBindings;
-    BindingMap< EventKey<Hooks::GuildEvents> >*         GuildEventBindings;
-    BindingMap< EventKey<Hooks::GroupEvents> >*         GroupEventBindings;
-    BindingMap< EventKey<Hooks::VehicleEvents> >*       VehicleEventBindings;
-    BindingMap< EventKey<Hooks::BGEvents> >*            BGEventBindings;
-    BindingMap< EventKey<Hooks::AllCreatureEvents> >*   AllCreatureEventBindings;
+    std::unique_ptr<BindingMap<EventKey<Hooks::ServerEvents>>>      ServerEventBindings;
+    std::unique_ptr<BindingMap<EventKey<Hooks::PlayerEvents>>>      PlayerEventBindings;
+    std::unique_ptr<BindingMap<EventKey<Hooks::GuildEvents>>>       GuildEventBindings;
+    std::unique_ptr<BindingMap<EventKey<Hooks::GroupEvents>>>       GroupEventBindings;
+    std::unique_ptr<BindingMap<EventKey<Hooks::VehicleEvents>>>     VehicleEventBindings;
+    std::unique_ptr<BindingMap<EventKey<Hooks::BGEvents>>>          BGEventBindings;
+    std::unique_ptr<BindingMap<EventKey<Hooks::TicketEvents>>>      TicketEventBindings;
+    std::unique_ptr<BindingMap<EventKey<Hooks::AllCreatureEvents>>> AllCreatureEventBindings;
 
-    BindingMap< EntryKey<Hooks::PacketEvents> >*        PacketEventBindings;
-    BindingMap< EntryKey<Hooks::CreatureEvents> >*      CreatureEventBindings;
-    BindingMap< EntryKey<Hooks::GossipEvents> >*        CreatureGossipBindings;
-    BindingMap< EntryKey<Hooks::GameObjectEvents> >*    GameObjectEventBindings;
-    BindingMap< EntryKey<Hooks::GossipEvents> >*        GameObjectGossipBindings;
-    BindingMap< EntryKey<Hooks::ItemEvents> >*          ItemEventBindings;
-    BindingMap< EntryKey<Hooks::GossipEvents> >*        ItemGossipBindings;
-    BindingMap< EntryKey<Hooks::GossipEvents> >*        PlayerGossipBindings;
-    BindingMap< EntryKey<Hooks::InstanceEvents> >*      MapEventBindings;
-    BindingMap< EntryKey<Hooks::InstanceEvents> >*      InstanceEventBindings;
-    BindingMap< EventKey<Hooks::TicketEvents> >*        TicketEventBindings;
-    BindingMap< EntryKey<Hooks::SpellEvents> >*         SpellEventBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::PacketEvents>>>      PacketEventBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::CreatureEvents>>>    CreatureEventBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::GossipEvents>>>      CreatureGossipBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::GameObjectEvents>>>  GameObjectEventBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::GossipEvents>>>      GameObjectGossipBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::ItemEvents>>>        ItemEventBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::GossipEvents>>>      ItemGossipBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::GossipEvents>>>      PlayerGossipBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::InstanceEvents>>>    MapEventBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::InstanceEvents>>>    InstanceEventBindings;
+    std::unique_ptr<BindingMap<EntryKey<Hooks::SpellEvents>>>       SpellEventBindings;
 
-    BindingMap< UniqueObjectKey<Hooks::CreatureEvents> >*  CreatureUniqueBindings;
+    std::unique_ptr<BindingMap<UniqueObjectKey<Hooks::CreatureEvents>>> CreatureUniqueBindings;
 
     static void Initialize();
     static void Uninitialize();
@@ -268,49 +191,107 @@ public:
     static void ReloadALE() { LOCK_ALE; reload = true; }
     static LockType& GetLock() { return lock; };
     static bool IsInitialized() { return initialized; }
-    // Never returns nullptr
-    static ALE* GetALE(lua_State* L)
+
+    void RunScripts();
+    bool ShouldReload() const { return reload; }
+    bool HasLuaState() const { return stateOpened; }
+
+    /*
+     * Registers a Lua handler for an event. Called from the Register* global
+     * functions exposed to scripts. Returns a callable that cancels the
+     * registration, or raises a Lua error on invalid arguments.
+     */
+    sol::object Register(uint8 regtype, uint32 entry, ObjectGuid guid, uint32 instanceId,
+        uint32 event_id, sol::protected_function callback, uint32 shots);
+
+    // -----------------------------------------------------------------
+    // Event dispatch
+    //
+    // Every game object argument is automatically wrapped into its safe
+    // handle (see ALEBind.h); plain values pass through unchanged.
+    // -----------------------------------------------------------------
+
+    // Calls one handler with (event_id, args...); reports errors.
+    // Returns an invalid result when the handler raised an error.
+    template<typename E, typename... Args>
+    sol::protected_function_result Call(sol::protected_function const& callback, E event_id, Args&&... args)
     {
-        lua_pushstring(L, ALE_STATE_PTR);
-        lua_rawget(L, LUA_REGISTRYINDEX);
-        ASSERT(lua_islightuserdata(L, -1));
-        ALE* E = static_cast<ALE*>(lua_touserdata(L, -1));
-        lua_pop(L, 1);
-        ASSERT(E);
-        return E;
+        EnterDispatch();
+        sol::protected_function_result result = callback(event_id, ALEBind::ToLua(std::forward<Args>(args))...);
+        LeaveDispatch();
+
+        if (!result.valid())
+            Report(sol::error(result));
+
+        return result;
     }
 
-    // Static pushes, can be used by anything, including methods.
-    static void Push(lua_State* luastate); // nil
-    static void Push(lua_State* luastate, const long long);
-    static void Push(lua_State* luastate, const unsigned long long);
-    static void Push(lua_State* luastate, const long);
-    static void Push(lua_State* luastate, const unsigned long);
-    static void Push(lua_State* luastate, const int);
-    static void Push(lua_State* luastate, const unsigned int);
-    static void Push(lua_State* luastate, const bool);
-    static void Push(lua_State* luastate, const float);
-    static void Push(lua_State* luastate, const double);
-    static void Push(lua_State* luastate, const std::string&);
-    static void Push(lua_State* luastate, const char*);
-    static void Push(lua_State* luastate, Object const* obj);
-    static void Push(lua_State* luastate, WorldObject const* obj);
-    static void Push(lua_State* luastate, Unit const* unit);
-    static void Push(lua_State* luastate, Pet const* pet);
-    static void Push(lua_State* luastate, TempSummon const* summon);
-    static void Push(lua_State* luastate, ObjectGuid const guid);
-    static void Push(lua_State* luastate, GemPropertiesEntry const& gemProperties);
-    static void Push(lua_State* luastate, SpellEntry const& spell);
-    static void Push(lua_State* luastate, CreatureTemplate const* creatureTemplate);
-    template<typename T>
-    static void Push(lua_State* luastate, T const* ptr)
+    // Calls every handler bound to `key`, ignoring their results.
+    template<typename K, typename... Args>
+    void CallAll(BindingMap<K>& bindings, K const& key, Args&&... args)
     {
-        ALETemplate<T>::Push(luastate, ptr);
+        for (sol::protected_function const& callback : bindings.GetCallbacksFor(key))
+            Call(callback, key.event_id, args...);
     }
 
-    static std::string FormatQuery(lua_State* L, const char* query);
+    // Same, for events bound in two maps (creature entry + unique creature).
+    template<typename K1, typename K2, typename... Args>
+    void CallAll(BindingMap<K1>& bindings1, BindingMap<K2>& bindings2, K1 const& key1, K2 const& key2, Args&&... args)
+    {
+        CallAll(bindings1, key1, args...);
+        CallAll(bindings2, key2, args...);
+    }
 
-    bool ExecuteCall(int params, int res);
+    /*
+     * Calls every handler bound to `key` and folds their first return value:
+     * returns `default_value` if every handler returned it (or nothing),
+     * the opposite as soon as one handler disagrees.
+     *
+     * With default_value = false this implements the usual "return true to
+     * override default behaviour" hook contract.
+     */
+    template<typename K, typename... Args>
+    bool CallAllBool(BindingMap<K>& bindings, K const& key, bool default_value, Args&&... args)
+    {
+        bool result = default_value;
+
+        for (sol::protected_function const& callback : bindings.GetCallbacksFor(key))
+        {
+            sol::protected_function_result callResult = Call(callback, key.event_id, args...);
+            if (!callResult.valid())
+                continue;
+
+            if (sol::optional<bool> value = callResult.get<sol::optional<bool>>(0))
+                if (*value != default_value)
+                    result = !default_value;
+        }
+
+        return result;
+    }
+
+    // Same, for events bound in two maps (creature entry + unique creature).
+    template<typename K1, typename K2, typename... Args>
+    bool CallAllBool(BindingMap<K1>& bindings1, BindingMap<K2>& bindings2, K1 const& key1, K2 const& key2,
+        bool default_value, Args&&... args)
+    {
+        bool result1 = CallAllBool(bindings1, key1, default_value, args...);
+        bool result2 = CallAllBool(bindings2, key2, default_value, args...);
+        return (result1 != default_value || result2 != default_value) ? !default_value : default_value;
+    }
+
+    /*
+     * Returns the merged handler snapshot for a creature event bound by entry
+     * and/or by unique spawn, for hooks that need to inspect each handler's
+     * results themselves (modified damage, multiple return values, ...).
+     */
+    std::vector<sol::protected_function> GetCreatureCallbacks(
+        EntryKey<Hooks::CreatureEvents> const& entryKey, UniqueObjectKey<Hooks::CreatureEvents> const& uniqueKey)
+    {
+        std::vector<sol::protected_function> callbacks = CreatureEventBindings->GetCallbacksFor(entryKey);
+        std::vector<sol::protected_function> unique = CreatureUniqueBindings->GetCallbacksFor(uniqueKey);
+        callbacks.insert(callbacks.end(), unique.begin(), unique.end());
+        return callbacks;
+    }
 
     /*
      * Returns `true` if ALE has instance data for `map`.
@@ -318,48 +299,26 @@ public:
     bool HasInstanceData(Map const* map);
 
     /*
-     * Use the top element of the stack as the instance data table for `map`,
-     *   then pops it off the stack.
+     * Stores `data` as the instance data table for `map`.
      */
-    void CreateInstanceData(Map const* map);
+    void CreateInstanceData(Map const* map, sol::table data);
 
     /*
-     * Retrieve the instance data for the `Map` scripted by `ai` and push it
-     *   onto the stack.
+     * Retrieves the instance data table for the `Map` scripted by `ai`.
      *
-     * An `ALEInstanceAI` is needed because the instance data might
-     *   not exist (i.e. ALE has been reloaded).
-     *
-     * In that case, the AI is "reloaded" (new instance data table is created
-     *   and loaded with the last known save state, and `Load`/`Initialize`
-     *   hooks are called).
+     * An `ALEInstanceAI` is needed because the instance data might not exist
+     * (i.e. ALE has been reloaded). In that case the AI is "reloaded" (a new
+     * instance data table is created and loaded with the last known save
+     * state, and `Load`/`Initialize` hooks are called).
      */
-    void PushInstanceData(lua_State* L, ALEInstanceAI* ai, bool incrementCounter = true);
-
-    void RunScripts();
-    bool ShouldReload() const { return reload; }
-    bool HasLuaState() const { return L != NULL; }
-    uint64 GetCallstackId() const { return callstackid; }
-    int Register(lua_State* L, uint8 reg, uint32 entry, ObjectGuid guid, uint32 instanceId, uint32 event_id, int functionRef, uint32 shots);
-
-    // Checks
-    template<typename T> static T CHECKVAL(lua_State* luastate, int narg);
-    template<typename T> static T CHECKVAL(lua_State* luastate, int narg, T def)
-    {
-        return lua_isnoneornil(luastate, narg) ? def : CHECKVAL<T>(luastate, narg);
-    }
-    template<typename T> static T* CHECKOBJ(lua_State* luastate, int narg, bool error = true)
-    {
-        return ALETemplate<T>::Check(luastate, narg, error);
-    }
-    static ALEObject* CHECKTYPE(lua_State* luastate, int narg, const char *tname, bool error = true);
+    sol::table GetInstanceData(ALEInstanceAI* ai);
 
     CreatureAI* GetAI(Creature* creature);
     InstanceData* GetInstanceData(Map* map);
     void FreeInstanceId(uint32 instanceId);
 
     /* Custom */
-    void OnTimedEvent(int funcRef, uint32 delay, uint32 calls, WorldObject* obj);
+    void OnTimedEvent(sol::protected_function callback, uint32 delay, uint32 calls, WorldObject* obj);
     bool OnCommand(ChatHandler& handler, const char* text);
     void OnWorldUpdate(uint32 diff);
     void OnLootItem(Player* pPlayer, Item* pItem, uint32 count, ObjectGuid guid);
@@ -597,7 +556,7 @@ public:
     void OnTicketClose(GmTicket* ticket);
     void OnTicketUpdateLastChange(GmTicket* ticket);
     void OnTicketResolve(GmTicket* ticket);
-  
+
     /* Spell */
     void OnSpellPrepare(Unit* caster, Spell* spell, SpellInfo const* spellInfo);
     void OnSpellCast(Unit* caster, Spell* spell, SpellInfo const* spellInfo, bool skipCheck);
@@ -618,10 +577,7 @@ public:
     void OnAllCreatureModifyHealReceived(Creature* me, Unit* target, uint32& heal, SpellInfo const* spellInfo);
     uint32 OnAllCreatureDealDamage(Creature* me, Unit* pVictim, uint32 damage, DamageEffectType damagetype);
 };
-template<> Unit* ALE::CHECKOBJ<Unit>(lua_State* L, int narg, bool error);
-template<> Object* ALE::CHECKOBJ<Object>(lua_State* L, int narg, bool error);
-template<> WorldObject* ALE::CHECKOBJ<WorldObject>(lua_State* L, int narg, bool error);
-template<> ALEObject* ALE::CHECKOBJ<ALEObject>(lua_State* L, int narg, bool error);
 
 #define sALE ALE::GALE
-#endif
+
+#endif // _LUA_ENGINE_H

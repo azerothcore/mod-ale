@@ -7,6 +7,12 @@
 #ifndef ACHIEVEMENTMETHODS_H
 #define ACHIEVEMENTMETHODS_H
 
+#include "ALEBind.h"
+
+#include "Common.h"
+#include "DBCStructure.h"
+#include "SharedDefines.h"
+
 /***
  * Represents an entry from the game's achievement database (e.g., achievement earned for completing certain tasks).
  *
@@ -19,10 +25,9 @@ namespace LuaAchievement
      *
      * @return uint32 id
      */
-    int GetId(lua_State* L, AchievementEntry* const achievement)
+    uint32 GetId(AchievementEntry const& achievement)
     {
-        ALE::Push(L, achievement->ID);
-        return 1;
+        return achievement.ID;
     }
 
     /**
@@ -44,16 +49,21 @@ namespace LuaAchievement
      * @param [LocaleConstant] locale = DEFAULT_LOCALE : locale to return the [Achievement] name in
      * @return string name
      */
-    int GetName(lua_State* L, AchievementEntry* const achievement)
+    char const* GetName(AchievementEntry const& achievement, sol::optional<uint8> locale)
     {
-        uint8 locale = ALE::CHECKVAL<uint8>(L, 2, DEFAULT_LOCALE);
-        if (locale >= TOTAL_LOCALES)
-        {
-            return luaL_argerror(L, 2, "valid LocaleConstant expected");
-        }
+        uint8 localeIndex = locale.value_or(DEFAULT_LOCALE);
+        if (localeIndex >= TOTAL_LOCALES)
+            throw std::invalid_argument("valid LocaleConstant expected");
 
-        ALE::Push(L, achievement->name[locale]);
-        return 1;
+        return achievement.name[localeIndex];
     }
-};
+}
+
+void RegisterAchievementMethods(sol::state& lua)
+{
+    sol::usertype<AchievementEntry> type = lua.new_usertype<AchievementEntry>("Achievement", sol::no_constructor);
+
+    type["GetId"]   = &LuaAchievement::GetId;
+    type["GetName"] = &LuaAchievement::GetName;
+}
 #endif

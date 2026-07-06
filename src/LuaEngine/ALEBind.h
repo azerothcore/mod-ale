@@ -265,10 +265,23 @@ namespace ALEBind
         });
     }
 
+    // Binds a free function whose first parameter is the self pointer:
+    // Method(&LuaCorpse::GetOwnerGUID) with ObjectGuid GetOwnerGUID(Corpse* corpse)
+    template<typename R, typename T, typename... Args>
+        requires Handled<std::remove_const_t<T>>
+    auto Method(R (*f)(T*, Args...))
+    {
+        return MakeMethod<R, std::remove_const_t<T>, Args...>([f](std::remove_const_t<T>* self, Args... args) -> R
+        {
+            return f(self, std::forward<Args>(args)...);
+        });
+    }
+
     // Binds a lambda whose first parameter is the self pointer:
     // Method([](Player* self, uint32 id) { ... })
     template<typename F>
-        requires (!std::is_member_function_pointer_v<std::remove_reference_t<F>>)
+        requires (!std::is_member_function_pointer_v<std::remove_reference_t<F>>
+            && !std::is_pointer_v<std::remove_reference_t<F>>)
     auto Method(F&& fn)
     {
         return CallableTraits<std::remove_reference_t<F>>::Method(std::forward<F>(fn));

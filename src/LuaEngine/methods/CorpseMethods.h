@@ -7,6 +7,10 @@
 #ifndef CORPSEMETHODS_H
 #define CORPSEMETHODS_H
 
+#include "ALEBind.h"
+
+#include "Corpse.h"
+
 /***
  * The remains of a [Player] that has died.
  *
@@ -19,10 +23,9 @@ namespace LuaCorpse
      *
      * @return ObjectGuid ownerGUID
      */
-    int GetOwnerGUID(lua_State* L, Corpse* corpse)
+    ObjectGuid GetOwnerGUID(Corpse* corpse)
     {
-        ALE::Push(L, corpse->GetOwnerGUID());
-        return 1;
+        return corpse->GetOwnerGUID();
     }
 
     /**
@@ -30,10 +33,9 @@ namespace LuaCorpse
      *
      * @return uint32 ghostTime
      */
-    int GetGhostTime(lua_State* L, Corpse* corpse)
+    uint32 GetGhostTime(Corpse* corpse)
     {
-        ALE::Push(L, corpse->GetGhostTime());
-        return 1;
+        return corpse->GetGhostTime();
     }
 
     /**
@@ -48,10 +50,9 @@ namespace LuaCorpse
      *
      * @return [CorpseType] corpseType
      */
-    int GetType(lua_State* L, Corpse* corpse)
+    CorpseType GetType(Corpse* corpse)
     {
-        ALE::Push(L, corpse->GetType());
-        return 1;
+        return corpse->GetType();
     }
 
     /**
@@ -59,19 +60,28 @@ namespace LuaCorpse
      *
      * See [Corpse:GetGhostTime].
      */
-    int ResetGhostTime(lua_State* /*L*/, Corpse* corpse)
+    void ResetGhostTime(Corpse* corpse)
     {
         corpse->ResetGhostTime();
-        return 0;
     }
 
     /**
      * Saves the [Corpse] to the database.
      */
-    int SaveToDB(lua_State* /*L*/, Corpse* corpse)
+    void SaveToDB(Corpse* corpse)
     {
         corpse->SaveToDB();
-        return 0;
     }
-};
+}
+
+void RegisterCorpseMethods(sol::state& lua)
+{
+    sol::usertype<CorpseRef> type = ALEBind::NewHandleType<CorpseRef, WorldObjectRef, ObjectRef>(lua, "Corpse");
+
+    type["GetOwnerGUID"]   = ALEBind::Method(&LuaCorpse::GetOwnerGUID);
+    type["GetGhostTime"]   = ALEBind::Method(&LuaCorpse::GetGhostTime);
+    type["GetType"]        = ALEBind::Method(&LuaCorpse::GetType);
+    type["ResetGhostTime"] = ALEBind::Method(&LuaCorpse::ResetGhostTime);
+    type["SaveToDB"]       = ALEBind::Method(&LuaCorpse::SaveToDB);
+}
 #endif

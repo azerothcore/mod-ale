@@ -216,6 +216,27 @@ GameObject* GameObjectRef::Require() const
     throw ALEStaleObjectError("GameObject");
 }
 
+TransportRef::TransportRef(Transport const* transport) :
+    GameObjectRef(transport)
+{
+}
+
+Transport* TransportRef::Resolve() const
+{
+    if (GameObject* go = GameObjectRef::Resolve())
+        return go->ToTransport();
+
+    return nullptr;
+}
+
+Transport* TransportRef::Require() const
+{
+    if (Transport* transport = Resolve())
+        return transport;
+
+    throw ALEStaleObjectError("Transport");
+}
+
 CorpseRef::CorpseRef(Corpse const* corpse) :
     WorldObjectRef(corpse)
 {

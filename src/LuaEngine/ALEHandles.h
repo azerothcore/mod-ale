@@ -20,6 +20,7 @@ class Item;
 class Map;
 class Object;
 class Player;
+class Transport;
 class Unit;
 class WorldObject;
 class Creature;
@@ -172,6 +173,16 @@ public:
 
     GameObject* Resolve() const;
     GameObject* Require() const;
+};
+
+class TransportRef : public GameObjectRef
+{
+public:
+    TransportRef() = default;
+    explicit TransportRef(Transport const* transport);
+
+    Transport* Resolve() const;
+    Transport* Require() const;
 };
 
 class CorpseRef : public WorldObjectRef

@@ -5,11 +5,8 @@
  */
 
 #include "Hooks.h"
-#include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ALEIncludes.h"
-#include "ALETemplate.h"
 
 using namespace Hooks;
 
@@ -29,60 +26,53 @@ using namespace Hooks;
         return;\
     LOCK_ALE
 
+namespace
+{
+    // Handlers receive a copy of the packet; a handler returning false blocks it.
+    template<typename ALEType, typename BindingsType, typename KeyType>
+    void DispatchPacketEvent(ALEType* engine, BindingsType& bindings, KeyType const& key,
+        WorldPacket const& packet, Player* player, bool& result)
+    {
+        for (sol::protected_function const& callback : bindings.GetCallbacksFor(key))
+        {
+            sol::protected_function_result callResult = engine->Call(callback, key.event_id, WorldPacket(packet), player);
+            if (!callResult.valid())
+                continue;
+
+            if (sol::optional<bool> value = callResult.template get<sol::optional<bool>>(0))
+                if (!*value)
+                    result = false;
+        }
+    }
+}
+
 bool ALE::OnPacketSend(WorldSession* session, const WorldPacket& packet)
 {
     bool result = true;
-    Player* player = NULL;
+    Player* player = nullptr;
     if (session)
         player = session->GetPlayer();
     OnPacketSendAny(player, packet, result);
     OnPacketSendOne(player, packet, result);
     return result;
 }
+
 void ALE::OnPacketSendAny(Player* player, const WorldPacket& packet, bool& result)
 {
     START_HOOK_SERVER(SERVER_EVENT_ON_PACKET_SEND);
-    Push(new WorldPacket(packet));
-    Push(player);
-    int n = SetupStack(ServerEventBindings, key, 2);
-
-    while (n > 0)
-    {
-        int r = CallOneFunction(n--, 2, 1);
-
-        if (lua_isboolean(L, r + 0) && !lua_toboolean(L, r + 0))
-            result = false;
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(2);
+    DispatchPacketEvent(this, *ServerEventBindings, key, packet, player, result);
 }
 
 void ALE::OnPacketSendOne(Player* player, const WorldPacket& packet, bool& result)
 {
     START_HOOK_PACKET(PACKET_EVENT_ON_PACKET_SEND, packet.GetOpcode());
-    Push(new WorldPacket(packet));
-    Push(player);
-    int n = SetupStack(PacketEventBindings, key, 2);
-
-    while (n > 0)
-    {
-        int r = CallOneFunction(n--, 2, 1);
-
-        if (lua_isboolean(L, r + 0) && !lua_toboolean(L, r + 0))
-            result = false;
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(2);
+    DispatchPacketEvent(this, *PacketEventBindings, key, packet, player, result);
 }
 
 bool ALE::OnPacketReceive(WorldSession* session, WorldPacket const& packet)
 {
     bool result = true;
-    Player* player = NULL;
+    Player* player = nullptr;
     if (session)
         player = session->GetPlayer();
     OnPacketReceiveAny(player, packet, result);
@@ -93,39 +83,11 @@ bool ALE::OnPacketReceive(WorldSession* session, WorldPacket const& packet)
 void ALE::OnPacketReceiveAny(Player* player, WorldPacket const& packet, bool& result)
 {
     START_HOOK_SERVER(SERVER_EVENT_ON_PACKET_RECEIVE);
-    Push(new WorldPacket(packet));
-    Push(player);
-    int n = SetupStack(ServerEventBindings, key, 2);
-
-    while (n > 0)
-    {
-        int r = CallOneFunction(n--, 2, 1);
-
-        if (lua_isboolean(L, r + 0) && !lua_toboolean(L, r + 0))
-            result = false;
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(2);
+    DispatchPacketEvent(this, *ServerEventBindings, key, packet, player, result);
 }
 
 void ALE::OnPacketReceiveOne(Player* player, WorldPacket const& packet, bool& result)
 {
     START_HOOK_PACKET(PACKET_EVENT_ON_PACKET_RECEIVE, packet.GetOpcode());
-    Push(new WorldPacket(packet));
-    Push(player);
-    int n = SetupStack(PacketEventBindings, key, 2);
-
-    while (n > 0)
-    {
-        int r = CallOneFunction(n--, 2, 1);
-
-        if (lua_isboolean(L, r + 0) && !lua_toboolean(L, r + 0))
-            result = false;
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(2);
+    DispatchPacketEvent(this, *PacketEventBindings, key, packet, player, result);
 }

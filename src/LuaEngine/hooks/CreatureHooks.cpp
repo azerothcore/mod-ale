@@ -5,99 +5,77 @@
  */
 
 #include "Hooks.h"
-#include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ALEIncludes.h"
-#include "ALETemplate.h"
 
 using namespace Hooks;
 
+// Creature events can be bound to every creature of an entry and/or to one
+// specific spawn (see RegisterCreatureEvent / RegisterUniqueCreatureEvent).
 #define START_HOOK(EVENT, CREATURE) \
     if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto entry_key = EntryKey<CreatureEvents>(EVENT, CREATURE->GetEntry());\
-    auto unique_key = UniqueObjectKey<CreatureEvents>(EVENT, CREATURE->GET_GUID(), CREATURE->GetInstanceId());\
-    if (!CreatureEventBindings->HasBindingsFor(entry_key))\
-        if (!CreatureUniqueBindings->HasBindingsFor(unique_key))\
-            return;\
+    auto unique_key = UniqueObjectKey<CreatureEvents>(EVENT, CREATURE->GetGUID(), CREATURE->GetInstanceId());\
+    if (!CreatureEventBindings->HasBindingsFor(entry_key) && !CreatureUniqueBindings->HasBindingsFor(unique_key))\
+        return;\
     LOCK_ALE
 
 #define START_HOOK_WITH_RETVAL(EVENT, CREATURE, RETVAL) \
     if (!ALEConfig::GetInstance().IsALEEnabled())\
         return RETVAL;\
     auto entry_key = EntryKey<CreatureEvents>(EVENT, CREATURE->GetEntry());\
-    auto unique_key = UniqueObjectKey<CreatureEvents>(EVENT, CREATURE->GET_GUID(), CREATURE->GetInstanceId());\
-    if (!CreatureEventBindings->HasBindingsFor(entry_key))\
-        if (!CreatureUniqueBindings->HasBindingsFor(unique_key))\
-            return RETVAL;\
+    auto unique_key = UniqueObjectKey<CreatureEvents>(EVENT, CREATURE->GetGUID(), CREATURE->GetInstanceId());\
+    if (!CreatureEventBindings->HasBindingsFor(entry_key) && !CreatureUniqueBindings->HasBindingsFor(unique_key))\
+        return RETVAL;\
     LOCK_ALE
 
 void ALE::OnDummyEffect(WorldObject* pCaster, uint32 spellId, SpellEffIndex effIndex, Creature* pTarget)
 {
     START_HOOK(CREATURE_EVENT_ON_DUMMY_EFFECT, pTarget);
-    Push(pCaster);
-    Push(spellId);
-    Push(effIndex);
-    Push(pTarget);
-    CallAllFunctions(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    CallAll(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, pCaster, spellId, effIndex, pTarget);
 }
 
 bool ALE::OnQuestAccept(Player* pPlayer, Creature* pCreature, Quest const* pQuest)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_QUEST_ACCEPT, pCreature, false);
-    Push(pPlayer);
-    Push(pCreature);
-    Push(pQuest);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, pPlayer, pCreature, pQuest);
 }
 
 bool ALE::OnQuestReward(Player* pPlayer, Creature* pCreature, Quest const* pQuest, uint32 opt)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_QUEST_REWARD, pCreature, false);
-    Push(pPlayer);
-    Push(pCreature);
-    Push(pQuest);
-    Push(opt);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, pPlayer, pCreature, pQuest, opt);
 }
 
 void ALE::GetDialogStatus(const Player* pPlayer, const Creature* pCreature)
 {
     START_HOOK(CREATURE_EVENT_ON_DIALOG_STATUS, pCreature);
-    Push(pPlayer);
-    Push(pCreature);
-    CallAllFunctions(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    CallAll(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, pPlayer, pCreature);
 }
 
 void ALE::OnAddToWorld(Creature* pCreature)
 {
     START_HOOK(CREATURE_EVENT_ON_ADD, pCreature);
-    Push(pCreature);
-    CallAllFunctions(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    CallAll(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, pCreature);
 }
 
 void ALE::OnRemoveFromWorld(Creature* pCreature)
 {
     START_HOOK(CREATURE_EVENT_ON_REMOVE, pCreature);
-    Push(pCreature);
-    CallAllFunctions(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    CallAll(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, pCreature);
 }
 
 bool ALE::OnSummoned(Creature* pCreature, Unit* pSummoner)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_SUMMONED, pCreature, false);
-    Push(pCreature);
-    Push(pSummoner);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, pCreature, pSummoner);
 }
 
 bool ALE::UpdateAI(Creature* me, const uint32 diff)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_AIUPDATE, me, false);
-    Push(me);
-    Push(diff);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, diff);
 }
 
 //Called for reaction at enter to combat if not in combat yet (enemy can be NULL)
@@ -105,9 +83,7 @@ bool ALE::UpdateAI(Creature* me, const uint32 diff)
 bool ALE::EnterCombat(Creature* me, Unit* target)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_ENTER_COMBAT, me, false);
-    Push(me);
-    Push(target);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, target);
 }
 
 // Called at any Damage from any attacker (before damage apply)
@@ -115,30 +91,22 @@ bool ALE::DamageTaken(Creature* me, Unit* attacker, uint32& damage)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_DAMAGE_TAKEN, me, false);
     bool result = false;
-    Push(me);
-    Push(attacker);
-    Push(damage);
-    int damageIndex = lua_gettop(L);
-    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 3);
 
-    while (n > 0)
+    // Handlers return (override, newDamage): `override` stops the default
+    // behaviour, `newDamage` feeds the handlers after it and the damage apply.
+    for (sol::protected_function const& callback : GetCreatureCallbacks(entry_key, unique_key))
     {
-        int r = CallOneFunction(n--, 3, 2);
+        sol::protected_function_result callResult = Call(callback, entry_key.event_id, me, attacker, damage);
+        if (!callResult.valid())
+            continue;
 
-        if (lua_isboolean(L, r + 0) && lua_toboolean(L, r + 0))
+        if (callResult.get<sol::optional<bool>>(0) == sol::optional<bool>(true))
             result = true;
 
-        if (lua_isnumber(L, r + 1))
-        {
-            damage = ALE::CHECKVAL<uint32>(L, r + 1);
-            // Update the stack for subsequent calls.
-            ReplaceArgument(damage, damageIndex);
-        }
-
-        lua_pop(L, 2);
+        if (sol::optional<uint32> newDamage = callResult.get<sol::optional<uint32>>(1))
+            damage = *newDamage;
     }
 
-    CleanUpStack(3);
     return result;
 }
 
@@ -147,55 +115,42 @@ bool ALE::JustDied(Creature* me, Unit* killer)
 {
     On_Reset(me);
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_DIED, me, false);
-    Push(me);
-    Push(killer);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, killer);
 }
 
 //Called at creature killing another unit
 bool ALE::KilledUnit(Creature* me, Unit* victim)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_TARGET_DIED, me, false);
-    Push(me);
-    Push(victim);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, victim);
 }
 
 // Called when the creature summon successfully other creature
 bool ALE::JustSummoned(Creature* me, Creature* summon)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_JUST_SUMMONED_CREATURE, me, false);
-    Push(me);
-    Push(summon);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, summon);
 }
 
 // Called when a summoned creature is despawned
 bool ALE::SummonedCreatureDespawn(Creature* me, Creature* summon)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_SUMMONED_CREATURE_DESPAWN, me, false);
-    Push(me);
-    Push(summon);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, summon);
 }
 
 //Called at waypoint reached or PointMovement end
 bool ALE::MovementInform(Creature* me, uint32 type, uint32 id)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_REACH_WP, me, false);
-    Push(me);
-    Push(type);
-    Push(id);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, type, id);
 }
 
 // Called before EnterCombat even before the creature is in combat.
 bool ALE::AttackStart(Creature* me, Unit* target)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_PRE_COMBAT, me, false);
-    Push(me);
-    Push(target);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, target);
 }
 
 // Called for reaction at stopping attack at no attackers or targets
@@ -203,8 +158,7 @@ bool ALE::EnterEvadeMode(Creature* me)
 {
     On_Reset(me);
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_LEAVE_COMBAT, me, false);
-    Push(me);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me);
 }
 
 // Called when creature is spawned or respawned (for reseting variables)
@@ -212,26 +166,21 @@ bool ALE::JustRespawned(Creature* me)
 {
     On_Reset(me);
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_SPAWN, me, false);
-    Push(me);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me);
 }
 
 // Called at reaching home after evade
 bool ALE::JustReachedHome(Creature* me)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_REACH_HOME, me, false);
-    Push(me);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me);
 }
 
 // Called at text emote receive from player
 bool ALE::ReceiveEmote(Creature* me, Player* player, uint32 emoteId)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_RECEIVE_EMOTE, me, false);
-    Push(me);
-    Push(player);
-    Push(emoteId);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, player, emoteId);
 }
 
 // called when the corpse of this creature gets removed
@@ -239,290 +188,142 @@ bool ALE::CorpseRemoved(Creature* me, uint32& respawnDelay)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_CORPSE_REMOVED, me, false);
     bool result = false;
-    Push(me);
-    Push(respawnDelay);
-    int respawnDelayIndex = lua_gettop(L);
-    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 2);
 
-    while (n > 0)
+    // Handlers return (override, newRespawnDelay).
+    for (sol::protected_function const& callback : GetCreatureCallbacks(entry_key, unique_key))
     {
-        int r = CallOneFunction(n--, 2, 2);
+        sol::protected_function_result callResult = Call(callback, entry_key.event_id, me, respawnDelay);
+        if (!callResult.valid())
+            continue;
 
-        if (lua_isboolean(L, r + 0) && lua_toboolean(L, r + 0))
+        if (callResult.get<sol::optional<bool>>(0) == sol::optional<bool>(true))
             result = true;
 
-        if (lua_isnumber(L, r + 1))
-        {
-            respawnDelay = ALE::CHECKVAL<uint32>(L, r + 1);
-            // Update the stack for subsequent calls.
-            ReplaceArgument(respawnDelay, respawnDelayIndex);
-        }
-
-        lua_pop(L, 2);
+        if (sol::optional<uint32> newDelay = callResult.get<sol::optional<uint32>>(1))
+            respawnDelay = *newDelay;
     }
 
-    CleanUpStack(2);
     return result;
 }
 
 bool ALE::MoveInLineOfSight(Creature* me, Unit* who)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_MOVE_IN_LOS, me, false);
-    Push(me);
-    Push(who);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, who);
 }
 
 // Called on creature initial spawn, respawn, death, evade (leave combat)
 void ALE::On_Reset(Creature* me) // Not an override, custom
 {
     START_HOOK(CREATURE_EVENT_ON_RESET, me);
-    Push(me);
-    CallAllFunctions(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    CallAll(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, me);
 }
 
 // Called when hit by a spell
 bool ALE::SpellHit(Creature* me, WorldObject* caster, SpellInfo const* spell)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_HIT_BY_SPELL, me, false);
-    Push(me);
-    Push(caster);
-    Push(spell->Id); // Pass spell object?
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, caster, spell->Id);
 }
 
 // Called when spell hits a target
 bool ALE::SpellHitTarget(Creature* me, WorldObject* target, SpellInfo const* spell)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_SPELL_HIT_TARGET, me, false);
-    Push(me);
-    Push(target);
-    Push(spell->Id); // Pass spell object?
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, target, spell->Id);
 }
 
 bool ALE::SummonedCreatureDies(Creature* me, Creature* summon, Unit* killer)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_SUMMONED_CREATURE_DIED, me, false);
-    Push(me);
-    Push(summon);
-    Push(killer);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, summon, killer);
 }
 
 // Called when owner takes damage
 bool ALE::OwnerAttackedBy(Creature* me, Unit* attacker)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_OWNER_ATTACKED_AT, me, false);
-    Push(me);
-    Push(attacker);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, attacker);
 }
 
 // Called when owner attacks something
 bool ALE::OwnerAttacked(Creature* me, Unit* target)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_OWNER_ATTACKED, me, false);
-    Push(me);
-    Push(target);
-    return CallAllFunctionsBool(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    return CallAllBool(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, false, me, target);
 }
 
 void ALE::OnCreatureAuraApply(Creature* me, Aura* aura)
 {
     START_HOOK(CREATURE_EVENT_ON_AURA_APPLY, me);
-    Push(me);
-    Push(aura);
-    CallAllFunctions(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    CallAll(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, me, aura);
 }
 
 void ALE::OnCreatureAuraRemove(Creature* me, Aura* aura, AuraRemoveMode mode)
 {
     START_HOOK(CREATURE_EVENT_ON_AURA_REMOVE, me);
-    Push(me);
-    Push(aura);
-    Push(mode);
-    CallAllFunctions(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key);
+    CallAll(*CreatureEventBindings, *CreatureUniqueBindings, entry_key, unique_key, me, aura, mode);
 }
 
 void ALE::OnCreatureHeal(Creature* me, Unit* target, uint32& gain)
 {
     START_HOOK(CREATURE_EVENT_ON_HEAL, me);
-    Push(me);
-    Push(target);
-    Push(gain);
-
-    int gainIndex = lua_gettop(L);
-    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 3);
-    while (n > 0)
+    gain = FoldCallbacks(GetCreatureCallbacks(entry_key, unique_key), gain, [&](auto const& callback, uint32 current)
     {
-        int r = CallOneFunction(n--, 3, 1);
-        if (lua_isnumber(L, r))
-        {
-            gain = CHECKVAL<uint32>(L, r);
-            // Update the stack for subsequent calls.
-            ReplaceArgument(gain, gainIndex);
-        }
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(3);
+        return Call(callback, entry_key.event_id, me, target, current);
+    });
 }
 
 void ALE::OnCreatureDamage(Creature* me, Unit* target, uint32& damage)
 {
     START_HOOK(CREATURE_EVENT_ON_DAMAGE, me);
-    Push(me);
-    Push(target);
-    Push(damage);
-
-    int damageIndex = lua_gettop(L);
-    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 3);
-    while (n > 0)
+    damage = FoldCallbacks(GetCreatureCallbacks(entry_key, unique_key), damage, [&](auto const& callback, uint32 current)
     {
-        int r = CallOneFunction(n--, 3, 1);
-        if (lua_isnumber(L, r))
-        {
-            damage = CHECKVAL<uint32>(L, r);
-            // Update the stack for subsequent calls.
-            ReplaceArgument(damage, damageIndex);
-        }
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(3);
+        return Call(callback, entry_key.event_id, me, target, current);
+    });
 }
 
 void ALE::OnCreatureModifyPeriodicDamageAurasTick(Creature* me, Unit* target, uint32& damage, SpellInfo const* spellInfo)
 {
     START_HOOK(CREATURE_EVENT_ON_MODIFY_PERIODIC_DAMAGE_AURAS_TICK, me);
-    Push(me);
-    Push(target);
-    Push(damage);
-    Push(spellInfo);
-
-    int damageIndex = lua_gettop(L) - 1;
-    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 4);
-    while (n > 0)
+    damage = FoldCallbacks(GetCreatureCallbacks(entry_key, unique_key), damage, [&](auto const& callback, uint32 current)
     {
-        int r = CallOneFunction(n--, 4, 1);
-        if (lua_isnumber(L, r))
-        {
-            damage = CHECKVAL<uint32>(L, r);
-            // Update the stack for subsequent calls.
-            ReplaceArgument(damage, damageIndex);
-        }
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(4);
+        return Call(callback, entry_key.event_id, me, target, current, spellInfo);
+    });
 }
 
 void ALE::OnCreatureModifyMeleeDamage(Creature* me, Unit* target, uint32& damage)
 {
     START_HOOK(CREATURE_EVENT_ON_MODIFY_MELEE_DAMAGE, me);
-    Push(me);
-    Push(target);
-    Push(damage);
-
-    int damageIndex = lua_gettop(L);
-    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 3);
-    while (n > 0)
+    damage = FoldCallbacks(GetCreatureCallbacks(entry_key, unique_key), damage, [&](auto const& callback, uint32 current)
     {
-        int r = CallOneFunction(n--, 3, 1);
-        if (lua_isnumber(L, r))
-        {
-            damage = CHECKVAL<uint32>(L, r);
-            // Update the stack for subsequent calls.
-            ReplaceArgument(damage, damageIndex);
-        }
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(3);
+        return Call(callback, entry_key.event_id, me, target, current);
+    });
 }
 
 void ALE::OnCreatureModifySpellDamageTaken(Creature* me, Unit* target, int32& damage, SpellInfo const* spellInfo)
 {
     START_HOOK(CREATURE_EVENT_ON_MODIFY_SPELL_DAMAGE_TAKEN, me);
-    Push(me);
-    Push(target);
-    Push(damage);
-    Push(spellInfo);
-
-    int damageIndex = lua_gettop(L) - 1;
-    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 4);
-    while (n > 0)
+    damage = FoldCallbacks(GetCreatureCallbacks(entry_key, unique_key), damage, [&](auto const& callback, int32 current)
     {
-        int r = CallOneFunction(n--, 4, 1);
-        if (lua_isnumber(L, r))
-        {
-            damage = CHECKVAL<int32>(L, r);
-            // Update the stack for subsequent calls.
-            ReplaceArgument(damage, damageIndex);
-        }
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(4);
+        return Call(callback, entry_key.event_id, me, target, current, spellInfo);
+    });
 }
 
 void ALE::OnCreatureModifyHealReceived(Creature* me, Unit* target, uint32& heal, SpellInfo const* spellInfo)
 {
     START_HOOK(CREATURE_EVENT_ON_MODIFY_HEAL_RECEIVED, me);
-    Push(me);
-    Push(target);
-    Push(heal);
-    Push(spellInfo);
-
-    int healIndex = lua_gettop(L) - 1;
-    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 4);
-    while (n > 0)
+    heal = FoldCallbacks(GetCreatureCallbacks(entry_key, unique_key), heal, [&](auto const& callback, uint32 current)
     {
-        int r = CallOneFunction(n--, 4, 1);
-        if (lua_isnumber(L, r))
-        {
-            heal = CHECKVAL<uint32>(L, r);
-            // Update the stack for subsequent calls.
-            ReplaceArgument(heal, healIndex);
-        }
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(4);
+        return Call(callback, entry_key.event_id, me, target, current, spellInfo);
+    });
 }
 
 uint32 ALE::OnCreatureDealDamage(Creature* me, Unit* target, uint32 damage, DamageEffectType damagetype)
 {
     START_HOOK_WITH_RETVAL(CREATURE_EVENT_ON_DEAL_DAMAGE, me, damage);
-    uint32 result = damage;
-    Push(me);
-    Push(target);
-    Push(damage);
-    Push(damagetype);
-    int damageIndex = lua_gettop(L) - 1;
-    int n = SetupStack(CreatureEventBindings, CreatureUniqueBindings, entry_key, unique_key, 4);
-
-    while (n > 0)
+    return FoldCallbacks(GetCreatureCallbacks(entry_key, unique_key), damage, [&](auto const& callback, uint32 current)
     {
-        int r = CallOneFunction(n--, 4, 1);
-
-        if (lua_isnumber(L, r))
-        {
-            result = CHECKVAL<uint32>(L, r);
-            // Update the stack for subsequent calls.
-            ReplaceArgument(result, damageIndex);
-        }
-
-        lua_pop(L, 1);
-    }
-
-    CleanUpStack(4);
-    return result;
+        return Call(callback, entry_key.event_id, me, target, current, damagetype);
+    });
 }

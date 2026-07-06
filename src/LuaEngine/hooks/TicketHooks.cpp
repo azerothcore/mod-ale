@@ -5,11 +5,8 @@
  */
 
 #include "Hooks.h"
-#include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ALEIncludes.h"
-#include "ALETemplate.h"
 
 using namespace Hooks;
 
@@ -24,28 +21,23 @@ using namespace Hooks;
 void ALE::OnTicketCreate(GmTicket* ticket)
 {
     START_HOOK(TICKET_EVENT_ON_CREATE);
-    Push(ticket);
-    CallAllFunctions(TicketEventBindings, key);
+    CallAll(*TicketEventBindings, key, ticket);
 }
 
 void ALE::OnTicketUpdateLastChange(GmTicket* ticket)
 {
     START_HOOK(TICKET_EVENT_UPDATE_LAST_CHANGE);
-    Push(ticket);
-    CallAllFunctions(TicketEventBindings, key);
+    CallAll(*TicketEventBindings, key, ticket);
 }
 
 void ALE::OnTicketClose(GmTicket* ticket)
 {
     START_HOOK(TICKET_EVENT_ON_CLOSE);
-    Push(ticket);
-    CallAllFunctions(TicketEventBindings, key);
+    CallAll(*TicketEventBindings, key, ticket);
 }
 
 void ALE::OnTicketResolve(GmTicket* ticket)
 {
     START_HOOK(TICKET_EVENT_ON_RESOLVE);
-    Push(ticket);
-    CallAllFunctions(TicketEventBindings, key);
+    CallAll(*TicketEventBindings, key, ticket);
 }
-

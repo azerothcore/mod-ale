@@ -5,11 +5,8 @@
  */
 
 #include "Hooks.h"
-#include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ALEIncludes.h"
-#include "ALETemplate.h"
 
 using namespace Hooks;
 
@@ -21,40 +18,20 @@ using namespace Hooks;
         return;\
     LOCK_ALE
 
-#define START_HOOK_WITH_RETVAL(EVENT, ENTRY, RETVAL) \
-    if (!ALEConfig::GetInstance().IsALEEnabled())\
-        return RETVAL;\
-    auto key = EntryKey<SpellEvents>(EVENT, ENTRY);\
-    if (!SpellEventBindings->HasBindingsFor(key))\
-        return RETVAL;\
-    LOCK_ALE
-
 void ALE::OnSpellCastCancel(Unit* caster, Spell* spell, SpellInfo const* spellInfo, bool bySelf)
 {
     START_HOOK(SPELL_EVENT_ON_CAST_CANCEL, spellInfo->Id);
-    Push(caster);
-    Push(spell);
-    Push(bySelf);
-
-    CallAllFunctions(SpellEventBindings, key);
+    CallAll(*SpellEventBindings, key, caster, spell, bySelf);
 }
 
 void ALE::OnSpellCast(Unit* caster, Spell* spell, SpellInfo const* spellInfo, bool skipCheck)
 {
     START_HOOK(SPELL_EVENT_ON_CAST, spellInfo->Id);
-    Push(caster);
-    Push(spell);
-    Push(skipCheck);
-
-    CallAllFunctions(SpellEventBindings, key);
+    CallAll(*SpellEventBindings, key, caster, spell, skipCheck);
 }
 
 void ALE::OnSpellPrepare(Unit* caster, Spell* spell, SpellInfo const* spellInfo)
 {
     START_HOOK(SPELL_EVENT_ON_PREPARE, spellInfo->Id);
-    Push(caster);
-    Push(spell);
-
-    CallAllFunctions(SpellEventBindings, key);
+    CallAll(*SpellEventBindings, key, caster, spell);
 }
-

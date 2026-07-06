@@ -5,10 +5,8 @@
  */
 
 #include "Hooks.h"
-#include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ALETemplate.h"
 
 using namespace Hooks;
 
@@ -23,38 +21,29 @@ using namespace Hooks;
 void ALE::OnInstall(Vehicle* vehicle)
 {
     START_HOOK(VEHICLE_EVENT_ON_INSTALL);
-    Push(vehicle);
-    CallAllFunctions(VehicleEventBindings, key);
+    CallAll(*VehicleEventBindings, key, vehicle);
 }
 
 void ALE::OnUninstall(Vehicle* vehicle)
 {
     START_HOOK(VEHICLE_EVENT_ON_UNINSTALL);
-    Push(vehicle);
-    CallAllFunctions(VehicleEventBindings, key);
+    CallAll(*VehicleEventBindings, key, vehicle);
 }
 
 void ALE::OnInstallAccessory(Vehicle* vehicle, Creature* accessory)
 {
     START_HOOK(VEHICLE_EVENT_ON_INSTALL_ACCESSORY);
-    Push(vehicle);
-    Push(accessory);
-    CallAllFunctions(VehicleEventBindings, key);
+    CallAll(*VehicleEventBindings, key, vehicle, accessory);
 }
 
 void ALE::OnAddPassenger(Vehicle* vehicle, Unit* passenger, int8 seatId)
 {
     START_HOOK(VEHICLE_EVENT_ON_ADD_PASSENGER);
-    Push(vehicle);
-    Push(passenger);
-    Push(seatId);
-    CallAllFunctions(VehicleEventBindings, key);
+    CallAll(*VehicleEventBindings, key, vehicle, passenger, seatId);
 }
 
 void ALE::OnRemovePassenger(Vehicle* vehicle, Unit* passenger)
 {
     START_HOOK(VEHICLE_EVENT_ON_REMOVE_PASSENGER);
-    Push(vehicle);
-    Push(passenger);
-    CallAllFunctions(VehicleEventBindings, key);
+    CallAll(*VehicleEventBindings, key, vehicle, passenger);
 }

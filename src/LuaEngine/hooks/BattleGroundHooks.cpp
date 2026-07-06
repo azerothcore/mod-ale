@@ -5,10 +5,8 @@
  */
 
 #include "Hooks.h"
-#include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ALETemplate.h"
 
 using namespace Hooks;
 
@@ -23,36 +21,23 @@ using namespace Hooks;
 void ALE::OnBGStart(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId)
 {
     START_HOOK(BG_EVENT_ON_START);
-    Push(bg);
-    Push(bgId);
-    Push(instanceId);
-    CallAllFunctions(BGEventBindings, key);
+    CallAll(*BGEventBindings, key, bg, bgId, instanceId);
 }
 
 void ALE::OnBGEnd(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId, TeamId winner)
 {
     START_HOOK(BG_EVENT_ON_END);
-    Push(bg);
-    Push(bgId);
-    Push(instanceId);
-    Push(winner);
-    CallAllFunctions(BGEventBindings, key);
+    CallAll(*BGEventBindings, key, bg, bgId, instanceId, winner);
 }
 
 void ALE::OnBGCreate(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId)
 {
     START_HOOK(BG_EVENT_ON_CREATE);
-    Push(bg);
-    Push(bgId);
-    Push(instanceId);
-    CallAllFunctions(BGEventBindings, key);
+    CallAll(*BGEventBindings, key, bg, bgId, instanceId);
 }
 
 void ALE::OnBGDestroy(BattleGround* bg, BattleGroundTypeId bgId, uint32 instanceId)
 {
     START_HOOK(BG_EVENT_ON_PRE_DESTROY);
-    Push(bg);
-    Push(bgId);
-    Push(instanceId);
-    CallAllFunctions(BGEventBindings, key);
+    CallAll(*BGEventBindings, key, bg, bgId, instanceId);
 }

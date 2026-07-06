@@ -5,12 +5,9 @@
  */
 
 #include "Hooks.h"
-#include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ALEIncludes.h"
 #include "ALEEventMgr.h"
-#include "ALETemplate.h"
 
 using namespace Hooks;
 
@@ -33,106 +30,78 @@ using namespace Hooks;
 void ALE::OnDummyEffect(WorldObject* pCaster, uint32 spellId, SpellEffIndex effIndex, GameObject* pTarget)
 {
     START_HOOK(GAMEOBJECT_EVENT_ON_DUMMY_EFFECT, pTarget->GetEntry());
-    Push(pCaster);
-    Push(spellId);
-    Push(effIndex);
-    Push(pTarget);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pCaster, spellId, effIndex, pTarget);
 }
 
 void ALE::UpdateAI(GameObject* pGameObject, uint32 diff)
 {
     pGameObject->ALEEvents->Update(diff);
     START_HOOK(GAMEOBJECT_EVENT_ON_AIUPDATE, pGameObject->GetEntry());
-    Push(pGameObject);
-    Push(diff);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pGameObject, diff);
 }
 
 bool ALE::OnQuestAccept(Player* pPlayer, GameObject* pGameObject, Quest const* pQuest)
 {
     START_HOOK_WITH_RETVAL(GAMEOBJECT_EVENT_ON_QUEST_ACCEPT, pGameObject->GetEntry(), false);
-    Push(pPlayer);
-    Push(pGameObject);
-    Push(pQuest);
-    return CallAllFunctionsBool(GameObjectEventBindings, key);
+    return CallAllBool(*GameObjectEventBindings, key, false, pPlayer, pGameObject, pQuest);
 }
 
 bool ALE::OnQuestReward(Player* pPlayer, GameObject* pGameObject, Quest const* pQuest, uint32 opt)
 {
     START_HOOK_WITH_RETVAL(GAMEOBJECT_EVENT_ON_QUEST_REWARD, pGameObject->GetEntry(), false);
-    Push(pPlayer);
-    Push(pGameObject);
-    Push(pQuest);
-    Push(opt);
-    return CallAllFunctionsBool(GameObjectEventBindings, key);
+    return CallAllBool(*GameObjectEventBindings, key, false, pPlayer, pGameObject, pQuest, opt);
 }
 
 void ALE::GetDialogStatus(const Player* pPlayer, const GameObject* pGameObject)
 {
     START_HOOK(GAMEOBJECT_EVENT_ON_DIALOG_STATUS, pGameObject->GetEntry());
-    Push(pPlayer);
-    Push(pGameObject);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pPlayer, pGameObject);
 }
 
 void ALE::OnDestroyed(GameObject* pGameObject, WorldObject* attacker)
 {
     START_HOOK(GAMEOBJECT_EVENT_ON_DESTROYED, pGameObject->GetEntry());
-    Push(pGameObject);
-    Push(attacker);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pGameObject, attacker);
 }
 
 void ALE::OnDamaged(GameObject* pGameObject, WorldObject* attacker)
 {
     START_HOOK(GAMEOBJECT_EVENT_ON_DAMAGED, pGameObject->GetEntry());
-    Push(pGameObject);
-    Push(attacker);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pGameObject, attacker);
 }
 
 void ALE::OnLootStateChanged(GameObject* pGameObject, uint32 state)
 {
     START_HOOK(GAMEOBJECT_EVENT_ON_LOOT_STATE_CHANGE, pGameObject->GetEntry());
-    Push(pGameObject);
-    Push(state);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pGameObject, state);
 }
 
 void ALE::OnGameObjectStateChanged(GameObject* pGameObject, uint32 state)
 {
     START_HOOK(GAMEOBJECT_EVENT_ON_GO_STATE_CHANGED, pGameObject->GetEntry());
-    Push(pGameObject);
-    Push(state);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pGameObject, state);
 }
 
 void ALE::OnSpawn(GameObject* pGameObject)
 {
     START_HOOK(GAMEOBJECT_EVENT_ON_SPAWN, pGameObject->GetEntry());
-    Push(pGameObject);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pGameObject);
 }
 
 void ALE::OnAddToWorld(GameObject* pGameObject)
 {
     START_HOOK(GAMEOBJECT_EVENT_ON_ADD, pGameObject->GetEntry());
-    Push(pGameObject);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pGameObject);
 }
 
 void ALE::OnRemoveFromWorld(GameObject* pGameObject)
 {
     START_HOOK(GAMEOBJECT_EVENT_ON_REMOVE, pGameObject->GetEntry());
-    Push(pGameObject);
-    CallAllFunctions(GameObjectEventBindings, key);
+    CallAll(*GameObjectEventBindings, key, pGameObject);
 }
 
 bool ALE::OnGameObjectUse(Player* pPlayer, GameObject* pGameObject)
 {
     START_HOOK_WITH_RETVAL(GAMEOBJECT_EVENT_ON_USE, pGameObject->GetEntry(), false);
-    Push(pGameObject);
-    Push(pPlayer);
-    return CallAllFunctionsBool(GameObjectEventBindings, key);
+    return CallAllBool(*GameObjectEventBindings, key, false, pGameObject, pPlayer);
 }

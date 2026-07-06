@@ -5,11 +5,8 @@
  */
 
 #include "Hooks.h"
-#include "HookHelpers.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
-#include "ALEIncludes.h"
-#include "ALETemplate.h"
 
 using namespace Hooks;
 
@@ -32,25 +29,18 @@ using namespace Hooks;
 void ALE::OnDummyEffect(WorldObject* pCaster, uint32 spellId, SpellEffIndex effIndex, Item* pTarget)
 {
     START_HOOK(ITEM_EVENT_ON_DUMMY_EFFECT, pTarget->GetEntry());
-    Push(pCaster);
-    Push(spellId);
-    Push(effIndex);
-    Push(pTarget);
-    CallAllFunctions(ItemEventBindings, key);
+    CallAll(*ItemEventBindings, key, pCaster, spellId, effIndex, pTarget);
 }
 
 bool ALE::OnQuestAccept(Player* pPlayer, Item* pItem, Quest const* pQuest)
 {
     START_HOOK_WITH_RETVAL(ITEM_EVENT_ON_QUEST_ACCEPT, pItem->GetEntry(), false);
-    Push(pPlayer);
-    Push(pItem);
-    Push(pQuest);
-    return CallAllFunctionsBool(ItemEventBindings, key);
+    return CallAllBool(*ItemEventBindings, key, false, pPlayer, pItem, pQuest);
 }
 
 bool ALE::OnUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
 {
-    ObjectGuid guid = pItem->GET_GUID();
+    ObjectGuid guid = pItem->GetGUID();
     bool castSpell = true;
 
     if (!OnItemUse(pPlayer, pItem, targets))
@@ -81,37 +71,31 @@ bool ALE::OnUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
 bool ALE::OnItemUse(Player* pPlayer, Item* pItem, SpellCastTargets const& targets)
 {
     START_HOOK_WITH_RETVAL(ITEM_EVENT_ON_USE, pItem->GetEntry(), true);
-    Push(pPlayer);
-    Push(pItem);
 
-    if (GameObject* target = targets.GetGOTarget())
-        Push(target);
-    else if (Item* target = targets.GetItemTarget())
-        Push(target);
-    else if (Corpse* target = targets.GetCorpseTarget())
-        Push(target);
-    else if (Unit* target = targets.GetUnitTarget())
-        Push(target);
-    else if (WorldObject* target = targets.GetObjectTarget())
-        Push(target);
-    else
-        Push();
+    // The handler receives whatever the item was used on, or nil.
+    sol::object target = sol::make_object(lua, sol::nil);
+    if (GameObject* goTarget = targets.GetGOTarget())
+        target = sol::make_object(lua, GameObjectRef(goTarget));
+    else if (Item* itemTarget = targets.GetItemTarget())
+        target = sol::make_object(lua, ItemRef(itemTarget));
+    else if (Corpse* corpseTarget = targets.GetCorpseTarget())
+        target = sol::make_object(lua, CorpseRef(corpseTarget));
+    else if (Unit* unitTarget = targets.GetUnitTarget())
+        target = ALEBind::ToLuaDynamic(lua, unitTarget);
+    else if (WorldObject* objectTarget = targets.GetObjectTarget())
+        target = ALEBind::ToLuaDynamic(lua, objectTarget);
 
-    return CallAllFunctionsBool(ItemEventBindings, key, true);
+    return CallAllBool(*ItemEventBindings, key, true, pPlayer, pItem, target);
 }
 
 bool ALE::OnExpire(Player* pPlayer, ItemTemplate const* pProto)
 {
     START_HOOK_WITH_RETVAL(ITEM_EVENT_ON_EXPIRE, pProto->ItemId, false);
-    Push(pPlayer);
-    Push(pProto->ItemId);
-    return CallAllFunctionsBool(ItemEventBindings, key);
+    return CallAllBool(*ItemEventBindings, key, false, pPlayer, pProto->ItemId);
 }
 
 bool ALE::OnRemove(Player* pPlayer, Item* pItem)
 {
     START_HOOK_WITH_RETVAL(ITEM_EVENT_ON_REMOVE, pItem->GetEntry(), false);
-    Push(pPlayer);
-    Push(pItem);
-    return CallAllFunctionsBool(ItemEventBindings, key);
+    return CallAllBool(*ItemEventBindings, key, false, pPlayer, pItem);
 }

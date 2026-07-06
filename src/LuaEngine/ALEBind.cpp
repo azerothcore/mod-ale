@@ -36,4 +36,14 @@ namespace ALEBind
 
         return sol::make_object(lua, sol::nil);
     }
+
+    sol::object ToLuaDynamic(sol::state_view lua, WorldObject const* obj)
+    {
+        return ToLuaDynamic(lua, static_cast<Object const*>(obj));
+    }
+
+    sol::object ToLuaDynamic(sol::state_view lua, Unit const* unit)
+    {
+        return ToLuaDynamic(lua, static_cast<Object const*>(unit));
+    }
 }

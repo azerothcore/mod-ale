@@ -161,7 +161,11 @@ namespace ALEBind
 
     // Wraps a pointer to a polymorphic base into the most-derived handle, so
     // a Unit that is really a Player arrives in Lua as a Player.
+    // One exact overload per base class: binding files usually only see
+    // forward declarations, so no pointer conversion can happen there.
     sol::object ToLuaDynamic(sol::state_view lua, Object const* obj);
+    sol::object ToLuaDynamic(sol::state_view lua, WorldObject const* obj);
+    sol::object ToLuaDynamic(sol::state_view lua, Unit const* unit);
 
     // Converts a native return value to what Lua receives.
     // Game object pointers become handles, nullptr becomes nil.

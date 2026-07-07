@@ -101,7 +101,7 @@ void ALE::LoadScriptPaths()
     std::string lua_cpath_extra(ALEConfig::GetInstance().GetRequireCPath());
 
 #ifndef ALE_WINDOWS
-    if (lua_folderpath[0] == '~')
+    if (!lua_folderpath.empty() && lua_folderpath[0] == '~')
         if (char const* home = getenv("HOME"))
             lua_folderpath.replace(0, 1, home);
 #endif
@@ -412,9 +412,9 @@ void ALE::RunScripts()
             continue;
 
         // Run it and remember its result the way require() would
-        EnterDispatch();
+        // (the guard covers the rest of the iteration, which is harmless).
+        DispatchGuard guard(this);
         sol::protected_function_result result = chunk();
-        LeaveDispatch();
 
         if (!result.valid())
         {

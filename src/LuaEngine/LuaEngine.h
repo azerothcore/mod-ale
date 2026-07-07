@@ -139,14 +139,23 @@ private:
     static void GetScripts(std::string path);
     static void AddScriptPath(std::string filename, const std::string& fullpath);
 
-    // Marks the end of one nested dispatch level; retires handle caches when
-    // the outermost handler returns.
-    void EnterDispatch() { ++event_level; }
-    void LeaveDispatch()
+    // RAII marker of one nested dispatch level; retires handle caches when the
+    // outermost handler returns, even if argument conversion or the call throws.
+    struct DispatchGuard
     {
-        if (--event_level == 0)
-            ALEHandleEpoch::Bump();
-    }
+        explicit DispatchGuard(ALE* engine) : _engine(engine) { ++_engine->event_level; }
+        ~DispatchGuard()
+        {
+            if (--_engine->event_level == 0)
+                ALEHandleEpoch::Bump();
+        }
+
+        DispatchGuard(DispatchGuard const&) = delete;
+        DispatchGuard& operator=(DispatchGuard const&) = delete;
+
+    private:
+        ALE* _engine;
+    };
 
     // Reports a failed handler call to the log and the OnError emitter.
     void Report(sol::error const& error);
@@ -216,9 +225,8 @@ public:
     template<typename E, typename... Args>
     sol::protected_function_result Call(sol::protected_function const& callback, E event_id, Args&&... args)
     {
-        EnterDispatch();
+        DispatchGuard guard(this);
         sol::protected_function_result result = callback(event_id, ALEBind::ToLua(lua, std::forward<Args>(args))...);
-        LeaveDispatch();
 
         if (!result.valid())
             Report(sol::error(result));
@@ -231,9 +239,8 @@ public:
     template<typename... Args>
     sol::protected_function_result CallFunction(sol::protected_function const& callback, Args&&... args)
     {
-        EnterDispatch();
+        DispatchGuard guard(this);
         sol::protected_function_result result = callback(ALEBind::ToLua(lua, std::forward<Args>(args))...);
-        LeaveDispatch();
 
         if (!result.valid())
             Report(sol::error(result));

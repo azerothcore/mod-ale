@@ -70,7 +70,8 @@ public:
     // Simply calls Save, since the functions are a bit different in name and data types on different cores
     std::string GetSaveData() override
     {
-        return Save();
+        char const* data = Save();
+        return data ? data : "";
     }
     const char* Save() const;
 

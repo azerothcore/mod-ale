@@ -9,6 +9,7 @@
 
 #include <cstring>
 #include <memory>
+#include <unordered_set>
 
 namespace
 {
@@ -45,10 +46,15 @@ namespace
         }
     }
 
-    void EncodeValue(sol::object const& value, std::string& out);
+    void EncodeValue(sol::object const& value, std::string& out, std::unordered_set<void const*>& openTables);
 
-    void EncodeTable(sol::table const& table, std::string& out)
+    void EncodeTable(sol::table const& table, std::string& out, std::unordered_set<void const*>& openTables)
     {
+        // A table reachable from itself would recurse forever; fail the save
+        // cleanly instead.
+        if (!openTables.insert(table.pointer()).second)
+            throw std::runtime_error("instance data contains a table that references itself (cycle)");
+
         uint32 count = 0;
         for (auto const& [key, value] : table.pairs())
             if (IsSerializable(key) && IsSerializable(value))
@@ -65,12 +71,14 @@ namespace
                 continue;
             }
 
-            EncodeValue(key, out);
-            EncodeValue(value, out);
+            EncodeValue(key, out, openTables);
+            EncodeValue(value, out, openTables);
         }
+
+        openTables.erase(table.pointer());
     }
 
-    void EncodeValue(sol::object const& value, std::string& out)
+    void EncodeValue(sol::object const& value, std::string& out, std::unordered_set<void const*>& openTables)
     {
         switch (value.get_type())
         {
@@ -94,7 +102,7 @@ namespace
                 break;
             }
             case sol::type::table:
-                EncodeTable(value.as<sol::table>(), out);
+                EncodeTable(value.as<sol::table>(), out, openTables);
                 break;
             default:
                 // Filtered out by IsSerializable before we get here.
@@ -109,9 +117,11 @@ namespace
         unsigned char const* pos;
         unsigned char const* end;
 
+        size_t Remaining() const { return static_cast<size_t>(end - pos); }
+
         bool Read(void* dest, size_t size)
         {
-            if (static_cast<size_t>(end - pos) < size)
+            if (Remaining() < size)
                 return false;
 
             std::memcpy(dest, pos, size);
@@ -148,6 +158,11 @@ namespace
             {
                 uint32 length;
                 if (!reader.Read(&length, sizeof(length)))
+                    break;
+
+                // The length comes from persisted data: validate it against the
+                // remaining bytes before allocating anything.
+                if (length > reader.Remaining())
                     break;
 
                 std::string str(length, '\0');
@@ -255,7 +270,17 @@ const char* ALEInstanceAI::Save() const
     ALEInstanceAI* self = const_cast<ALEInstanceAI*>(this);
 
     std::string encoded;
-    EncodeTable(sALE->GetInstanceData(self), encoded);
+    std::unordered_set<void const*> openTables;
+
+    try
+    {
+        EncodeTable(sALE->GetInstanceData(self), encoded, openTables);
+    }
+    catch (std::exception const& error)
+    {
+        ALE_LOG_ERROR("Error while saving instance data: {}", error.what());
+        return nullptr;
+    }
 
     // The serialized table is binary; store it base-64 encoded.
     ALEUtil::EncodeData(reinterpret_cast<unsigned char const*>(encoded.data()), encoded.size(), self->lastSaveData);

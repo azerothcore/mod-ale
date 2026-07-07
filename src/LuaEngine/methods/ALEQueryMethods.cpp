@@ -4,10 +4,10 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef QUERYMETHODS_H
-#define QUERYMETHODS_H
+#include "ALEBind.h"
 
-#define RESULT  (*result)
+#include "QueryResult.h"
+#include "StringFormat.h"
 
 /***
  * The result of a database query.
@@ -16,18 +16,13 @@
  *
  * Inherits all methods from: none
  */
-namespace LuaQuery
+namespace LuaALEQuery
 {
-    static void CheckFields(lua_State* L, ALEQuery* result)
+    static void CheckFields(ResultSet* resultset, uint32 field)
     {
-        uint32 field = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 count = RESULT->GetFieldCount();
+        uint32 count = resultset->GetFieldCount();
         if (field >= count)
-        {
-            char arr[256];
-            snprintf(arr, sizeof(arr), "trying to access invalid field index %u. There are %u fields available and the indexes start from 0", field, count);
-            luaL_argerror(L, 2, arr);
-        }
+            throw std::invalid_argument(Acore::StringFormat("trying to access invalid field index {}. There are {} fields available and the indexes start from 0", field, count));
     }
 
     /**
@@ -36,13 +31,11 @@ namespace LuaQuery
      * @param uint32 column
      * @return bool isNull
      */
-    int IsNull(lua_State* L, ALEQuery* result)
+    bool IsNull(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
+        CheckFields(resultset, col);
 
-        ALE::Push(L, RESULT->Fetch()[col].IsNull());
-        return 1;
+        return resultset->Fetch()[col].IsNull();
     }
 
     /**
@@ -50,10 +43,9 @@ namespace LuaQuery
      *
      * @return uint32 columnCount
      */
-    int GetColumnCount(lua_State* L, ALEQuery* result)
+    uint32 GetColumnCount(ResultSet* resultset)
     {
-        ALE::Push(L, RESULT->GetFieldCount());
-        return 1;
+        return resultset->GetFieldCount();
     }
 
     /**
@@ -61,13 +53,12 @@ namespace LuaQuery
      *
      * @return uint32 rowCount
      */
-    int GetRowCount(lua_State* L, ALEQuery* result)
+    uint32 GetRowCount(ResultSet* resultset)
     {
-        if (RESULT->GetRowCount() > (uint32)-1)
-            ALE::Push(L, (uint32)-1);
-        else
-            ALE::Push(L, (uint32)(RESULT->GetRowCount()));
-        return 1;
+        if (resultset->GetRowCount() > (uint32)-1)
+            return (uint32)-1;
+
+        return (uint32)(resultset->GetRowCount());
     }
 
     /**
@@ -76,12 +67,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return bool data
      */
-    int GetBool(lua_State* L, ALEQuery* result)
+    bool GetBool(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<bool>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<bool>();
     }
 
     /**
@@ -90,12 +79,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return uint8 data
      */
-    int GetUInt8(lua_State* L, ALEQuery* result)
+    uint8 GetUInt8(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<uint8>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<uint8>();
     }
 
     /**
@@ -104,12 +91,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return uint16 data
      */
-    int GetUInt16(lua_State* L, ALEQuery* result)
+    uint16 GetUInt16(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<uint16>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<uint16>();
     }
 
     /**
@@ -118,12 +103,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return uint32 data
      */
-    int GetUInt32(lua_State* L, ALEQuery* result)
+    uint32 GetUInt32(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<uint32>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<uint32>();
     }
 
     /**
@@ -132,12 +115,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return uint64 data
      */
-    int GetUInt64(lua_State* L, ALEQuery* result)
+    uint64 GetUInt64(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<uint64>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<uint64>();
     }
 
     /**
@@ -146,12 +127,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return int8 data
      */
-    int GetInt8(lua_State* L, ALEQuery* result)
+    int8 GetInt8(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<int8>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<int8>();
     }
 
     /**
@@ -160,12 +139,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return int16 data
      */
-    int GetInt16(lua_State* L, ALEQuery* result)
+    int16 GetInt16(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<int16>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<int16>();
     }
 
     /**
@@ -174,12 +151,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return int32 data
      */
-    int GetInt32(lua_State* L, ALEQuery* result)
+    int32 GetInt32(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<int32>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<int32>();
     }
 
     /**
@@ -188,12 +163,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return int64 data
      */
-    int GetInt64(lua_State* L, ALEQuery* result)
+    int64 GetInt64(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<int64>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<int64>();
     }
 
     /**
@@ -202,12 +175,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return float data
      */
-    int GetFloat(lua_State* L, ALEQuery* result)
+    float GetFloat(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<float>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<float>();
     }
 
     /**
@@ -216,12 +187,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return double data
      */
-    int GetDouble(lua_State* L, ALEQuery* result)
+    double GetDouble(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<double>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<double>();
     }
 
     /**
@@ -230,12 +199,10 @@ namespace LuaQuery
      * @param uint32 column
      * @return string data
      */
-    int GetString(lua_State* L, ALEQuery* result)
+    std::string GetString(ResultSet* resultset, uint32 col)
     {
-        uint32 col = ALE::CHECKVAL<uint32>(L, 2);
-        CheckFields(L, result);
-        ALE::Push(L, RESULT->Fetch()[col].Get<std::string>());
-        return 1;
+        CheckFields(resultset, col);
+        return resultset->Fetch()[col].Get<std::string>();
     }
 
     /**
@@ -247,10 +214,9 @@ namespace LuaQuery
      *
      * @return bool hadNextRow
      */
-    int NextRow(lua_State* L, ALEQuery* result)
+    bool NextRow(ResultSet* resultset)
     {
-        ALE::Push(L, RESULT->NextRow());
-        return 1;
+        return resultset->NextRow();
     }
 
     /**
@@ -270,22 +236,21 @@ namespace LuaQuery
      *
      * @return table rowData : table filled with row columns and data where `T[column] = data`
      */
-    int GetRow(lua_State* L, ALEQuery* result)
+    sol::table GetRow(ResultSet* resultset, sol::this_state s)
     {
-        uint32 col = RESULT->GetFieldCount();
-        Field* row = RESULT->Fetch();
+        uint32 col = resultset->GetFieldCount();
+        Field* row = resultset->Fetch();
 
-        lua_createtable(L, 0, col);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table(0, col);
 
         for (uint32 i = 0; i < col; ++i)
         {
-            ALE::Push(L, RESULT->GetFieldName(i));
+            std::string fieldName = resultset->GetFieldName(i);
 
             std::string _str = row[i].Get<std::string>();
-            const char* str = _str.c_str();
+            char const* str = _str.c_str();
             if (row[i].IsNull() || !str)
-                ALE::Push(L);
+                tbl[fieldName] = sol::lua_nil;
             else
             {
                 // MYSQL_TYPE_LONGLONG Interpreted as string for lua
@@ -297,20 +262,38 @@ namespace LuaQuery
                     case DatabaseFieldTypes::Int64:
                     case DatabaseFieldTypes::Float:
                     case DatabaseFieldTypes::Double:
-                        ALE::Push(L, strtod(str, NULL));
+                        tbl[fieldName] = strtod(str, NULL);
                         break;
                     default:
-                        ALE::Push(L, str);
+                        tbl[fieldName] = str;
                         break;
                 }
             }
-            lua_rawset(L, tbl);
         }
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
-};
-#undef RESULT
+}
 
-#endif
+void RegisterALEQueryMethods(sol::state& lua)
+{
+    sol::usertype<ResultSet> type = lua.new_usertype<ResultSet>("ALEQuery", sol::no_constructor);
+
+    type["IsNull"]         = &LuaALEQuery::IsNull;
+    type["GetColumnCount"] = &LuaALEQuery::GetColumnCount;
+    type["GetRowCount"]    = &LuaALEQuery::GetRowCount;
+    type["GetBool"]        = &LuaALEQuery::GetBool;
+    type["GetUInt8"]       = &LuaALEQuery::GetUInt8;
+    type["GetUInt16"]      = &LuaALEQuery::GetUInt16;
+    type["GetUInt32"]      = &LuaALEQuery::GetUInt32;
+    type["GetUInt64"]      = &LuaALEQuery::GetUInt64;
+    type["GetInt8"]        = &LuaALEQuery::GetInt8;
+    type["GetInt16"]       = &LuaALEQuery::GetInt16;
+    type["GetInt32"]       = &LuaALEQuery::GetInt32;
+    type["GetInt64"]       = &LuaALEQuery::GetInt64;
+    type["GetFloat"]       = &LuaALEQuery::GetFloat;
+    type["GetDouble"]      = &LuaALEQuery::GetDouble;
+    type["GetString"]      = &LuaALEQuery::GetString;
+    type["NextRow"]        = &LuaALEQuery::NextRow;
+    type["GetRow"]         = &LuaALEQuery::GetRow;
+}

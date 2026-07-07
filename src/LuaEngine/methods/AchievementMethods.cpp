@@ -4,9 +4,6 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef ACHIEVEMENTMETHODS_H
-#define ACHIEVEMENTMETHODS_H
-
 #include "ALEBind.h"
 
 #include "Common.h"
@@ -66,4 +63,3 @@ void RegisterAchievementMethods(sol::state& lua)
     type["GetId"]   = &LuaAchievement::GetId;
     type["GetName"] = &LuaAchievement::GetName;
 }
-#endif

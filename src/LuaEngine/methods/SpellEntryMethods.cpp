@@ -4,8 +4,12 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef SPELLENTRYMETHODS_H
-#define SPELLENTRYMETHODS_H
+#include "ALEBind.h"
+
+#include "DBCStores.h"
+#include "DBCStructure.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
 
 /***
  * Represents spell data loaded from the DBCs, including effects, costs, attributes, and requirements.
@@ -21,10 +25,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 id
      */
-    int GetId(lua_State* L, SpellEntry* entry)
+    uint32 GetId(SpellEntry* entry)
     {
-        ALE::Push(L, entry->Id);
-        return 1;
+        return entry->Id;
     }
 
     /**
@@ -32,10 +35,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 categoryId
      */
-    int GetCategory(lua_State* L, SpellEntry* entry)
+    uint32 GetCategory(SpellEntry* entry)
     {
-        ALE::Push(L, entry->Category);
-        return 1;
+        return entry->Category;
     }
 
     /**
@@ -43,10 +45,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 dispelId
      */
-    int GetDispel(lua_State* L, SpellEntry* entry)
+    uint32 GetDispel(SpellEntry* entry)
     {
-        ALE::Push(L, entry->Dispel);
-        return 1;
+        return entry->Dispel;
     }
 
     /**
@@ -54,10 +55,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 mechanicId
      */
-    int GetMechanic(lua_State* L, SpellEntry* entry)
+    uint32 GetMechanic(SpellEntry* entry)
     {
-        ALE::Push(L, entry->Mechanic);
-        return 1;
+        return entry->Mechanic;
     }
 
     /**
@@ -65,10 +65,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 attribute : bitmask, but returned as uint32
      */
-    int GetAttributes(lua_State* L, SpellEntry* entry)
+    uint32 GetAttributes(SpellEntry* entry)
     {
-        ALE::Push(L, entry->Attributes);
-        return 1;
+        return entry->Attributes;
     }
 
     /**
@@ -76,10 +75,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 attributeEx : bitmask, but returned as uint32
      */
-    int GetAttributesEx(lua_State* L, SpellEntry* entry)
+    uint32 GetAttributesEx(SpellEntry* entry)
     {
-        ALE::Push(L, entry->AttributesEx);
-        return 1;
+        return entry->AttributesEx;
     }
 
     /**
@@ -87,10 +85,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 attributeEx2 : bitmask, but returned as uint32
      */
-    int GetAttributesEx2(lua_State* L, SpellEntry* entry)
+    uint32 GetAttributesEx2(SpellEntry* entry)
     {
-        ALE::Push(L, entry->AttributesEx2);
-        return 1;
+        return entry->AttributesEx2;
     }
 
     /**
@@ -98,10 +95,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 attributeEx3 : bitmask, but returned as uint32
      */
-    int GetAttributesEx3(lua_State* L, SpellEntry* entry)
+    uint32 GetAttributesEx3(SpellEntry* entry)
     {
-        ALE::Push(L, entry->AttributesEx3);
-        return 1;
+        return entry->AttributesEx3;
     }
 
     /**
@@ -109,10 +105,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 attributeEx4 : bitmask, but returned as uint32
      */
-    int GetAttributesEx4(lua_State* L, SpellEntry* entry)
+    uint32 GetAttributesEx4(SpellEntry* entry)
     {
-        ALE::Push(L, entry->AttributesEx4);
-        return 1;
+        return entry->AttributesEx4;
     }
 
     /**
@@ -120,10 +115,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 attributeEx5 : bitmask, but returned as uint32
      */
-    int GetAttributesEx5(lua_State* L, SpellEntry* entry)
+    uint32 GetAttributesEx5(SpellEntry* entry)
     {
-        ALE::Push(L, entry->AttributesEx5);
-        return 1;
+        return entry->AttributesEx5;
     }
 
     /**
@@ -131,10 +125,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 attributeEx6 : bitmask, but returned as uint32
      */
-    int GetAttributesEx6(lua_State* L, SpellEntry* entry)
+    uint32 GetAttributesEx6(SpellEntry* entry)
     {
-        ALE::Push(L, entry->AttributesEx6);
-        return 1;
+        return entry->AttributesEx6;
     }
 
     /**
@@ -142,10 +135,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 attributeEx7 : bitmask, but returned as uint32
      */
-    int GetAttributesEx7(lua_State* L, SpellEntry* entry)
+    uint32 GetAttributesEx7(SpellEntry* entry)
     {
-        ALE::Push(L, entry->AttributesEx7);
-        return 1;
+        return entry->AttributesEx7;
     }
 
     /**
@@ -153,10 +145,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 stance : bitmask, but returned as uint32
      */
-    int GetStances(lua_State* L, SpellEntry* entry)
+    uint32 GetStances(SpellEntry* entry)
     {
-        ALE::Push(L, entry->Stances);
-        return 1;
+        return entry->Stances;
     }
 
     /**
@@ -166,10 +157,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 stancesNotMask
      */
-    int GetStancesNot(lua_State* L, SpellEntry* entry)
+    uint32 GetStancesNot(SpellEntry* entry)
     {
-        ALE::Push(L, entry->StancesNot);
-        return 1;
+        return entry->StancesNot;
     }
 
     /**
@@ -177,10 +167,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 target : bitmasks, but returned as uint32.
      */
-    int GetTargets(lua_State* L, SpellEntry* entry)
+    uint32 GetTargets(SpellEntry* entry)
     {
-        ALE::Push(L, entry->Targets);
-        return 1;
+        return entry->Targets;
     }
 
     /**
@@ -188,10 +177,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 targetCreatureType : bitmasks, but returned as uint32.
      */
-    int GetTargetCreatureType(lua_State* L, SpellEntry* entry)
+    uint32 GetTargetCreatureType(SpellEntry* entry)
     {
-        ALE::Push(L, entry->TargetCreatureType);
-        return 1;
+        return entry->TargetCreatureType;
     }
 
     /**
@@ -201,10 +189,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 spellFocusId
      */
-    int GetRequiresSpellFocus(lua_State* L, SpellEntry* entry)
+    uint32 GetRequiresSpellFocus(SpellEntry* entry)
     {
-        ALE::Push(L, entry->RequiresSpellFocus);
-        return 1;
+        return entry->RequiresSpellFocus;
     }
 
     /**
@@ -214,10 +201,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 facingFlags
      */
-    int GetFacingCasterFlags(lua_State* L, SpellEntry* entry)
+    uint32 GetFacingCasterFlags(SpellEntry* entry)
     {
-        ALE::Push(L, entry->FacingCasterFlags);
-        return 1;
+        return entry->FacingCasterFlags;
     }
 
     /**
@@ -227,10 +213,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 casterAuraState
      */
-    int GetCasterAuraState(lua_State* L, SpellEntry* entry)
+    uint32 GetCasterAuraState(SpellEntry* entry)
     {
-        ALE::Push(L, entry->CasterAuraState);
-        return 1;
+        return entry->CasterAuraState;
     }
 
     /**
@@ -240,10 +225,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 targetAuraState
      */
-    int GetTargetAuraState(lua_State* L, SpellEntry* entry)
+    uint32 GetTargetAuraState(SpellEntry* entry)
     {
-        ALE::Push(L, entry->TargetAuraState);
-        return 1;
+        return entry->TargetAuraState;
     }
 
     /**
@@ -253,10 +237,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 casterAuraStateNot
      */
-    int GetCasterAuraStateNot(lua_State* L, SpellEntry* entry)
+    uint32 GetCasterAuraStateNot(SpellEntry* entry)
     {
-        ALE::Push(L, entry->CasterAuraStateNot);
-        return 1;
+        return entry->CasterAuraStateNot;
     }
 
     /**
@@ -266,10 +249,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 targetAuraStateNot
      */
-    int GetTargetAuraStateNot(lua_State* L, SpellEntry* entry)
+    uint32 GetTargetAuraStateNot(SpellEntry* entry)
     {
-        ALE::Push(L, entry->TargetAuraStateNot);
-        return 1;
+        return entry->TargetAuraStateNot;
     }
 
     /**
@@ -279,10 +261,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 casterAuraSpellId
      */
-    int GetCasterAuraSpell(lua_State* L, SpellEntry* entry)
+    uint32 GetCasterAuraSpell(SpellEntry* entry)
     {
-        ALE::Push(L, entry->CasterAuraSpell);
-        return 1;
+        return entry->CasterAuraSpell;
     }
 
     /**
@@ -292,10 +273,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 targetAuraSpellId
      */
-    int GetTargetAuraSpell(lua_State* L, SpellEntry* entry)
+    uint32 GetTargetAuraSpell(SpellEntry* entry)
     {
-        ALE::Push(L, entry->TargetAuraSpell);
-        return 1;
+        return entry->TargetAuraSpell;
     }
 
     /**
@@ -305,10 +285,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 excludeCasterAuraSpellId
      */
-    int GetExcludeCasterAuraSpell(lua_State* L, SpellEntry* entry)
+    uint32 GetExcludeCasterAuraSpell(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ExcludeCasterAuraSpell);
-        return 1;
+        return entry->ExcludeCasterAuraSpell;
     }
 
     /**
@@ -318,10 +297,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 excludeTargetAuraSpellId
      */
-    int GetExcludeTargetAuraSpell(lua_State* L, SpellEntry* entry)
+    uint32 GetExcludeTargetAuraSpell(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ExcludeTargetAuraSpell);
-        return 1;
+        return entry->ExcludeTargetAuraSpell;
     }
 
     /**
@@ -331,10 +309,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 castingTimeIndex
      */
-    int GetCastingTimeIndex(lua_State* L, SpellEntry* entry)
+    uint32 GetCastingTimeIndex(SpellEntry* entry)
     {
-        ALE::Push(L, entry->CastingTimeIndex);
-        return 1;
+        return entry->CastingTimeIndex;
     }
 
     /**
@@ -342,10 +319,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 recoveryTime
      */
-    int GetRecoveryTime(lua_State* L, SpellEntry* entry)
+    uint32 GetRecoveryTime(SpellEntry* entry)
     {
-        ALE::Push(L, entry->RecoveryTime);
-        return 1;
+        return entry->RecoveryTime;
     }
 
     /**
@@ -353,10 +329,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 categoryRecoveryTime : in milliseconds, returned as uint32
      */
-    int GetCategoryRecoveryTime(lua_State* L, SpellEntry* entry)
+    uint32 GetCategoryRecoveryTime(SpellEntry* entry)
     {
-        ALE::Push(L, entry->CategoryRecoveryTime);
-        return 1;
+        return entry->CategoryRecoveryTime;
     }
 
     /**
@@ -366,10 +341,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 interruptFlags
      */
-    int GetInterruptFlags(lua_State* L, SpellEntry* entry)
+    uint32 GetInterruptFlags(SpellEntry* entry)
     {
-        ALE::Push(L, entry->InterruptFlags);
-        return 1;
+        return entry->InterruptFlags;
     }
 
     /**
@@ -379,10 +353,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 auraInterruptFlags
      */
-    int GetAuraInterruptFlags(lua_State* L, SpellEntry* entry)
+    uint32 GetAuraInterruptFlags(SpellEntry* entry)
     {
-        ALE::Push(L, entry->AuraInterruptFlags);
-        return 1;
+        return entry->AuraInterruptFlags;
     }
 
     /**
@@ -392,10 +365,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 channelInterruptFlags
      */
-    int GetChannelInterruptFlags(lua_State* L, SpellEntry* entry)
+    uint32 GetChannelInterruptFlags(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ChannelInterruptFlags);
-        return 1;
+        return entry->ChannelInterruptFlags;
     }
 
     /**
@@ -405,10 +377,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 procFlags
      */
-    int GetProcFlags(lua_State* L, SpellEntry* entry)
+    uint32 GetProcFlags(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ProcFlags);
-        return 1;
+        return entry->ProcFlags;
     }
 
     /**
@@ -416,10 +387,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 procChance
      */
-    int GetProcChance(lua_State* L, SpellEntry* entry)
+    uint32 GetProcChance(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ProcChance);
-        return 1;
+        return entry->ProcChance;
     }
 
     /**
@@ -427,10 +397,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 procCharges
      */
-    int GetProcCharges(lua_State* L, SpellEntry* entry)
+    uint32 GetProcCharges(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ProcCharges);
-        return 1;
+        return entry->ProcCharges;
     }
 
     /**
@@ -438,10 +407,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 maxLevel : the [SpellEntry] max level.
      */
-    int GetMaxLevel(lua_State* L, SpellEntry* entry)
+    uint32 GetMaxLevel(SpellEntry* entry)
     {
-        ALE::Push(L, entry->MaxLevel);
-        return 1;
+        return entry->MaxLevel;
     }
 
     /**
@@ -449,10 +417,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 baseLevel
      */
-    int GetBaseLevel(lua_State* L, SpellEntry* entry)
+    uint32 GetBaseLevel(SpellEntry* entry)
     {
-        ALE::Push(L, entry->BaseLevel);
-        return 1;
+        return entry->BaseLevel;
     }
 
     /**
@@ -460,10 +427,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 spellLevel
      */
-    int GetSpellLevel(lua_State* L, SpellEntry* entry)
+    uint32 GetSpellLevel(SpellEntry* entry)
     {
-        ALE::Push(L, entry->SpellLevel);
-        return 1;
+        return entry->SpellLevel;
     }
 
     /**
@@ -471,10 +437,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 durationIndex
      */
-    int GetDurationIndex(lua_State* L, SpellEntry* entry)
+    uint32 GetDurationIndex(SpellEntry* entry)
     {
-        ALE::Push(L, entry->DurationIndex);
-        return 1;
+        return entry->DurationIndex;
     }
 
     /**
@@ -482,10 +447,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 powerTypeId
      */
-    int GetPowerType(lua_State* L, SpellEntry* entry)
+    uint32 GetPowerType(SpellEntry* entry)
     {
-        ALE::Push(L, entry->PowerType);
-        return 1;
+        return entry->PowerType;
     }
 
     /**
@@ -493,10 +457,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 manaCost
      */
-    int GetManaCost(lua_State* L, SpellEntry* entry)
+    uint32 GetManaCost(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ManaCost);
-        return 1;
+        return entry->ManaCost;
     }
 
     /**
@@ -504,10 +467,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 manaCostPerLevel
      */
-    int GetManaCostPerlevel(lua_State* L, SpellEntry* entry)
+    uint32 GetManaCostPerlevel(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ManaCostPerlevel);
-        return 1;
+        return entry->ManaCostPerlevel;
     }
 
     /**
@@ -515,10 +477,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 manaPerSecond
      */
-    int GetManaPerSecond(lua_State* L, SpellEntry* entry)
+    uint32 GetManaPerSecond(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ManaPerSecond);
-        return 1;
+        return entry->ManaPerSecond;
     }
 
     /**
@@ -526,10 +487,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 manaPerSecondPerLevel
      */
-    int GetManaPerSecondPerLevel(lua_State* L, SpellEntry* entry)
+    uint32 GetManaPerSecondPerLevel(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ManaPerSecondPerLevel);
-        return 1;
+        return entry->ManaPerSecondPerLevel;
     }
 
     /**
@@ -537,10 +497,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 rangeIndex
      */
-    int GetRangeIndex(lua_State* L, SpellEntry* entry)
+    uint32 GetRangeIndex(SpellEntry* entry)
     {
-        ALE::Push(L, entry->RangeIndex);
-        return 1;
+        return entry->RangeIndex;
     }
 
     /**
@@ -548,10 +507,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 speed
      */
-    int GetSpeed(lua_State* L, SpellEntry* entry)
+    float GetSpeed(SpellEntry* entry)
     {
-        ALE::Push(L, entry->Speed);
-        return 1;
+        return entry->Speed;
     }
 
     /**
@@ -559,10 +517,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 stackAmount
      */
-    int GetStackAmount(lua_State* L, SpellEntry* entry)
+    uint32 GetStackAmount(SpellEntry* entry)
     {
-        ALE::Push(L, entry->StackAmount);
-        return 1;
+        return entry->StackAmount;
     }
 
     /**
@@ -570,20 +527,17 @@ namespace LuaSpellEntry
      *
      * @return table totem
      */
-    int GetTotem(lua_State* L, SpellEntry* entry)
+    sol::table GetTotem(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->Totem.size(); ++index)
         {
-            ALE::Push(L, entry->Totem[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->Totem[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -591,20 +545,17 @@ namespace LuaSpellEntry
      *
      * @return table reagent
      */
-    int GetReagent(lua_State* L, SpellEntry* entry)
+    sol::table GetReagent(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->Reagent.size(); ++index)
         {
-            ALE::Push(L, entry->Reagent[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->Reagent[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -612,20 +563,17 @@ namespace LuaSpellEntry
      *
      * @return table reagentCount
      */
-    int GetReagentCount(lua_State* L, SpellEntry* entry)
+    sol::table GetReagentCount(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->ReagentCount.size(); ++index)
         {
-            ALE::Push(L, entry->ReagentCount[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->ReagentCount[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -633,10 +581,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 equippedItemClassId
      */
-    int GetEquippedItemClass(lua_State* L, SpellEntry* entry)
+    int32 GetEquippedItemClass(SpellEntry* entry)
     {
-        ALE::Push(L, entry->EquippedItemClass);
-        return 1;
+        return entry->EquippedItemClass;
     }
 
     /**
@@ -644,10 +591,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 equippedItemSubClassMasks : bitmasks, returned as uint32.
      */
-    int GetEquippedItemSubClassMask(lua_State* L, SpellEntry* entry)
+    int32 GetEquippedItemSubClassMask(SpellEntry* entry)
     {
-        ALE::Push(L, entry->EquippedItemSubClassMask);
-        return 1;
+        return entry->EquippedItemSubClassMask;
     }
 
     /**
@@ -655,10 +601,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 equippedItemInventoryTypeMasks : bitmasks, returned as uint32.
      */
-    int GetEquippedItemInventoryTypeMask(lua_State* L, SpellEntry* entry)
+    int32 GetEquippedItemInventoryTypeMask(SpellEntry* entry)
     {
-        ALE::Push(L, entry->EquippedItemInventoryTypeMask);
-        return 1;
+        return entry->EquippedItemInventoryTypeMask;
     }
 
     /**
@@ -666,20 +611,17 @@ namespace LuaSpellEntry
      *
      * @return table effect
      */
-    int GetEffect(lua_State* L, SpellEntry* entry)
+    sol::table GetEffect(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->Effect.size(); ++index)
         {
-            ALE::Push(L, entry->Effect[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->Effect[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -687,20 +629,17 @@ namespace LuaSpellEntry
      *
      * @return table effectDieSides
      */
-    int GetEffectDieSides(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectDieSides(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectDieSides.size(); ++index)
         {
-            ALE::Push(L, entry->EffectDieSides[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectDieSides[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -708,20 +647,17 @@ namespace LuaSpellEntry
      *
      * @return table effectRealPointsPerLevel
      */
-    int GetEffectRealPointsPerLevel(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectRealPointsPerLevel(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectRealPointsPerLevel.size(); ++index)
         {
-            ALE::Push(L, entry->EffectRealPointsPerLevel[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectRealPointsPerLevel[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -729,20 +665,17 @@ namespace LuaSpellEntry
      *
      * @return table effectBasePoints
      */
-    int GetEffectBasePoints(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectBasePoints(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectBasePoints.size(); ++index)
         {
-            ALE::Push(L, entry->EffectBasePoints[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectBasePoints[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -750,20 +683,17 @@ namespace LuaSpellEntry
      *
      * @return table effectMechanic
      */
-    int GetEffectMechanic(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectMechanic(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectMechanic.size(); ++index)
         {
-            ALE::Push(L, entry->EffectMechanic[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectMechanic[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -771,20 +701,17 @@ namespace LuaSpellEntry
      *
      * @return table effectImplicitTargetA
      */
-    int GetEffectImplicitTargetA(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectImplicitTargetA(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectImplicitTargetA.size(); ++index)
         {
-            ALE::Push(L, entry->EffectImplicitTargetA[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectImplicitTargetA[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -792,20 +719,17 @@ namespace LuaSpellEntry
      *
      * @return table effectImplicitTargetB
      */
-    int GetEffectImplicitTargetB(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectImplicitTargetB(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectImplicitTargetB.size(); ++index)
         {
-            ALE::Push(L, entry->EffectImplicitTargetB[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectImplicitTargetB[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -813,20 +737,17 @@ namespace LuaSpellEntry
      *
      * @return table effectRadiusIndex
      */
-    int GetEffectRadiusIndex(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectRadiusIndex(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectRadiusIndex.size(); ++index)
         {
-            ALE::Push(L, entry->EffectRadiusIndex[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectRadiusIndex[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -834,20 +755,17 @@ namespace LuaSpellEntry
      *
      * @return table effectApplyAura
      */
-    int GetEffectApplyAuraName(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectApplyAuraName(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectApplyAuraName.size(); ++index)
         {
-            ALE::Push(L, entry->EffectApplyAuraName[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectApplyAuraName[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -855,20 +773,17 @@ namespace LuaSpellEntry
      *
      * @return table effectAmplitude
      */
-    int GetEffectAmplitude(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectAmplitude(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectAmplitude.size(); ++index)
         {
-            ALE::Push(L, entry->EffectAmplitude[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectAmplitude[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -876,20 +791,17 @@ namespace LuaSpellEntry
      *
      * @return table effectValueMultiplier
      */
-    int GetEffectValueMultiplier(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectValueMultiplier(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectValueMultiplier.size(); ++index)
         {
-            ALE::Push(L, entry->EffectValueMultiplier[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectValueMultiplier[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -897,20 +809,17 @@ namespace LuaSpellEntry
      *
      * @return table effectChainTarget
      */
-    int GetEffectChainTarget(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectChainTarget(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectChainTarget.size(); ++index)
         {
-            ALE::Push(L, entry->EffectChainTarget[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectChainTarget[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -918,20 +827,17 @@ namespace LuaSpellEntry
      *
      * @return table effectItemType
      */
-    int GetEffectItemType(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectItemType(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectItemType.size(); ++index)
         {
-            ALE::Push(L, entry->EffectItemType[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectItemType[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -939,20 +845,17 @@ namespace LuaSpellEntry
      *
      * @return table effectMiscValueA
      */
-    int GetEffectMiscValue(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectMiscValue(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectMiscValue.size(); ++index)
         {
-            ALE::Push(L, entry->EffectMiscValue[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectMiscValue[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -960,20 +863,17 @@ namespace LuaSpellEntry
      *
      * @return table effectMiscValueB
      */
-    int GetEffectMiscValueB(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectMiscValueB(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectMiscValueB.size(); ++index)
         {
-            ALE::Push(L, entry->EffectMiscValueB[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectMiscValueB[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -981,20 +881,17 @@ namespace LuaSpellEntry
      *
      * @return table effectTriggerSpell
      */
-    int GetEffectTriggerSpell(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectTriggerSpell(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectTriggerSpell.size(); ++index)
         {
-            ALE::Push(L, entry->EffectTriggerSpell[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectTriggerSpell[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -1002,20 +899,17 @@ namespace LuaSpellEntry
      *
      * @return table effectPointsPerComboPoint : returns a table containing all the effect points per combo point values of [SpellEntry]
      */
-    int GetEffectPointsPerComboPoint(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectPointsPerComboPoint(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectPointsPerComboPoint.size(); ++index)
         {
-            ALE::Push(L, entry->EffectPointsPerComboPoint[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectPointsPerComboPoint[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -1026,20 +920,17 @@ namespace LuaSpellEntry
      *
      * @return table effectSpellClassMask : table of [SpellFamilyFlags] per effect
      */
-    int GetEffectSpellClassMask(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectSpellClassMask(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectSpellClassMask.size(); ++index)
         {
-            ALE::Push(L, entry->EffectSpellClassMask[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = static_cast<bool>(entry->EffectSpellClassMask[index]);
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -1047,20 +938,17 @@ namespace LuaSpellEntry
      *
      * @return table spellVisuals : returns a table containing both spellVisuals for [SpellEntry].
      */
-    int GetSpellVisual(lua_State* L, SpellEntry* entry)
+    sol::table GetSpellVisual(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->SpellVisual.size(); ++index)
         {
-            ALE::Push(L, entry->SpellVisual[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->SpellVisual[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -1068,10 +956,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 spellIconId
      */
-    int GetSpellIconID(lua_State* L, SpellEntry* entry)
+    uint32 GetSpellIconID(SpellEntry* entry)
     {
-        ALE::Push(L, entry->SpellIconID);
-        return 1;
+        return entry->SpellIconID;
     }
 
     /**
@@ -1079,10 +966,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 activeIconId
      */
-    int GetActiveIconID(lua_State* L, SpellEntry* entry)
+    uint32 GetActiveIconID(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ActiveIconID);
-        return 1;
+        return entry->ActiveIconID;
     }
 
     /**
@@ -1090,10 +976,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 spellPriority
      */
-    int GetSpellPriority(lua_State* L, SpellEntry* entry)
+    uint32 GetSpellPriority(SpellEntry* entry)
     {
-        ALE::Push(L, entry->SpellPriority);
-        return 1;
+        return entry->SpellPriority;
     }
 
     /**
@@ -1101,20 +986,17 @@ namespace LuaSpellEntry
      *
      * @return table spellNames
      */
-    int GetSpellName(lua_State* L, SpellEntry* entry)
+    sol::table GetSpellName(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->SpellName.size(); ++index)
         {
-            ALE::Push(L, entry->SpellName[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->SpellName[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -1122,20 +1004,17 @@ namespace LuaSpellEntry
      *
      * @return table spellRanks
      */
-    int GetRank(lua_State* L, SpellEntry* entry)
+    sol::table GetRank(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->Rank.size(); ++index)
         {
-            ALE::Push(L, entry->Rank[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->Rank[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -1143,10 +1022,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 manaCostPercentage : the mana cost in percentage, returned as uint32.
      */
-    int GetManaCostPercentage(lua_State* L, SpellEntry* entry)
+    uint32 GetManaCostPercentage(SpellEntry* entry)
     {
-        ALE::Push(L, entry->ManaCostPercentage);
-        return 1;
+        return entry->ManaCostPercentage;
     }
 
     /**
@@ -1154,10 +1032,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 globalCooldownTime
      */
-    int GetStartRecoveryCategory(lua_State* L, SpellEntry* entry)
+    uint32 GetStartRecoveryCategory(SpellEntry* entry)
     {
-        ALE::Push(L, entry->StartRecoveryCategory);
-        return 1;
+        return entry->StartRecoveryCategory;
     }
 
     /**
@@ -1165,10 +1042,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 globalCooldownCategory
      */
-    int GetStartRecoveryTime(lua_State* L, SpellEntry* entry)
+    uint32 GetStartRecoveryTime(SpellEntry* entry)
     {
-        ALE::Push(L, entry->StartRecoveryTime);
-        return 1;
+        return entry->StartRecoveryTime;
     }
 
     /**
@@ -1176,10 +1052,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 maxTargetLevel
      */
-    int GetMaxTargetLevel(lua_State* L, SpellEntry* entry)
+    uint32 GetMaxTargetLevel(SpellEntry* entry)
     {
-        ALE::Push(L, entry->MaxTargetLevel);
-        return 1;
+        return entry->MaxTargetLevel;
     }
 
     /**
@@ -1189,10 +1064,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 spellFamilyName
      */
-    int GetSpellFamilyName(lua_State* L, SpellEntry* entry)
+    uint32 GetSpellFamilyName(SpellEntry* entry)
     {
-        ALE::Push(L, entry->SpellFamilyName);
-        return 1;
+        return entry->SpellFamilyName;
     }
 
     /**
@@ -1202,10 +1076,9 @@ namespace LuaSpellEntry
      *
      * @return uint64 spellFamilyFlags
      */
-    int GetSpellFamilyFlags(lua_State* L, SpellEntry* entry)
+    bool GetSpellFamilyFlags(SpellEntry* entry)
     {
-        ALE::Push(L, entry->SpellFamilyFlags);
-        return 1;
+        return entry->SpellFamilyFlags;
     }
 
     /**
@@ -1213,10 +1086,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 maxAffectedTargets
      */
-    int GetMaxAffectedTargets(lua_State* L, SpellEntry* entry)
+    uint32 GetMaxAffectedTargets(SpellEntry* entry)
     {
-        ALE::Push(L, entry->MaxAffectedTargets);
-        return 1;
+        return entry->MaxAffectedTargets;
     }
 
     /**
@@ -1224,10 +1096,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 spellDamageTypeId
      */
-    int GetDmgClass(lua_State* L, SpellEntry* entry)
+    uint32 GetDmgClass(SpellEntry* entry)
     {
-        ALE::Push(L, entry->DmgClass);
-        return 1;
+        return entry->DmgClass;
     }
 
     /**
@@ -1235,10 +1106,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 preventionTypeId
      */
-    int GetPreventionType(lua_State* L, SpellEntry* entry)
+    uint32 GetPreventionType(SpellEntry* entry)
     {
-        ALE::Push(L, entry->PreventionType);
-        return 1;
+        return entry->PreventionType;
     }
 
     /**
@@ -1246,20 +1116,17 @@ namespace LuaSpellEntry
      *
      * @return table effectDamageMultipliers
      */
-    int GetEffectDamageMultiplier(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectDamageMultiplier(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectDamageMultiplier.size(); ++index)
         {
-            ALE::Push(L, entry->EffectDamageMultiplier[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectDamageMultiplier[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -1267,20 +1134,17 @@ namespace LuaSpellEntry
      *
      * @return table totemCategory
      */
-    int GetTotemCategory(lua_State* L, SpellEntry* entry)
+    sol::table GetTotemCategory(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->TotemCategory.size(); ++index)
         {
-            ALE::Push(L, entry->TotemCategory[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->TotemCategory[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -1290,10 +1154,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 areaGroupId
      */
-    int GetAreaGroupId(lua_State* L, SpellEntry* entry)
+    int32 GetAreaGroupId(SpellEntry* entry)
     {
-        ALE::Push(L, entry->AreaGroupId);
-        return 1;
+        return entry->AreaGroupId;
     }
 
     /**
@@ -1301,10 +1164,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 schoolMask : bitmask, returned as uint32.
      */
-    int GetSchoolMask(lua_State* L, SpellEntry* entry)
+    uint32 GetSchoolMask(SpellEntry* entry)
     {
-        ALE::Push(L, entry->SchoolMask);
-        return 1;
+        return entry->SchoolMask;
     }
 
     /**
@@ -1312,10 +1174,9 @@ namespace LuaSpellEntry
      *
      * @return uint32 runeCostId
      */
-    int GetRuneCostID(lua_State* L, SpellEntry* entry)
+    uint32 GetRuneCostID(SpellEntry* entry)
     {
-        ALE::Push(L, entry->RuneCostID);
-        return 1;
+        return entry->RuneCostID;
     }
 
     /**
@@ -1323,20 +1184,17 @@ namespace LuaSpellEntry
      *
      * @return table effectBonusMultipliers
      */
-    int GetEffectBonusMultiplier(lua_State* L, SpellEntry* entry)
+    sol::table GetEffectBonusMultiplier(SpellEntry* entry, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (size_t index = 0; index < entry->EffectBonusMultiplier.size(); ++index)
         {
-            ALE::Push(L, entry->EffectBonusMultiplier[index]);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = entry->EffectBonusMultiplier[index];
         }
-        
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+
+        return tbl;
     }
 
     /**
@@ -1344,17 +1202,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 category : the new category value
      */
-    int SetCategory(lua_State* L, SpellEntry* entry)
+    void SetCategory(SpellEntry* entry, uint32 category)
     {
-        uint32 category = ALE::CHECKVAL<uint32>(L, 2);
         entry->Category = category;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->CategoryEntry = category ? sSpellCategoryStore.LookupEntry(category) : nullptr;
         }
-        
-        return 0;
     }
 
     /**
@@ -1362,17 +1217,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 dispel : the new dispel type value
      */
-    int SetDispel(lua_State* L, SpellEntry* entry)
+    void SetDispel(SpellEntry* entry, uint32 dispel)
     {
-        uint32 dispel = ALE::CHECKVAL<uint32>(L, 2);
         entry->Dispel = dispel;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->Dispel = dispel;
         }
-        
-        return 0;
     }
 
     /**
@@ -1380,17 +1232,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 mechanic : the new mechanic value
      */
-    int SetMechanic(lua_State* L, SpellEntry* entry)
+    void SetMechanic(SpellEntry* entry, uint32 mechanic)
     {
-        uint32 mechanic = ALE::CHECKVAL<uint32>(L, 2);
         entry->Mechanic = mechanic;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->Mechanic = mechanic;
         }
-        
-        return 0;
     }
 
     /**
@@ -1398,17 +1247,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 attributes : the new attributes bitmask
      */
-    int SetAttributes(lua_State* L, SpellEntry* entry)
+    void SetAttributes(SpellEntry* entry, uint32 attributes)
     {
-        uint32 attributes = ALE::CHECKVAL<uint32>(L, 2);
         entry->Attributes = attributes;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->Attributes = attributes;
         }
-        
-        return 0;
     }
 
     /**
@@ -1416,17 +1262,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 attributesEx : the new attributesEx bitmask
      */
-    int SetAttributesEx(lua_State* L, SpellEntry* entry)
+    void SetAttributesEx(SpellEntry* entry, uint32 attributesEx)
     {
-        uint32 attributesEx = ALE::CHECKVAL<uint32>(L, 2);
         entry->AttributesEx = attributesEx;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->AttributesEx = attributesEx;
         }
-        
-        return 0;
     }
 
     /**
@@ -1434,17 +1277,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 attributesEx2 : the new attributesEx2 bitmask
      */
-    int SetAttributesEx2(lua_State* L, SpellEntry* entry)
+    void SetAttributesEx2(SpellEntry* entry, uint32 attributesEx2)
     {
-        uint32 attributesEx2 = ALE::CHECKVAL<uint32>(L, 2);
         entry->AttributesEx2 = attributesEx2;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->AttributesEx2 = attributesEx2;
         }
-        
-        return 0;
     }
 
     /**
@@ -1452,17 +1292,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 attributesEx3 : the new attributesEx3 bitmask
      */
-    int SetAttributesEx3(lua_State* L, SpellEntry* entry)
+    void SetAttributesEx3(SpellEntry* entry, uint32 attributesEx3)
     {
-        uint32 attributesEx3 = ALE::CHECKVAL<uint32>(L, 2);
         entry->AttributesEx3 = attributesEx3;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->AttributesEx3 = attributesEx3;
         }
-        
-        return 0;
     }
 
     /**
@@ -1470,17 +1307,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 attributesEx4 : the new attributesEx4 bitmask
      */
-    int SetAttributesEx4(lua_State* L, SpellEntry* entry)
+    void SetAttributesEx4(SpellEntry* entry, uint32 attributesEx4)
     {
-        uint32 attributesEx4 = ALE::CHECKVAL<uint32>(L, 2);
         entry->AttributesEx4 = attributesEx4;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->AttributesEx4 = attributesEx4;
         }
-        
-        return 0;
     }
 
     /**
@@ -1488,17 +1322,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 attributesEx5 : the new attributesEx5 bitmask
      */
-    int SetAttributesEx5(lua_State* L, SpellEntry* entry)
+    void SetAttributesEx5(SpellEntry* entry, uint32 attributesEx5)
     {
-        uint32 attributesEx5 = ALE::CHECKVAL<uint32>(L, 2);
         entry->AttributesEx5 = attributesEx5;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->AttributesEx5 = attributesEx5;
         }
-        
-        return 0;
     }
 
     /**
@@ -1506,17 +1337,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 attributesEx6 : the new attributesEx6 bitmask
      */
-    int SetAttributesEx6(lua_State* L, SpellEntry* entry)
+    void SetAttributesEx6(SpellEntry* entry, uint32 attributesEx6)
     {
-        uint32 attributesEx6 = ALE::CHECKVAL<uint32>(L, 2);
         entry->AttributesEx6 = attributesEx6;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->AttributesEx6 = attributesEx6;
         }
-        
-        return 0;
     }
 
     /**
@@ -1524,17 +1352,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 attributesEx7 : the new attributesEx7 bitmask
      */
-    int SetAttributesEx7(lua_State* L, SpellEntry* entry)
+    void SetAttributesEx7(SpellEntry* entry, uint32 attributesEx7)
     {
-        uint32 attributesEx7 = ALE::CHECKVAL<uint32>(L, 2);
         entry->AttributesEx7 = attributesEx7;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->AttributesEx7 = attributesEx7;
         }
-        
-        return 0;
     }
 
     /**
@@ -1542,17 +1367,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 stances : the new stances bitmask
      */
-    int SetStances(lua_State* L, SpellEntry* entry)
+    void SetStances(SpellEntry* entry, uint32 stances)
     {
-        uint32 stances = ALE::CHECKVAL<uint32>(L, 2);
         entry->Stances = stances;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->Stances = stances;
         }
-
-        return 0;
     }
 
     /**
@@ -1560,17 +1382,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 stancesNot : the new stancesNot bitmask
      */
-    int SetStancesNot(lua_State* L, SpellEntry* entry)
+    void SetStancesNot(SpellEntry* entry, uint32 stancesNot)
     {
-        uint32 stancesNot = ALE::CHECKVAL<uint32>(L, 2);
         entry->StancesNot = stancesNot;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->StancesNot = stancesNot;
         }
-
-        return 0;
     }
 
     /**
@@ -1578,17 +1397,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 targets : the new targets bitmask
      */
-    int SetTargets(lua_State* L, SpellEntry* entry)
+    void SetTargets(SpellEntry* entry, uint32 targets)
     {
-        uint32 targets = ALE::CHECKVAL<uint32>(L, 2);
         entry->Targets = targets;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->Targets = targets;
         }
-
-        return 0;
     }
 
     /**
@@ -1596,17 +1412,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 targetCreatureType : the new target creature type bitmask
      */
-    int SetTargetCreatureType(lua_State* L, SpellEntry* entry)
+    void SetTargetCreatureType(SpellEntry* entry, uint32 targetCreatureType)
     {
-        uint32 targetCreatureType = ALE::CHECKVAL<uint32>(L, 2);
         entry->TargetCreatureType = targetCreatureType;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->TargetCreatureType = targetCreatureType;
         }
-
-        return 0;
     }
 
     /**
@@ -1614,17 +1427,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 requiresSpellFocus : the new requires spell focus value
      */
-    int SetRequiresSpellFocus(lua_State* L, SpellEntry* entry)
+    void SetRequiresSpellFocus(SpellEntry* entry, uint32 requiresSpellFocus)
     {
-        uint32 requiresSpellFocus = ALE::CHECKVAL<uint32>(L, 2);
         entry->RequiresSpellFocus = requiresSpellFocus;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->RequiresSpellFocus = requiresSpellFocus;
         }
-
-        return 0;
     }
 
     /**
@@ -1632,17 +1442,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 facingCasterFlags : the new facing caster flags value
      */
-    int SetFacingCasterFlags(lua_State* L, SpellEntry* entry)
+    void SetFacingCasterFlags(SpellEntry* entry, uint32 facingCasterFlags)
     {
-        uint32 facingCasterFlags = ALE::CHECKVAL<uint32>(L, 2);
         entry->FacingCasterFlags = facingCasterFlags;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->FacingCasterFlags = facingCasterFlags;
         }
-
-        return 0;
     }
 
     /**
@@ -1650,17 +1457,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 casterAuraState : the new caster aura state value
      */
-    int SetCasterAuraState(lua_State* L, SpellEntry* entry)
+    void SetCasterAuraState(SpellEntry* entry, uint32 casterAuraState)
     {
-        uint32 casterAuraState = ALE::CHECKVAL<uint32>(L, 2);
         entry->CasterAuraState = casterAuraState;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->CasterAuraState = casterAuraState;
         }
-
-        return 0;
     }
 
     /**
@@ -1668,17 +1472,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 targetAuraState : the new target aura state value
      */
-    int SetTargetAuraState(lua_State* L, SpellEntry* entry)
+    void SetTargetAuraState(SpellEntry* entry, uint32 targetAuraState)
     {
-        uint32 targetAuraState = ALE::CHECKVAL<uint32>(L, 2);
         entry->TargetAuraState = targetAuraState;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->TargetAuraState = targetAuraState;
         }
-
-        return 0;
     }
 
     /**
@@ -1686,17 +1487,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 casterAuraStateNot : the new caster aura state not value
      */
-    int SetCasterAuraStateNot(lua_State* L, SpellEntry* entry)
+    void SetCasterAuraStateNot(SpellEntry* entry, uint32 casterAuraStateNot)
     {
-        uint32 casterAuraStateNot = ALE::CHECKVAL<uint32>(L, 2);
         entry->CasterAuraStateNot = casterAuraStateNot;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->CasterAuraStateNot = casterAuraStateNot;
         }
-
-        return 0;
     }
 
     /**
@@ -1704,17 +1502,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 targetAuraStateNot : the new target aura state not value
      */
-    int SetTargetAuraStateNot(lua_State* L, SpellEntry* entry)
+    void SetTargetAuraStateNot(SpellEntry* entry, uint32 targetAuraStateNot)
     {
-        uint32 targetAuraStateNot = ALE::CHECKVAL<uint32>(L, 2);
         entry->TargetAuraStateNot = targetAuraStateNot;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->TargetAuraStateNot = targetAuraStateNot;
         }
-
-        return 0;
     }
 
     /**
@@ -1722,17 +1517,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 casterAuraSpell : the new caster aura spell ID
      */
-    int SetCasterAuraSpell(lua_State* L, SpellEntry* entry)
+    void SetCasterAuraSpell(SpellEntry* entry, uint32 casterAuraSpell)
     {
-        uint32 casterAuraSpell = ALE::CHECKVAL<uint32>(L, 2);
         entry->CasterAuraSpell = casterAuraSpell;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->CasterAuraSpell = casterAuraSpell;
         }
-
-        return 0;
     }
 
     /**
@@ -1740,17 +1532,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 targetAuraSpell : the new target aura spell ID
      */
-    int SetTargetAuraSpell(lua_State* L, SpellEntry* entry)
+    void SetTargetAuraSpell(SpellEntry* entry, uint32 targetAuraSpell)
     {
-        uint32 targetAuraSpell = ALE::CHECKVAL<uint32>(L, 2);
         entry->TargetAuraSpell = targetAuraSpell;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->TargetAuraSpell = targetAuraSpell;
         }
-
-        return 0;
     }
 
     /**
@@ -1758,17 +1547,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 excludeCasterAuraSpell : the new exclude caster aura spell ID
      */
-    int SetExcludeCasterAuraSpell(lua_State* L, SpellEntry* entry)
+    void SetExcludeCasterAuraSpell(SpellEntry* entry, uint32 excludeCasterAuraSpell)
     {
-        uint32 excludeCasterAuraSpell = ALE::CHECKVAL<uint32>(L, 2);
         entry->ExcludeCasterAuraSpell = excludeCasterAuraSpell;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ExcludeCasterAuraSpell = excludeCasterAuraSpell;
         }
-
-        return 0;
     }
 
     /**
@@ -1776,17 +1562,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 excludeTargetAuraSpell : the new exclude target aura spell ID
      */
-    int SetExcludeTargetAuraSpell(lua_State* L, SpellEntry* entry)
+    void SetExcludeTargetAuraSpell(SpellEntry* entry, uint32 excludeTargetAuraSpell)
     {
-        uint32 excludeTargetAuraSpell = ALE::CHECKVAL<uint32>(L, 2);
         entry->ExcludeTargetAuraSpell = excludeTargetAuraSpell;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ExcludeTargetAuraSpell = excludeTargetAuraSpell;
         }
-
-        return 0;
     }
 
     /**
@@ -1794,17 +1577,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 recoveryTime : the new recovery time value
      */
-    int SetRecoveryTime(lua_State* L, SpellEntry* entry)
+    void SetRecoveryTime(SpellEntry* entry, uint32 recoveryTime)
     {
-        uint32 recoveryTime = ALE::CHECKVAL<uint32>(L, 2);
         entry->RecoveryTime = recoveryTime;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->RecoveryTime = recoveryTime;
         }
-
-        return 0;
     }
 
     /**
@@ -1812,17 +1592,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 categoryRecoveryTime : the new category recovery time value in milliseconds
      */
-    int SetCategoryRecoveryTime(lua_State* L, SpellEntry* entry)
+    void SetCategoryRecoveryTime(SpellEntry* entry, uint32 categoryRecoveryTime)
     {
-        uint32 categoryRecoveryTime = ALE::CHECKVAL<uint32>(L, 2);
         entry->CategoryRecoveryTime = categoryRecoveryTime;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->CategoryRecoveryTime = categoryRecoveryTime;
         }
-
-        return 0;
     }
 
     /**
@@ -1830,17 +1607,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 interruptFlags : the new interrupt flags bitmask
      */
-    int SetInterruptFlags(lua_State* L, SpellEntry* entry)
+    void SetInterruptFlags(SpellEntry* entry, uint32 interruptFlags)
     {
-        uint32 interruptFlags = ALE::CHECKVAL<uint32>(L, 2);
         entry->InterruptFlags = interruptFlags;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->InterruptFlags = interruptFlags;
         }
-
-        return 0;
     }
 
     /**
@@ -1848,17 +1622,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 auraInterruptFlags : the new aura interrupt flags bitmask
      */
-    int SetAuraInterruptFlags(lua_State* L, SpellEntry* entry)
+    void SetAuraInterruptFlags(SpellEntry* entry, uint32 auraInterruptFlags)
     {
-        uint32 auraInterruptFlags = ALE::CHECKVAL<uint32>(L, 2);
         entry->AuraInterruptFlags = auraInterruptFlags;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->AuraInterruptFlags = auraInterruptFlags;
         }
-
-        return 0;
     }
 
     /**
@@ -1866,17 +1637,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 channelInterruptFlags : the new channel interrupt flags bitmask
      */
-    int SetChannelInterruptFlags(lua_State* L, SpellEntry* entry)
+    void SetChannelInterruptFlags(SpellEntry* entry, uint32 channelInterruptFlags)
     {
-        uint32 channelInterruptFlags = ALE::CHECKVAL<uint32>(L, 2);
         entry->ChannelInterruptFlags = channelInterruptFlags;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ChannelInterruptFlags = channelInterruptFlags;
         }
-
-        return 0;
     }
 
     /**
@@ -1884,17 +1652,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 procFlags : the new proc flags bitmask
      */
-    int SetProcFlags(lua_State* L, SpellEntry* entry)
+    void SetProcFlags(SpellEntry* entry, uint32 procFlags)
     {
-        uint32 procFlags = ALE::CHECKVAL<uint32>(L, 2);
         entry->ProcFlags = procFlags;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ProcFlags = procFlags;
         }
-
-        return 0;
     }
 
     /**
@@ -1902,17 +1667,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 procChance : the new proc chance value
      */
-    int SetProcChance(lua_State* L, SpellEntry* entry)
+    void SetProcChance(SpellEntry* entry, uint32 procChance)
     {
-        uint32 procChance = ALE::CHECKVAL<uint32>(L, 2);
         entry->ProcChance = procChance;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ProcChance = procChance;
         }
-
-        return 0;
     }
 
     /**
@@ -1920,17 +1682,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 procCharges : the new proc charges value
      */
-    int SetProcCharges(lua_State* L, SpellEntry* entry)
+    void SetProcCharges(SpellEntry* entry, uint32 procCharges)
     {
-        uint32 procCharges = ALE::CHECKVAL<uint32>(L, 2);
         entry->ProcCharges = procCharges;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ProcCharges = procCharges;
         }
-
-        return 0;
     }
 
     /**
@@ -1938,17 +1697,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 maxLevel : the new max level value
      */
-    int SetMaxLevel(lua_State* L, SpellEntry* entry)
+    void SetMaxLevel(SpellEntry* entry, uint32 maxLevel)
     {
-        uint32 maxLevel = ALE::CHECKVAL<uint32>(L, 2);
         entry->MaxLevel = maxLevel;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->MaxLevel = maxLevel;
         }
-
-        return 0;
     }
 
     /**
@@ -1956,17 +1712,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 baseLevel : the new base level value
      */
-    int SetBaseLevel(lua_State* L, SpellEntry* entry)
+    void SetBaseLevel(SpellEntry* entry, uint32 baseLevel)
     {
-        uint32 baseLevel = ALE::CHECKVAL<uint32>(L, 2);
         entry->BaseLevel = baseLevel;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->BaseLevel = baseLevel;
         }
-
-        return 0;
     }
 
     /**
@@ -1974,17 +1727,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 spellLevel : the new spell level value
      */
-    int SetSpellLevel(lua_State* L, SpellEntry* entry)
+    void SetSpellLevel(SpellEntry* entry, uint32 spellLevel)
     {
-        uint32 spellLevel = ALE::CHECKVAL<uint32>(L, 2);
         entry->SpellLevel = spellLevel;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->SpellLevel = spellLevel;
         }
-
-        return 0;
     }
 
     /**
@@ -1992,17 +1742,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 manaCost : the new mana cost value
      */
-    int SetManaCost(lua_State* L, SpellEntry* entry)
+    void SetManaCost(SpellEntry* entry, uint32 manaCost)
     {
-        uint32 manaCost = ALE::CHECKVAL<uint32>(L, 2);
         entry->ManaCost = manaCost;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ManaCost = manaCost;
         }
-        
-        return 0;
     }
 
     /**
@@ -2010,17 +1757,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 powerType : the new power type ID
      */
-    int SetPowerType(lua_State* L, SpellEntry* entry)
+    void SetPowerType(SpellEntry* entry, uint32 powerType)
     {
-        uint32 powerType = ALE::CHECKVAL<uint32>(L, 2);
         entry->PowerType = powerType;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->PowerType = powerType;
         }
-        
-        return 0;
     }
 
     /**
@@ -2028,17 +1772,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 manaCostPerlevel : the new mana cost per level value
      */
-    int SetManaCostPerlevel(lua_State* L, SpellEntry* entry)
+    void SetManaCostPerlevel(SpellEntry* entry, uint32 manaCostPerlevel)
     {
-        uint32 manaCostPerlevel = ALE::CHECKVAL<uint32>(L, 2);
         entry->ManaCostPerlevel = manaCostPerlevel;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ManaCostPerlevel = manaCostPerlevel;
         }
-        
-        return 0;
     }
 
     /**
@@ -2046,17 +1787,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 manaPerSecond : the new mana per second value
      */
-    int SetManaPerSecond(lua_State* L, SpellEntry* entry)
+    void SetManaPerSecond(SpellEntry* entry, uint32 manaPerSecond)
     {
-        uint32 manaPerSecond = ALE::CHECKVAL<uint32>(L, 2);
         entry->ManaPerSecond = manaPerSecond;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ManaPerSecond = manaPerSecond;
         }
-        
-        return 0;
     }
 
     /**
@@ -2064,17 +1802,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 manaPerSecondPerLevel : the new mana per second per level value
      */
-    int SetManaPerSecondPerLevel(lua_State* L, SpellEntry* entry)
+    void SetManaPerSecondPerLevel(SpellEntry* entry, uint32 manaPerSecondPerLevel)
     {
-        uint32 manaPerSecondPerLevel = ALE::CHECKVAL<uint32>(L, 2);
         entry->ManaPerSecondPerLevel = manaPerSecondPerLevel;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ManaPerSecondPerLevel = manaPerSecondPerLevel;
         }
-        
-        return 0;
     }
 
     /**
@@ -2082,17 +1817,14 @@ namespace LuaSpellEntry
      *
      * @param float speed : the new speed value
      */
-    int SetSpeed(lua_State* L, SpellEntry* entry)
+    void SetSpeed(SpellEntry* entry, float speed)
     {
-        float speed = ALE::CHECKVAL<float>(L, 2);
         entry->Speed = speed;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->Speed = speed;
         }
-        
-        return 0;
     }
 
     /**
@@ -2100,17 +1832,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 stackAmount : the new stack amount value
      */
-    int SetStackAmount(lua_State* L, SpellEntry* entry)
+    void SetStackAmount(SpellEntry* entry, uint32 stackAmount)
     {
-        uint32 stackAmount = ALE::CHECKVAL<uint32>(L, 2);
         entry->StackAmount = stackAmount;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->StackAmount = stackAmount;
         }
-
-        return 0;
     }
 
     /**
@@ -2118,17 +1847,14 @@ namespace LuaSpellEntry
      *
      * @param int32 equippedItemClass : the new equipped item class value
      */
-    int SetEquippedItemClass(lua_State* L, SpellEntry* entry)
+    void SetEquippedItemClass(SpellEntry* entry, int32 equippedItemClass)
     {
-        int32 equippedItemClass = ALE::CHECKVAL<int32>(L, 2);
         entry->EquippedItemClass = equippedItemClass;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->EquippedItemClass = equippedItemClass;
         }
-
-        return 0;
     }
 
     /**
@@ -2136,17 +1862,14 @@ namespace LuaSpellEntry
      *
      * @param int32 equippedItemSubClassMask : the new equipped item sub class mask bitmasks
      */
-    int SetEquippedItemSubClassMask(lua_State* L, SpellEntry* entry)
+    void SetEquippedItemSubClassMask(SpellEntry* entry, int32 equippedItemSubClassMask)
     {
-        int32 equippedItemSubClassMask = ALE::CHECKVAL<int32>(L, 2);
         entry->EquippedItemSubClassMask = equippedItemSubClassMask;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->EquippedItemSubClassMask = equippedItemSubClassMask;
         }
-
-        return 0;
     }
 
     /**
@@ -2154,17 +1877,14 @@ namespace LuaSpellEntry
      *
      * @param int32 equippedItemInventoryTypeMask : the new equipped item inventory type mask bitmasks
      */
-    int SetEquippedItemInventoryTypeMask(lua_State* L, SpellEntry* entry)
+    void SetEquippedItemInventoryTypeMask(SpellEntry* entry, int32 equippedItemInventoryTypeMask)
     {
-        int32 equippedItemInventoryTypeMask = ALE::CHECKVAL<int32>(L, 2);
         entry->EquippedItemInventoryTypeMask = equippedItemInventoryTypeMask;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->EquippedItemInventoryTypeMask = equippedItemInventoryTypeMask;
         }
-
-        return 0;
     }
 
     /**
@@ -2172,17 +1892,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 spellIconID : the new spell icon ID value
      */
-    int SetSpellIconID(lua_State* L, SpellEntry* entry)
+    void SetSpellIconID(SpellEntry* entry, uint32 spellIconID)
     {
-        uint32 spellIconID = ALE::CHECKVAL<uint32>(L, 2);
         entry->SpellIconID = spellIconID;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->SpellIconID = spellIconID;
         }
-
-        return 0;
     }
 
     /**
@@ -2190,17 +1907,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 activeIconID : the new active icon ID value
      */
-    int SetActiveIconID(lua_State* L, SpellEntry* entry)
+    void SetActiveIconID(SpellEntry* entry, uint32 activeIconID)
     {
-        uint32 activeIconID = ALE::CHECKVAL<uint32>(L, 2);
         entry->ActiveIconID = activeIconID;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ActiveIconID = activeIconID;
         }
-
-        return 0;
     }
 
     /**
@@ -2208,17 +1922,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 spellPriority : the new spell priority value
      */
-    int SetSpellPriority(lua_State* L, SpellEntry* entry)
+    void SetSpellPriority(SpellEntry* entry, uint32 spellPriority)
     {
-        uint32 spellPriority = ALE::CHECKVAL<uint32>(L, 2);
         entry->SpellPriority = spellPriority;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->SpellPriority = spellPriority;
         }
-
-        return 0;
     }
 
     /**
@@ -2226,17 +1937,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 manaCostPercentage : the new mana cost percentage value
      */
-    int SetManaCostPercentage(lua_State* L, SpellEntry* entry)
+    void SetManaCostPercentage(SpellEntry* entry, uint32 manaCostPercentage)
     {
-        uint32 manaCostPercentage = ALE::CHECKVAL<uint32>(L, 2);
         entry->ManaCostPercentage = manaCostPercentage;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->ManaCostPercentage = manaCostPercentage;
         }
-        
-        return 0;
     }
 
     /**
@@ -2244,17 +1952,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 startRecoveryCategory : the new start recovery category value
      */
-    int SetStartRecoveryCategory(lua_State* L, SpellEntry* entry)
+    void SetStartRecoveryCategory(SpellEntry* entry, uint32 startRecoveryCategory)
     {
-        uint32 startRecoveryCategory = ALE::CHECKVAL<uint32>(L, 2);
         entry->StartRecoveryCategory = startRecoveryCategory;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->StartRecoveryCategory = startRecoveryCategory;
         }
-
-        return 0;
     }
 
     /**
@@ -2262,17 +1967,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 startRecoveryTime : the new start recovery time value
      */
-    int SetStartRecoveryTime(lua_State* L, SpellEntry* entry)
+    void SetStartRecoveryTime(SpellEntry* entry, uint32 startRecoveryTime)
     {
-        uint32 startRecoveryTime = ALE::CHECKVAL<uint32>(L, 2);
         entry->StartRecoveryTime = startRecoveryTime;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->StartRecoveryTime = startRecoveryTime;
         }
-
-        return 0;
     }
 
     /**
@@ -2280,17 +1982,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 maxTargetLevel : the new max target level value
      */
-    int SetMaxTargetLevel(lua_State* L, SpellEntry* entry)
+    void SetMaxTargetLevel(SpellEntry* entry, uint32 maxTargetLevel)
     {
-        uint32 maxTargetLevel = ALE::CHECKVAL<uint32>(L, 2);
         entry->MaxTargetLevel = maxTargetLevel;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->MaxTargetLevel = maxTargetLevel;
         }
-
-        return 0;
     }
 
     /**
@@ -2298,17 +1997,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 spellFamilyName : the new spell family name value
      */
-    int SetSpellFamilyName(lua_State* L, SpellEntry* entry)
+    void SetSpellFamilyName(SpellEntry* entry, uint32 spellFamilyName)
     {
-        uint32 spellFamilyName = ALE::CHECKVAL<uint32>(L, 2);
         entry->SpellFamilyName = spellFamilyName;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->SpellFamilyName = spellFamilyName;
         }
-
-        return 0;
     }
 
     /**
@@ -2316,17 +2012,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 maxAffectedTargets : the new max affected targets value
      */
-    int SetMaxAffectedTargets(lua_State* L, SpellEntry* entry)
+    void SetMaxAffectedTargets(SpellEntry* entry, uint32 maxAffectedTargets)
     {
-        uint32 maxAffectedTargets = ALE::CHECKVAL<uint32>(L, 2);
         entry->MaxAffectedTargets = maxAffectedTargets;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->MaxAffectedTargets = maxAffectedTargets;
         }
-
-        return 0;
     }
 
     /**
@@ -2334,17 +2027,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 dmgClass : the new damage class ID value
      */
-    int SetDmgClass(lua_State* L, SpellEntry* entry)
+    void SetDmgClass(SpellEntry* entry, uint32 dmgClass)
     {
-        uint32 dmgClass = ALE::CHECKVAL<uint32>(L, 2);
         entry->DmgClass = dmgClass;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->DmgClass = dmgClass;
         }
-
-        return 0;
     }
 
     /**
@@ -2352,17 +2042,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 preventionType : the new prevention type ID value
      */
-    int SetPreventionType(lua_State* L, SpellEntry* entry)
+    void SetPreventionType(SpellEntry* entry, uint32 preventionType)
     {
-        uint32 preventionType = ALE::CHECKVAL<uint32>(L, 2);
         entry->PreventionType = preventionType;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->PreventionType = preventionType;
         }
-
-        return 0;
     }
 
     /**
@@ -2370,17 +2057,14 @@ namespace LuaSpellEntry
      *
      * @param uint32 schoolMask : the new school mask bitmask value
      */
-    int SetSchoolMask(lua_State* L, SpellEntry* entry)
+    void SetSchoolMask(SpellEntry* entry, uint32 schoolMask)
     {
-        uint32 schoolMask = ALE::CHECKVAL<uint32>(L, 2);
         entry->SchoolMask = schoolMask;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->SchoolMask = schoolMask;
         }
-
-        return 0;
     }
 
     /**
@@ -2388,18 +2072,170 @@ namespace LuaSpellEntry
      *
      * @param uint32 runeCostID : the new rune cost ID value
      */
-    int SetRuneCostID(lua_State* L, SpellEntry* entry)
+    void SetRuneCostID(SpellEntry* entry, uint32 runeCostID)
     {
-        uint32 runeCostID = ALE::CHECKVAL<uint32>(L, 2);
         entry->RuneCostID = runeCostID;
 
         if (SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(entry->Id))
         {
             const_cast<SpellInfo*>(spellInfo)->RuneCostID = runeCostID;
         }
-
-        return 0;
     }
 }
 
-#endif
+void RegisterSpellEntryMethods(sol::state& lua)
+{
+    sol::usertype<SpellEntry> type = lua.new_usertype<SpellEntry>("SpellEntry", sol::no_constructor);
+
+    type["GetId"]                            = &LuaSpellEntry::GetId;
+    type["GetCategory"]                      = &LuaSpellEntry::GetCategory;
+    type["GetDispel"]                        = &LuaSpellEntry::GetDispel;
+    type["GetMechanic"]                      = &LuaSpellEntry::GetMechanic;
+    type["GetAttributes"]                    = &LuaSpellEntry::GetAttributes;
+    type["GetAttributesEx"]                  = &LuaSpellEntry::GetAttributesEx;
+    type["GetAttributesEx2"]                 = &LuaSpellEntry::GetAttributesEx2;
+    type["GetAttributesEx3"]                 = &LuaSpellEntry::GetAttributesEx3;
+    type["GetAttributesEx4"]                 = &LuaSpellEntry::GetAttributesEx4;
+    type["GetAttributesEx5"]                 = &LuaSpellEntry::GetAttributesEx5;
+    type["GetAttributesEx6"]                 = &LuaSpellEntry::GetAttributesEx6;
+    type["GetAttributesEx7"]                 = &LuaSpellEntry::GetAttributesEx7;
+    type["GetStances"]                       = &LuaSpellEntry::GetStances;
+    type["GetStancesNot"]                    = &LuaSpellEntry::GetStancesNot;
+    type["GetTargets"]                       = &LuaSpellEntry::GetTargets;
+    type["GetTargetCreatureType"]            = &LuaSpellEntry::GetTargetCreatureType;
+    type["GetRequiresSpellFocus"]            = &LuaSpellEntry::GetRequiresSpellFocus;
+    type["GetFacingCasterFlags"]             = &LuaSpellEntry::GetFacingCasterFlags;
+    type["GetCasterAuraState"]               = &LuaSpellEntry::GetCasterAuraState;
+    type["GetTargetAuraState"]               = &LuaSpellEntry::GetTargetAuraState;
+    type["GetCasterAuraStateNot"]            = &LuaSpellEntry::GetCasterAuraStateNot;
+    type["GetTargetAuraStateNot"]            = &LuaSpellEntry::GetTargetAuraStateNot;
+    type["GetCasterAuraSpell"]               = &LuaSpellEntry::GetCasterAuraSpell;
+    type["GetTargetAuraSpell"]               = &LuaSpellEntry::GetTargetAuraSpell;
+    type["GetExcludeCasterAuraSpell"]        = &LuaSpellEntry::GetExcludeCasterAuraSpell;
+    type["GetExcludeTargetAuraSpell"]        = &LuaSpellEntry::GetExcludeTargetAuraSpell;
+    type["GetCastingTimeIndex"]              = &LuaSpellEntry::GetCastingTimeIndex;
+    type["GetRecoveryTime"]                  = &LuaSpellEntry::GetRecoveryTime;
+    type["GetCategoryRecoveryTime"]          = &LuaSpellEntry::GetCategoryRecoveryTime;
+    type["GetInterruptFlags"]                = &LuaSpellEntry::GetInterruptFlags;
+    type["GetAuraInterruptFlags"]            = &LuaSpellEntry::GetAuraInterruptFlags;
+    type["GetChannelInterruptFlags"]         = &LuaSpellEntry::GetChannelInterruptFlags;
+    type["GetProcFlags"]                     = &LuaSpellEntry::GetProcFlags;
+    type["GetProcChance"]                    = &LuaSpellEntry::GetProcChance;
+    type["GetProcCharges"]                   = &LuaSpellEntry::GetProcCharges;
+    type["GetMaxLevel"]                      = &LuaSpellEntry::GetMaxLevel;
+    type["GetBaseLevel"]                     = &LuaSpellEntry::GetBaseLevel;
+    type["GetSpellLevel"]                    = &LuaSpellEntry::GetSpellLevel;
+    type["GetDurationIndex"]                 = &LuaSpellEntry::GetDurationIndex;
+    type["GetPowerType"]                     = &LuaSpellEntry::GetPowerType;
+    type["GetManaCost"]                      = &LuaSpellEntry::GetManaCost;
+    type["GetManaCostPerlevel"]              = &LuaSpellEntry::GetManaCostPerlevel;
+    type["GetManaPerSecond"]                 = &LuaSpellEntry::GetManaPerSecond;
+    type["GetManaPerSecondPerLevel"]         = &LuaSpellEntry::GetManaPerSecondPerLevel;
+    type["GetRangeIndex"]                    = &LuaSpellEntry::GetRangeIndex;
+    type["GetSpeed"]                         = &LuaSpellEntry::GetSpeed;
+    type["GetStackAmount"]                   = &LuaSpellEntry::GetStackAmount;
+    type["GetTotem"]                         = &LuaSpellEntry::GetTotem;
+    type["GetReagent"]                       = &LuaSpellEntry::GetReagent;
+    type["GetReagentCount"]                  = &LuaSpellEntry::GetReagentCount;
+    type["GetEquippedItemClass"]             = &LuaSpellEntry::GetEquippedItemClass;
+    type["GetEquippedItemSubClassMask"]      = &LuaSpellEntry::GetEquippedItemSubClassMask;
+    type["GetEquippedItemInventoryTypeMask"] = &LuaSpellEntry::GetEquippedItemInventoryTypeMask;
+    type["GetEffect"]                        = &LuaSpellEntry::GetEffect;
+    type["GetEffectDieSides"]                = &LuaSpellEntry::GetEffectDieSides;
+    type["GetEffectRealPointsPerLevel"]      = &LuaSpellEntry::GetEffectRealPointsPerLevel;
+    type["GetEffectBasePoints"]              = &LuaSpellEntry::GetEffectBasePoints;
+    type["GetEffectMechanic"]                = &LuaSpellEntry::GetEffectMechanic;
+    type["GetEffectImplicitTargetA"]         = &LuaSpellEntry::GetEffectImplicitTargetA;
+    type["GetEffectImplicitTargetB"]         = &LuaSpellEntry::GetEffectImplicitTargetB;
+    type["GetEffectRadiusIndex"]             = &LuaSpellEntry::GetEffectRadiusIndex;
+    type["GetEffectApplyAuraName"]           = &LuaSpellEntry::GetEffectApplyAuraName;
+    type["GetEffectAmplitude"]               = &LuaSpellEntry::GetEffectAmplitude;
+    type["GetEffectValueMultiplier"]         = &LuaSpellEntry::GetEffectValueMultiplier;
+    type["GetEffectChainTarget"]             = &LuaSpellEntry::GetEffectChainTarget;
+    type["GetEffectItemType"]                = &LuaSpellEntry::GetEffectItemType;
+    type["GetEffectMiscValue"]               = &LuaSpellEntry::GetEffectMiscValue;
+    type["GetEffectMiscValueB"]              = &LuaSpellEntry::GetEffectMiscValueB;
+    type["GetEffectTriggerSpell"]            = &LuaSpellEntry::GetEffectTriggerSpell;
+    type["GetEffectPointsPerComboPoint"]     = &LuaSpellEntry::GetEffectPointsPerComboPoint;
+    type["GetEffectSpellClassMask"]          = &LuaSpellEntry::GetEffectSpellClassMask;
+    type["GetSpellVisual"]                   = &LuaSpellEntry::GetSpellVisual;
+    type["GetSpellIconID"]                   = &LuaSpellEntry::GetSpellIconID;
+    type["GetActiveIconID"]                  = &LuaSpellEntry::GetActiveIconID;
+    type["GetSpellPriority"]                 = &LuaSpellEntry::GetSpellPriority;
+    type["GetSpellName"]                     = &LuaSpellEntry::GetSpellName;
+    type["GetRank"]                          = &LuaSpellEntry::GetRank;
+    type["GetManaCostPercentage"]            = &LuaSpellEntry::GetManaCostPercentage;
+    type["GetStartRecoveryCategory"]         = &LuaSpellEntry::GetStartRecoveryCategory;
+    type["GetStartRecoveryTime"]             = &LuaSpellEntry::GetStartRecoveryTime;
+    type["GetMaxTargetLevel"]                = &LuaSpellEntry::GetMaxTargetLevel;
+    type["GetSpellFamilyName"]               = &LuaSpellEntry::GetSpellFamilyName;
+    type["GetSpellFamilyFlags"]              = &LuaSpellEntry::GetSpellFamilyFlags;
+    type["GetMaxAffectedTargets"]            = &LuaSpellEntry::GetMaxAffectedTargets;
+    type["GetDmgClass"]                      = &LuaSpellEntry::GetDmgClass;
+    type["GetPreventionType"]                = &LuaSpellEntry::GetPreventionType;
+    type["GetEffectDamageMultiplier"]        = &LuaSpellEntry::GetEffectDamageMultiplier;
+    type["GetTotemCategory"]                 = &LuaSpellEntry::GetTotemCategory;
+    type["GetAreaGroupId"]                   = &LuaSpellEntry::GetAreaGroupId;
+    type["GetSchoolMask"]                    = &LuaSpellEntry::GetSchoolMask;
+    type["GetRuneCostID"]                    = &LuaSpellEntry::GetRuneCostID;
+    type["GetEffectBonusMultiplier"]         = &LuaSpellEntry::GetEffectBonusMultiplier;
+    type["SetCategory"]                      = &LuaSpellEntry::SetCategory;
+    type["SetDispel"]                        = &LuaSpellEntry::SetDispel;
+    type["SetMechanic"]                      = &LuaSpellEntry::SetMechanic;
+    type["SetAttributes"]                    = &LuaSpellEntry::SetAttributes;
+    type["SetAttributesEx"]                  = &LuaSpellEntry::SetAttributesEx;
+    type["SetAttributesEx2"]                 = &LuaSpellEntry::SetAttributesEx2;
+    type["SetAttributesEx3"]                 = &LuaSpellEntry::SetAttributesEx3;
+    type["SetAttributesEx4"]                 = &LuaSpellEntry::SetAttributesEx4;
+    type["SetAttributesEx5"]                 = &LuaSpellEntry::SetAttributesEx5;
+    type["SetAttributesEx6"]                 = &LuaSpellEntry::SetAttributesEx6;
+    type["SetAttributesEx7"]                 = &LuaSpellEntry::SetAttributesEx7;
+    type["SetStances"]                       = &LuaSpellEntry::SetStances;
+    type["SetStancesNot"]                    = &LuaSpellEntry::SetStancesNot;
+    type["SetTargets"]                       = &LuaSpellEntry::SetTargets;
+    type["SetTargetCreatureType"]            = &LuaSpellEntry::SetTargetCreatureType;
+    type["SetRequiresSpellFocus"]            = &LuaSpellEntry::SetRequiresSpellFocus;
+    type["SetFacingCasterFlags"]             = &LuaSpellEntry::SetFacingCasterFlags;
+    type["SetCasterAuraState"]               = &LuaSpellEntry::SetCasterAuraState;
+    type["SetTargetAuraState"]               = &LuaSpellEntry::SetTargetAuraState;
+    type["SetCasterAuraStateNot"]            = &LuaSpellEntry::SetCasterAuraStateNot;
+    type["SetTargetAuraStateNot"]            = &LuaSpellEntry::SetTargetAuraStateNot;
+    type["SetCasterAuraSpell"]               = &LuaSpellEntry::SetCasterAuraSpell;
+    type["SetTargetAuraSpell"]               = &LuaSpellEntry::SetTargetAuraSpell;
+    type["SetExcludeCasterAuraSpell"]        = &LuaSpellEntry::SetExcludeCasterAuraSpell;
+    type["SetExcludeTargetAuraSpell"]        = &LuaSpellEntry::SetExcludeTargetAuraSpell;
+    type["SetRecoveryTime"]                  = &LuaSpellEntry::SetRecoveryTime;
+    type["SetCategoryRecoveryTime"]          = &LuaSpellEntry::SetCategoryRecoveryTime;
+    type["SetInterruptFlags"]                = &LuaSpellEntry::SetInterruptFlags;
+    type["SetAuraInterruptFlags"]            = &LuaSpellEntry::SetAuraInterruptFlags;
+    type["SetChannelInterruptFlags"]         = &LuaSpellEntry::SetChannelInterruptFlags;
+    type["SetProcFlags"]                     = &LuaSpellEntry::SetProcFlags;
+    type["SetProcChance"]                    = &LuaSpellEntry::SetProcChance;
+    type["SetProcCharges"]                   = &LuaSpellEntry::SetProcCharges;
+    type["SetMaxLevel"]                      = &LuaSpellEntry::SetMaxLevel;
+    type["SetBaseLevel"]                     = &LuaSpellEntry::SetBaseLevel;
+    type["SetSpellLevel"]                    = &LuaSpellEntry::SetSpellLevel;
+    type["SetManaCost"]                      = &LuaSpellEntry::SetManaCost;
+    type["SetPowerType"]                     = &LuaSpellEntry::SetPowerType;
+    type["SetManaCostPerlevel"]              = &LuaSpellEntry::SetManaCostPerlevel;
+    type["SetManaPerSecond"]                 = &LuaSpellEntry::SetManaPerSecond;
+    type["SetManaPerSecondPerLevel"]         = &LuaSpellEntry::SetManaPerSecondPerLevel;
+    type["SetSpeed"]                         = &LuaSpellEntry::SetSpeed;
+    type["SetStackAmount"]                   = &LuaSpellEntry::SetStackAmount;
+    type["SetEquippedItemClass"]             = &LuaSpellEntry::SetEquippedItemClass;
+    type["SetEquippedItemSubClassMask"]      = &LuaSpellEntry::SetEquippedItemSubClassMask;
+    type["SetEquippedItemInventoryTypeMask"] = &LuaSpellEntry::SetEquippedItemInventoryTypeMask;
+    type["SetSpellIconID"]                   = &LuaSpellEntry::SetSpellIconID;
+    type["SetActiveIconID"]                  = &LuaSpellEntry::SetActiveIconID;
+    type["SetSpellPriority"]                 = &LuaSpellEntry::SetSpellPriority;
+    type["SetManaCostPercentage"]            = &LuaSpellEntry::SetManaCostPercentage;
+    type["SetStartRecoveryCategory"]         = &LuaSpellEntry::SetStartRecoveryCategory;
+    type["SetStartRecoveryTime"]             = &LuaSpellEntry::SetStartRecoveryTime;
+    type["SetMaxTargetLevel"]                = &LuaSpellEntry::SetMaxTargetLevel;
+    type["SetSpellFamilyName"]               = &LuaSpellEntry::SetSpellFamilyName;
+    type["SetMaxAffectedTargets"]            = &LuaSpellEntry::SetMaxAffectedTargets;
+    type["SetDmgClass"]                      = &LuaSpellEntry::SetDmgClass;
+    type["SetPreventionType"]                = &LuaSpellEntry::SetPreventionType;
+    type["SetSchoolMask"]                    = &LuaSpellEntry::SetSchoolMask;
+    type["SetRuneCostID"]                    = &LuaSpellEntry::SetRuneCostID;
+}

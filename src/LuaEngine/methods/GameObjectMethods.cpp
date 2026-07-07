@@ -4,8 +4,17 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef GAMEOBJECTMETHODS_H
-#define GAMEOBJECTMETHODS_H
+#include "ALEBind.h"
+
+#include "DatabaseEnv.h"
+#include "GameObject.h"
+#include "Item.h"
+#include "LootMgr.h"
+#include "ObjectAccessor.h"
+#include "ObjectMgr.h"
+#include "SharedDefines.h"
+#include "StringFormat.h"
+#include "Unit.h"
 
 /***
  * Represents a game object in the world, such as doors, chests, and other interactive objects.
@@ -20,12 +29,9 @@ namespace LuaGameObject
      * @param uint32 questId : quest entry Id to check
      * @return bool hasQuest
      */
-    int HasQuest(lua_State* L, GameObject* go)
+    bool HasQuest(GameObject* go, uint32 questId)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, go->hasQuest(questId));
-        return 1;
+        return go->hasQuest(questId);
     }
 
     /**
@@ -33,10 +39,9 @@ namespace LuaGameObject
      *
      * @return bool isSpawned
      */
-    int IsSpawned(lua_State* L, GameObject* go)
+    bool IsSpawned(GameObject* go)
     {
-        ALE::Push(L, go->isSpawned());
-        return 1;
+        return go->isSpawned();
     }
 
     /**
@@ -44,10 +49,9 @@ namespace LuaGameObject
      *
      * @return bool isTransport
      */
-    int IsTransport(lua_State* L, GameObject* go)
+    bool IsTransport(GameObject* go)
     {
-        ALE::Push(L, go->IsTransport());
-        return 1;
+        return go->IsTransport();
     }
 
     /**
@@ -55,16 +59,14 @@ namespace LuaGameObject
      *
      * @return bool isActive
      */
-    int IsActive(lua_State* L, GameObject* go)
+    bool IsActive(GameObject* go)
     {
-        ALE::Push(L, go->isActiveObject());
-        return 1;
+        return go->isActiveObject();
     }
 
-    /*int IsDestructible(lua_State* L, GameObject* go) // TODO: Implementation core side
+    /*bool IsDestructible(GameObject* go) // TODO: Implementation core side
     {
-        ALE::Push(L, go->IsDestructibleBuilding());
-        return 1;
+        return go->IsDestructibleBuilding();
     }*/
 
     /**
@@ -72,10 +74,9 @@ namespace LuaGameObject
      *
      * @return uint32 displayId
      */
-    int GetDisplayId(lua_State* L, GameObject* go)
+    uint32 GetDisplayId(GameObject* go)
     {
-        ALE::Push(L, go->GetDisplayId());
-        return 1;
+        return go->GetDisplayId();
     }
 
     /**
@@ -93,10 +94,9 @@ namespace LuaGameObject
      *
      * @return [GOState] goState
      */
-    int GetGoState(lua_State* L, GameObject* go)
+    GOState GetGoState(GameObject* go)
     {
-        ALE::Push(L, go->GetGoState());
-        return 1;
+        return go->GetGoState();
     }
 
     /**
@@ -115,10 +115,9 @@ namespace LuaGameObject
      *
      * @return [LootState] lootState
      */
-    int GetLootState(lua_State* L, GameObject* go)
+    LootState GetLootState(GameObject* go)
     {
-        ALE::Push(L, go->getLootState());
-        return 1;
+        return go->getLootState();
     }
 
     /**
@@ -128,10 +127,9 @@ namespace LuaGameObject
      *
      * @return [Player] player
      */
-    int GetLootRecipient(lua_State* L, GameObject* go)
+    Player* GetLootRecipient(GameObject* go)
     {
-        ALE::Push(L, go->GetLootRecipient());
-        return 1;
+        return go->GetLootRecipient();
     }
 
     /**
@@ -141,10 +139,9 @@ namespace LuaGameObject
      *
      * @return [Group] group
      */
-    int GetLootRecipientGroup(lua_State* L, GameObject* go)
+    Group* GetLootRecipientGroup(GameObject* go)
     {
-        ALE::Push(L, go->GetLootRecipientGroup());
-        return 1;
+        return go->GetLootRecipientGroup();
     }
 
     /**
@@ -152,10 +149,9 @@ namespace LuaGameObject
     *
     * @return uint32 spawnId
     */
-    int GetSpawnId(lua_State* L, GameObject* go)
+    uint32 GetSpawnId(GameObject* go)
     {
-        ALE::Push(L, go->GetSpawnId());
-        return 1;
+        return go->GetSpawnId();
     }
 
     /**
@@ -172,9 +168,9 @@ namespace LuaGameObject
      *
      * @param [GOState] state : all available go states can be seen above
      */
-    int SetGoState(lua_State* L, GameObject* go)
+    void SetGoState(GameObject* go, sol::optional<uint32> stateArg)
     {
-        uint32 state = ALE::CHECKVAL<uint32>(L, 2, 0);
+        uint32 state = stateArg.value_or(0);
 
         if (state == 0)
             go->SetGoState(GO_STATE_ACTIVE);
@@ -182,8 +178,6 @@ namespace LuaGameObject
             go->SetGoState(GO_STATE_READY);
         else if (state == 2)
             go->SetGoState(GO_STATE_ACTIVE_ALTERNATIVE);
-
-        return 0;
     }
 
     /**
@@ -202,9 +196,9 @@ namespace LuaGameObject
      *
      * @param [LootState] state : all available loot states can be seen above
      */
-    int SetLootState(lua_State* L, GameObject* go)
+    void SetLootState(GameObject* go, sol::optional<uint32> stateArg)
     {
-        uint32 state = ALE::CHECKVAL<uint32>(L, 2, 0);
+        uint32 state = stateArg.value_or(0);
 
         if (state == 0)
             go->SetLootState(GO_NOT_READY);
@@ -214,8 +208,6 @@ namespace LuaGameObject
             go->SetLootState(GO_ACTIVATED);
         else if (state == 3)
             go->SetLootState(GO_JUST_DEACTIVATED);
-
-        return 0;
     }
 
     /**
@@ -226,53 +218,46 @@ namespace LuaGameObject
     * @param uint32 amount = 1 : amount of the [Item] to add to the loot
     * @return uint32 itemGUIDlow : low GUID of the [Item]
     */
-    int AddLoot(lua_State* L, GameObject* go)
+    sol::variadic_results AddLoot(GameObject* go, sol::variadic_args args, sol::this_state s)
     {
-        int i = 1;
-        int argAmount = lua_gettop(L);
+        sol::state_view lua(s);
+        sol::variadic_results results;
 
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
-        uint8 addedItems = 0;
-        while (i + 2 <= argAmount)
+        for (std::size_t i = 0; i + 1 < args.size(); i += 2)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, ++i);
-            uint32 amount = ALE::CHECKVAL<uint32>(L, ++i);
+            uint32 entry = args[i].as<uint32>();
+            uint32 amount = args[i + 1].as<uint32>();
 
-            ItemTemplate const* item_proto = eObjectMgr->GetItemTemplate(entry);
+            ItemTemplate const* item_proto = sObjectMgr->GetItemTemplate(entry);
             if (!item_proto)
-            {
-                luaL_error(L, "Item entry %d does not exist", entry);
-                continue;
-            }
+                throw std::runtime_error(Acore::StringFormat("Item entry {} does not exist", entry));
+
             if (amount < 1 || (item_proto->MaxCount > 0 && amount > uint32(item_proto->MaxCount)))
-            {
-                luaL_error(L, "Item entry %d has invalid amount %d", entry, amount);
-                continue;
-            }
+                throw std::runtime_error(Acore::StringFormat("Item entry {} has invalid amount {}", entry, amount));
+
             if (Item* item = Item::CreateItem(entry, amount))
             {
                 item->SaveToDB(trans);
                 LootStoreItem storeItem(item->GetEntry(), 0, 100, 0, LOOT_MODE_DEFAULT, 0, item->GetCount(), item->GetCount());
                 go->loot.AddItem(storeItem);
-                ALE::Push(L, item->GetGUID().GetCounter());
-                ++addedItems;
+                results.push_back(sol::make_object(lua, item->GetGUID().GetCounter()));
             }
         }
 
         CharacterDatabase.CommitTransaction(trans);
 
-        return addedItems;
+        return results;
     }
 
     /**
      * Saves [GameObject] to the database
      *
      */
-    int SaveToDB(lua_State* /*L*/, GameObject* go)
+    void SaveToDB(GameObject* go)
     {
         go->SaveToDB();
-        return 0;
     }
 
     /**
@@ -282,17 +267,17 @@ namespace LuaGameObject
      *
      * @param bool deleteFromDB : if true, it will delete the [GameObject] from the database
      */
-    int RemoveFromWorld(lua_State* L, GameObject* go)
+    void RemoveFromWorld(GameObject* go, sol::optional<bool> deleteFromDB)
     {
-        bool deldb = ALE::CHECKVAL<bool>(L, 2, false);
+        bool deldb = deleteFromDB.value_or(false);
 
         // cs_gobject.cpp copy paste
         ObjectGuid ownerGuid = go->GetOwnerGUID();
         if (ownerGuid)
         {
-            Unit* owner = eObjectAccessor()GetUnit(*go, ownerGuid);
+            Unit* owner = ObjectAccessor::GetUnit(*go, ownerGuid);
             if (!owner || !ownerGuid.IsPlayer())
-                return 0;
+                return;
 
             owner->RemoveGameObject(go, false);
         }
@@ -302,9 +287,6 @@ namespace LuaGameObject
 
         go->SetRespawnTime(0);
         go->Delete();
-
-        ALE::CHECKOBJ<ALEObject>(L, 1)->Invalidate();
-        return 0;
     }
 
     /**
@@ -312,12 +294,9 @@ namespace LuaGameObject
      *
      * @param uint32 delay = 0 : cooldown time in seconds to restore the [GameObject] back to normal. 0 for infinite duration
      */
-    int UseDoorOrButton(lua_State* L, GameObject* go)
+    void UseDoorOrButton(GameObject* go, sol::optional<uint32> delay)
     {
-        uint32 delay = ALE::CHECKVAL<uint32>(L, 2, 0);
-
-        go->UseDoorOrButton(delay);
-        return 0;
+        go->UseDoorOrButton(delay.value_or(0));
     }
 
     /**
@@ -325,19 +304,17 @@ namespace LuaGameObject
      *
      * The gameobject may be automatically respawned by the core
      */
-    int Despawn(lua_State* /*L*/, GameObject* go)
+    void Despawn(GameObject* go)
     {
         go->SetLootState(GO_JUST_DEACTIVATED);
-        return 0;
     }
 
     /**
      * Respawns a [GameObject]
      */
-    int Respawn(lua_State* /*L*/, GameObject* go)
+    void Respawn(GameObject* go)
     {
         go->Respawn();
-        return 0;
     }
 
     /**
@@ -347,12 +324,9 @@ namespace LuaGameObject
      *
      * @param int32 delay = 0 : cooldown time in seconds to respawn or despawn the object. 0 means never
      */
-    int SetRespawnTime(lua_State* L, GameObject* go)
+    void SetRespawnTime(GameObject* go, int32 respawn)
     {
-        int32 respawn = ALE::CHECKVAL<int32>(L, 2);
-
         go->SetRespawnTime(respawn);
-        return 0;
     }
 
     /**
@@ -362,12 +336,34 @@ namespace LuaGameObject
      *
      * @param int32 delay = 0 : cooldown time in seconds to respawn or despawn the object. 0 means never
      */
-    int SetRespawnDelay(lua_State* L, GameObject* go)
+    void SetRespawnDelay(GameObject* go, int32 respawn)
     {
-        int32 respawn = ALE::CHECKVAL<int32>(L, 2);
-
         go->SetRespawnDelay(respawn);
-        return 0;
     }
-};
-#endif
+}
+
+void RegisterGameObjectMethods(sol::state& lua)
+{
+    sol::usertype<GameObjectRef> type = ALEBind::NewHandleType<GameObjectRef, WorldObjectRef, ObjectRef>(lua, "GameObject");
+
+    type["HasQuest"]              = ALEBind::Method(&LuaGameObject::HasQuest);
+    type["IsSpawned"]             = ALEBind::Method(&LuaGameObject::IsSpawned);
+    type["IsTransport"]           = ALEBind::Method(&LuaGameObject::IsTransport);
+    type["IsActive"]              = ALEBind::Method(&LuaGameObject::IsActive);
+    type["GetDisplayId"]          = ALEBind::Method(&LuaGameObject::GetDisplayId);
+    type["GetGoState"]            = ALEBind::Method(&LuaGameObject::GetGoState);
+    type["GetLootState"]          = ALEBind::Method(&LuaGameObject::GetLootState);
+    type["GetLootRecipient"]      = ALEBind::Method(&LuaGameObject::GetLootRecipient);
+    type["GetLootRecipientGroup"] = ALEBind::Method(&LuaGameObject::GetLootRecipientGroup);
+    type["GetSpawnId"]            = ALEBind::Method(&LuaGameObject::GetSpawnId);
+    type["SetGoState"]            = ALEBind::Method(&LuaGameObject::SetGoState);
+    type["SetLootState"]          = ALEBind::Method(&LuaGameObject::SetLootState);
+    type["AddLoot"]               = ALEBind::Method(&LuaGameObject::AddLoot);
+    type["SaveToDB"]              = ALEBind::Method(&LuaGameObject::SaveToDB);
+    type["RemoveFromWorld"]       = ALEBind::Method(&LuaGameObject::RemoveFromWorld);
+    type["UseDoorOrButton"]       = ALEBind::Method(&LuaGameObject::UseDoorOrButton);
+    type["Despawn"]               = ALEBind::Method(&LuaGameObject::Despawn);
+    type["Respawn"]               = ALEBind::Method(&LuaGameObject::Respawn);
+    type["SetRespawnTime"]        = ALEBind::Method(&LuaGameObject::SetRespawnTime);
+    type["SetRespawnDelay"]       = ALEBind::Method(&LuaGameObject::SetRespawnDelay);
+}

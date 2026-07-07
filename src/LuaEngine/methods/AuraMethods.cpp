@@ -4,8 +4,10 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef AURAMETHODS_H
-#define AURAMETHODS_H
+#include "ALEBind.h"
+
+#include "SpellAuras.h"
+#include "Unit.h"
 
 /***
  * The persistent effect of a [Spell] that remains on a [Unit] after the [Spell]
@@ -26,10 +28,9 @@ namespace LuaAura
      *
      * @return [Unit] caster
      */
-    int GetCaster(lua_State* L, Aura* aura)
+    Unit* GetCaster(Aura* aura)
     {
-        ALE::Push(L, aura->GetCaster());
-        return 1;
+        return aura->GetCaster();
     }
 
     /**
@@ -37,10 +38,9 @@ namespace LuaAura
      *
      * @return string caster_guid : the GUID of the Unit as a decimal string
      */
-    int GetCasterGUID(lua_State* L, Aura* aura)
+    ObjectGuid GetCasterGUID(Aura* aura)
     {
-        ALE::Push(L, aura->GetCasterGUID());
-        return 1;
+        return aura->GetCasterGUID();
     }
 
     /**
@@ -48,10 +48,9 @@ namespace LuaAura
      *
      * @return uint32 caster_level
      */
-    int GetCasterLevel(lua_State* L, Aura* aura)
+    uint8 GetCasterLevel(Aura* aura)
     {
-        ALE::Push(L, aura->GetCaster()->GetLevel());
-        return 1;
+        return aura->GetCaster()->GetLevel();
     }
 
     /**
@@ -59,10 +58,9 @@ namespace LuaAura
      *
      * @return int32 duration : amount of time left in milliseconds
      */
-    int GetDuration(lua_State* L, Aura* aura)
+    int32 GetDuration(Aura* aura)
     {
-        ALE::Push(L, aura->GetDuration());
-        return 1;
+        return aura->GetDuration();
     }
 
     /**
@@ -70,10 +68,9 @@ namespace LuaAura
      *
      * @return uint32 aura_id
      */
-    int GetAuraId(lua_State* L, Aura* aura)
+    uint32 GetAuraId(Aura* aura)
     {
-        ALE::Push(L, aura->GetId());
-        return 1;
+        return aura->GetId();
     }
 
     /**
@@ -84,10 +81,9 @@ namespace LuaAura
      *
      * @return int32 max_duration : the maximum duration of the Aura, in milliseconds
      */
-    int GetMaxDuration(lua_State* L, Aura* aura)
+    int32 GetMaxDuration(Aura* aura)
     {
-        ALE::Push(L, aura->GetMaxDuration());
-        return 1;
+        return aura->GetMaxDuration();
     }
 
     /**
@@ -97,10 +93,9 @@ namespace LuaAura
      *
      * @return uint32 stack_amount
      */
-    int GetStackAmount(lua_State* L, Aura* aura)
+    uint8 GetStackAmount(Aura* aura)
     {
-        ALE::Push(L, aura->GetStackAmount());
-        return 1;
+        return aura->GetStackAmount();
     }
 
     /**
@@ -108,10 +103,9 @@ namespace LuaAura
      *
      * @return [Unit] owner
      */
-    int GetOwner(lua_State* L, Aura* aura)
+    WorldObject* GetOwner(Aura* aura)
     {
-        ALE::Push(L, aura->GetOwner());
-        return 1;
+        return aura->GetOwner();
     }
 
     /**
@@ -119,11 +113,9 @@ namespace LuaAura
      *
      * @param int32 duration : the new duration of the Aura, in milliseconds
      */
-    int SetDuration(lua_State* L, Aura* aura)
+    void SetDuration(Aura* aura, int32 duration)
     {
-        int32 duration = ALE::CHECKVAL<int32>(L, 2);
         aura->SetDuration(duration);
-        return 0;
     }
 
     /**
@@ -134,11 +126,9 @@ namespace LuaAura
      *
      * @param int32 duration : the new maximum duration of the Aura, in milliseconds
      */
-    int SetMaxDuration(lua_State* L, Aura* aura)
+    void SetMaxDuration(Aura* aura, int32 duration)
     {
-        int32 duration = ALE::CHECKVAL<int32>(L, 2);
         aura->SetMaxDuration(duration);
-        return 0;
     }
 
     /**
@@ -149,21 +139,34 @@ namespace LuaAura
      *
      * @param uint32 amount
      */
-    int SetStackAmount(lua_State* L, Aura* aura)
+    void SetStackAmount(Aura* aura, uint8 amount)
     {
-        uint8 amount = ALE::CHECKVAL<uint8>(L, 2);
         aura->SetStackAmount(amount);
-        return 0;
     }
 
     /**
      * Remove this [Aura] from the [Unit] it is applied to.
      */
-    int Remove(lua_State* L, Aura* aura)
+    void Remove(Aura* aura)
     {
         aura->Remove();
-        ALE::CHECKOBJ<ALEObject>(L, 1)->Invalidate();
-        return 0;
     }
-};
-#endif
+}
+
+void RegisterAuraMethods(sol::state& lua)
+{
+    sol::usertype<ScopedRef<Aura>> type = ALEBind::NewHandleType<ScopedRef<Aura>>(lua, "Aura");
+
+    type["GetCaster"]      = ALEBind::Method(&LuaAura::GetCaster);
+    type["GetCasterGUID"]  = ALEBind::Method(&LuaAura::GetCasterGUID);
+    type["GetCasterLevel"] = ALEBind::Method(&LuaAura::GetCasterLevel);
+    type["GetDuration"]    = ALEBind::Method(&LuaAura::GetDuration);
+    type["GetAuraId"]      = ALEBind::Method(&LuaAura::GetAuraId);
+    type["GetMaxDuration"] = ALEBind::Method(&LuaAura::GetMaxDuration);
+    type["GetStackAmount"] = ALEBind::Method(&LuaAura::GetStackAmount);
+    type["GetOwner"]       = ALEBind::Method(&LuaAura::GetOwner);
+    type["SetDuration"]    = ALEBind::Method(&LuaAura::SetDuration);
+    type["SetMaxDuration"] = ALEBind::Method(&LuaAura::SetMaxDuration);
+    type["SetStackAmount"] = ALEBind::Method(&LuaAura::SetStackAmount);
+    type["Remove"]         = ALEBind::Method(&LuaAura::Remove);
+}

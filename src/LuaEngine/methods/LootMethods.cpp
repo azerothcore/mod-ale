@@ -4,12 +4,14 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef LOOTMETHODS_H
-#define LOOTMETHODS_H
+#include "ALEBind.h"
+
+#include "LootMgr.h"
+#include "Player.h"
 
 /***
  * Represents loot that can be obtained from various sources like creatures, gameobjects, or items.
- * 
+ *
  * Contains information about items that can be looted, their quantities, money, and loot state.
  *
  * Inherits all methods from: none
@@ -21,10 +23,9 @@ namespace LuaLoot
      *
      * @return bool isLooted
      */
-    int IsLooted(lua_State* L, Loot* loot)
+    bool IsLooted(Loot* loot)
     {
-        ALE::Push(L, loot->isLooted());
-        return 1;
+        return loot->isLooted();
     }
 
     /**
@@ -40,15 +41,10 @@ namespace LuaLoot
      * @param bool needsQuest = false : if `true`, the item requires a quest to be looted
      * @param bool allowStacking = true : if `true`, allow items to stack in the loot window
      */
-    int AddItem(lua_State* L, Loot* loot)
+    void AddItem(Loot* loot, uint32 itemid, uint8 min_count, uint8 max_count, float chance, uint16 loot_mode, sol::optional<bool> needsQuest, sol::optional<bool> allowStacking)
     {
-        uint32 itemid = ALE::CHECKVAL<uint32>(L, 2);
-        uint8 min_count = ALE::CHECKVAL<uint8>(L, 3);
-        uint8 max_count = ALE::CHECKVAL<uint8>(L, 4);
-        float chance = ALE::CHECKVAL<float>(L, 5);
-        uint16 loot_mode = ALE::CHECKVAL<uint16>(L, 6);
-        bool needs_quest = ALE::CHECKVAL<bool>(L, 7, false);
-        bool allow_stacking = ALE::CHECKVAL<bool>(L, 8, true);
+        bool needs_quest = needsQuest.value_or(false);
+        bool allow_stacking = allowStacking.value_or(true);
 
         if (allow_stacking)
         {
@@ -61,15 +57,13 @@ namespace LuaLoot
                     uint32 add = std::max<uint32>(1u, min_count);
                     uint32 newCount = std::min<uint32>(255u, lootitem.count + add);
                     lootitem.count = static_cast<uint8>(newCount);
-                    return 0;
+                    return;
                 }
             }
         }
 
         LootStoreItem newLootStoreItem(itemid, 0, chance, needs_quest, loot_mode, 0, min_count, max_count);
         loot->AddItem(newLootStoreItem);
-
-        return 0;
     }
 
     /**
@@ -79,15 +73,15 @@ namespace LuaLoot
      * @param uint32 count = 0 : specific count to check for. If 0, ignores count
      * @return bool hasItem
      */
-    int HasItem(lua_State* L, Loot* loot)
+    bool HasItem(Loot* loot, sol::optional<uint32> itemId, sol::optional<uint32> countArg)
     {
-        uint32 itemid = ALE::CHECKVAL<uint32>(L, 2, false);
-        uint32 count = ALE::CHECKVAL<uint32>(L, 3, false);
+        uint32 itemid = itemId.value_or(0);
+        uint32 count = countArg.value_or(0);
         bool has_item = false;
 
         if (itemid)
         {
-            for (const LootItem &lootitem : loot->items)
+            for (LootItem const& lootitem : loot->items)
             {
                 if (lootitem.itemid == itemid && (count == 0 || lootitem.count == count))
                 {
@@ -98,7 +92,7 @@ namespace LuaLoot
         }
         else
         {
-            for (const LootItem &lootitem : loot->items)
+            for (LootItem const& lootitem : loot->items)
             {
                 if (lootitem.itemid != 0)
                 {
@@ -108,8 +102,41 @@ namespace LuaLoot
             }
         }
 
-        ALE::Push(L, has_item);
-        return 1;
+        return has_item;
+    }
+
+    // Helper for RemoveItem: erases (or decrements) matching items in one loot container.
+    void RemoveItemFromContainer(std::vector<LootItem>& container, uint32 itemid, bool isCountSpecified, uint32& remaining)
+    {
+        for (auto it = container.begin(); it != container.end(); )
+        {
+            if (it->itemid == itemid)
+            {
+                if (isCountSpecified)
+                {
+                    if (it->count > remaining)
+                    {
+                        it->count -= static_cast<uint8>(remaining);
+                        remaining = 0;
+                        break;
+                    }
+                    else
+                    {
+                        remaining -= it->count;
+                        it = container.erase(it);
+                        if (remaining == 0)
+                            break;
+                        continue;
+                    }
+                }
+                else
+                {
+                    it = container.erase(it);
+                    continue;
+                }
+            }
+            ++it;
+        }
     }
 
     /**
@@ -121,53 +148,24 @@ namespace LuaLoot
      * @param bool isCountSpecified = false : if `true`, only removes the specified count
      * @param uint32 count = 0 : amount to remove when isCountSpecified is true
      */
-    int RemoveItem(lua_State* L, Loot* loot)
+    void RemoveItem(Loot* loot, uint32 itemid, sol::optional<bool> isCountSpecifiedArg, sol::optional<uint32> countArg)
     {
-        uint32 itemid = ALE::CHECKVAL<uint32>(L, 2);
-        bool isCountSpecified = ALE::CHECKVAL<bool>(L, 3, false);
-        uint32 count = isCountSpecified ? ALE::CHECKVAL<uint32>(L, 4) : 0;
-
-        auto removeFromContainer = [&](auto& container, uint32& remaining)
+        bool isCountSpecified = isCountSpecifiedArg.value_or(false);
+        uint32 count = 0;
+        if (isCountSpecified)
         {
-            for (auto it = container.begin(); it != container.end(); )
-            {
-                if (it->itemid == itemid)
-                {
-                    if (isCountSpecified)
-                    {
-                        if (it->count > remaining)
-                        {
-                            it->count -= static_cast<uint8>(remaining);
-                            remaining = 0;
-                            break;
-                        }
-                        else
-                        {
-                            remaining -= it->count;
-                            it = container.erase(it);
-                            if (remaining == 0)
-                                break;
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        it = container.erase(it);
-                        continue;
-                    }
-                }
-                ++it;
-            }
-        };
+            if (!countArg)
+                throw std::invalid_argument("count expected when isCountSpecified is true");
+
+            count = *countArg;
+        }
 
         // Remove from regular items
-        removeFromContainer(loot->items, count);
+        RemoveItemFromContainer(loot->items, itemid, isCountSpecified, count);
 
         // Remove from quest items as well
         if (!isCountSpecified || count > 0)
-            removeFromContainer(loot->quest_items, count);
-
-        return 0;
+            RemoveItemFromContainer(loot->quest_items, itemid, isCountSpecified, count);
     }
 
     /**
@@ -175,10 +173,9 @@ namespace LuaLoot
      *
      * @return uint32 money : the amount of money in copper
      */
-    int GetMoney(lua_State* L, Loot* loot)
+    uint32 GetMoney(Loot* loot)
     {
-        ALE::Push(L, loot->gold);
-        return 1;
+        return loot->gold;
     }
 
     /**
@@ -186,12 +183,9 @@ namespace LuaLoot
      *
      * @param uint32 money : the amount of money to set in copper
      */
-    int SetMoney(lua_State* L, Loot* loot)
+    void SetMoney(Loot* loot, uint32 gold)
     {
-        uint32 gold = ALE::CHECKVAL<uint32>(L, 2);
-
         loot->gold = gold;
-        return 0;
     }
 
     /**
@@ -200,22 +194,17 @@ namespace LuaLoot
      * @param uint32 minGold : minimum amount of money in copper
      * @param uint32 maxGold : maximum amount of money in copper
      */
-    int GenerateMoney(lua_State* L, Loot* loot)
+    void GenerateMoney(Loot* loot, uint32 min_gold, uint32 max_gold)
     {
-        uint32 min_gold = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 max_gold = ALE::CHECKVAL<uint32>(L, 3);
-
         loot->generateMoneyLoot(min_gold, max_gold);
-        return 0;
     }
 
     /**
      * Clears all items and money from this [Loot].
      */
-    int Clear(lua_State* /*L*/, Loot* loot)
+    void Clear(Loot* loot)
     {
         loot->clear();
-        return 0;
     }
 
     /**
@@ -223,12 +212,9 @@ namespace LuaLoot
      *
      * @param uint32 count : the number of unlooted items
      */
-    int SetUnlootedCount(lua_State* L, Loot* loot)
+    void SetUnlootedCount(Loot* loot, uint32 count)
     {
-        uint32 count = ALE::CHECKVAL<uint32>(L, 2);
-
         loot->unlootedCount = count;
-        return 0;
     }
 
     /**
@@ -236,10 +222,9 @@ namespace LuaLoot
      *
      * @return uint32 unlootedCount
      */
-    int GetUnlootedCount(lua_State* L, Loot* loot)
+    uint32 GetUnlootedCount(Loot* loot)
     {
-        ALE::Push(L, loot->unlootedCount);
-        return 1;
+        return loot->unlootedCount;
     }
 
     /**
@@ -255,38 +240,26 @@ namespace LuaLoot
      *
      * @return table items : array of item tables
      */
-    int GetItems(lua_State* L, Loot* loot)
+    sol::table GetItems(Loot* loot, sol::this_state s)
     {
-        lua_createtable(L, loot->items.size(), 0);
-        int tbl = lua_gettop(L);
+        sol::state_view lua(s);
+        sol::table tbl = lua.create_table();
 
         for (unsigned int i = 0; i < loot->items.size(); i++)
         {
-            lua_newtable(L);
+            sol::table item = lua.create_table();
 
-            ALE::Push(L, loot->items[i].itemid);
-            lua_setfield(L, -2, "id");
+            item["id"] = loot->items[i].itemid;
+            item["index"] = loot->items[i].itemIndex;
+            item["count"] = static_cast<uint8>(loot->items[i].count);
+            item["needs_quest"] = static_cast<bool>(loot->items[i].needs_quest);
+            item["is_looted"] = static_cast<bool>(loot->items[i].is_looted);
+            item["roll_winner_guid"] = loot->items[i].rollWinnerGUID;
 
-            ALE::Push(L, loot->items[i].itemIndex);
-            lua_setfield(L, -2, "index");
-
-            ALE::Push(L, loot->items[i].count);
-            lua_setfield(L, -2, "count");
-
-            ALE::Push(L, loot->items[i].needs_quest);
-            lua_setfield(L, -2, "needs_quest");
-
-            ALE::Push(L, loot->items[i].is_looted);
-            lua_setfield(L, -2, "is_looted");
-
-            ALE::Push(L, loot->items[i].rollWinnerGUID);
-            lua_setfield(L, -2, "roll_winner_guid");
-
-            lua_rawseti(L, tbl, i + 1);
+            tbl[i + 1] = item;
         }
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
     /**
@@ -302,38 +275,26 @@ namespace LuaLoot
      *
      * @return table quest_items : array of quest item tables
      */
-    int GetQuestItems(lua_State* L, Loot* loot)
+    sol::table GetQuestItems(Loot* loot, sol::this_state s)
     {
-        lua_createtable(L, loot->quest_items.size(), 0);
-        int tbl = lua_gettop(L);
+        sol::state_view lua(s);
+        sol::table tbl = lua.create_table();
 
         for (unsigned int i = 0; i < loot->quest_items.size(); i++)
         {
-            lua_newtable(L);
+            sol::table item = lua.create_table();
 
-            ALE::Push(L, loot->quest_items[i].itemid);
-            lua_setfield(L, -2, "id");
+            item["id"] = loot->quest_items[i].itemid;
+            item["index"] = loot->quest_items[i].itemIndex;
+            item["count"] = static_cast<uint8>(loot->quest_items[i].count);
+            item["needs_quest"] = static_cast<bool>(loot->quest_items[i].needs_quest);
+            item["is_looted"] = static_cast<bool>(loot->quest_items[i].is_looted);
+            item["roll_winner_guid"] = loot->quest_items[i].rollWinnerGUID;
 
-            ALE::Push(L, loot->quest_items[i].itemIndex);
-            lua_setfield(L, -2, "index");
-
-            ALE::Push(L, loot->quest_items[i].count);
-            lua_setfield(L, -2, "count");
-
-            ALE::Push(L, loot->quest_items[i].needs_quest);
-            lua_setfield(L, -2, "needs_quest");
-
-            ALE::Push(L, loot->quest_items[i].is_looted);
-            lua_setfield(L, -2, "is_looted");
-
-            ALE::Push(L, loot->quest_items[i].rollWinnerGUID);
-            lua_setfield(L, -2, "roll_winner_guid");
-
-            lua_rawseti(L, tbl, i + 1);
+            tbl[i + 1] = item;
         }
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
     /**
@@ -341,7 +302,7 @@ namespace LuaLoot
      *
      * This should be called after removing items to ensure indices are sequential.
      */
-    int UpdateItemIndex(lua_State* /*L*/, Loot* loot)
+    void UpdateItemIndex(Loot* loot)
     {
         uint32 index = 0;
 
@@ -350,8 +311,6 @@ namespace LuaLoot
 
         for (unsigned int i = 0; i < loot->quest_items.size(); ++i)
             loot->quest_items[i].itemIndex = index++;
-
-        return 0;
     }
 
     /**
@@ -361,13 +320,11 @@ namespace LuaLoot
      * @param uint32 count : specific count to match. If 0, ignores count
      * @param bool looted = true : `true` to mark as looted, `false` to mark as unlooted
      */
-    int SetItemLooted(lua_State* L, Loot* loot)
+    void SetItemLooted(Loot* loot, uint32 itemid, uint32 count, sol::optional<bool> lootedArg)
     {
-        uint32 itemid = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 count = ALE::CHECKVAL<uint32>(L, 3);
-        bool looted = ALE::CHECKVAL<bool>(L, 4, true);
+        bool looted = lootedArg.value_or(true);
 
-        for (auto &lootItem : loot->items)
+        for (auto& lootItem : loot->items)
         {
             if (lootItem.itemid == itemid && (count == 0 || lootItem.count == count))
             {
@@ -375,7 +332,6 @@ namespace LuaLoot
                 break;
             }
         }
-        return 0;
     }
 
     /**
@@ -383,10 +339,9 @@ namespace LuaLoot
      *
      * @return bool isEmpty
      */
-    int IsEmpty(lua_State* L, Loot* loot)
+    bool IsEmpty(Loot* loot)
     {
-        ALE::Push(L, loot->empty());
-        return 1;
+        return loot->empty();
     }
 
     /**
@@ -394,10 +349,9 @@ namespace LuaLoot
      *
      * @return [LootType] lootType
      */
-    int GetLootType(lua_State* L, Loot* loot)
+    LootType GetLootType(Loot* loot)
     {
-        ALE::Push(L, loot->loot_type);
-        return 1;
+        return loot->loot_type;
     }
 
     /**
@@ -422,11 +376,9 @@ namespace LuaLoot
      *
      * @param [LootType] lootType : the loot type to set
      */
-    int SetLootType(lua_State* L, Loot* loot)
+    void SetLootType(Loot* loot, uint32 lootType)
     {
-        uint32 lootType = ALE::CHECKVAL<uint32>(L, 2);
         loot->loot_type = static_cast<LootType>(lootType);
-        return 0;
     }
 
     /**
@@ -434,10 +386,9 @@ namespace LuaLoot
      *
      * @return ObjectGuid roundRobinPlayer : the player GUID
      */
-    int GetRoundRobinPlayer(lua_State* L, Loot* loot)
+    ObjectGuid GetRoundRobinPlayer(Loot* loot)
     {
-        ALE::Push(L, loot->roundRobinPlayer);
-        return 1;
+        return loot->roundRobinPlayer;
     }
 
     /**
@@ -445,11 +396,9 @@ namespace LuaLoot
      *
      * @param ObjectGuid playerGUID : the player GUID
      */
-    int SetRoundRobinPlayer(lua_State* L, Loot* loot)
+    void SetRoundRobinPlayer(Loot* loot, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
         loot->roundRobinPlayer = guid;
-        return 0;
     }
 
     /**
@@ -457,10 +406,9 @@ namespace LuaLoot
      *
      * @return ObjectGuid lootOwner : the player GUID
      */
-    int GetLootOwner(lua_State* L, Loot* loot)
+    ObjectGuid GetLootOwner(Loot* loot)
     {
-        ALE::Push(L, loot->lootOwnerGUID);
-        return 1;
+        return loot->lootOwnerGUID;
     }
 
     /**
@@ -468,11 +416,9 @@ namespace LuaLoot
      *
      * @param ObjectGuid playerGUID : the player GUID
      */
-    int SetLootOwner(lua_State* L, Loot* loot)
+    void SetLootOwner(Loot* loot, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
         loot->lootOwnerGUID = guid;
-        return 0;
     }
 
     /**
@@ -480,10 +426,9 @@ namespace LuaLoot
      *
      * @return ObjectGuid containerGUID : the container GUID
      */
-    int GetContainer(lua_State* L, Loot* loot)
+    ObjectGuid GetContainer(Loot* loot)
     {
-        ALE::Push(L, loot->containerGUID);
-        return 1;
+        return loot->containerGUID;
     }
 
     /**
@@ -491,11 +436,9 @@ namespace LuaLoot
      *
      * @param ObjectGuid containerGUID : the container GUID
      */
-    int SetContainer(lua_State* L, Loot* loot)
+    void SetContainer(Loot* loot, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
         loot->containerGUID = guid;
-        return 0;
     }
 
     /**
@@ -503,10 +446,9 @@ namespace LuaLoot
      *
      * @return ObjectGuid sourceGUID : the source [WorldObject] GUID
      */
-    int GetSourceWorldObject(lua_State* L, Loot* loot)
+    ObjectGuid GetSourceWorldObject(Loot* loot)
     {
-        ALE::Push(L, loot->sourceWorldObjectGUID);
-        return 1;
+        return loot->sourceWorldObjectGUID;
     }
 
     /**
@@ -514,11 +456,9 @@ namespace LuaLoot
      *
      * @param ObjectGuid sourceGUID : the source [WorldObject] GUID
      */
-    int SetSourceWorldObject(lua_State* L, Loot* loot)
+    void SetSourceWorldObject(Loot* loot, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
         loot->sourceWorldObjectGUID = guid;
-        return 0;
     }
 
     /**
@@ -526,10 +466,9 @@ namespace LuaLoot
      *
      * @return bool hasQuestItems
      */
-    int HasQuestItems(lua_State* L, Loot* loot)
+    bool HasQuestItems(Loot* loot)
     {
-        ALE::Push(L, !loot->quest_items.empty());
-        return 1;
+        return !loot->quest_items.empty();
     }
 
     /**
@@ -537,10 +476,9 @@ namespace LuaLoot
      *
      * @return bool hasItemForAll
      */
-    int HasItemForAll(lua_State* L, Loot* loot)
+    bool HasItemForAll(Loot* loot)
     {
-        ALE::Push(L, loot->hasItemForAll());
-        return 1;
+        return loot->hasItemForAll();
     }
 
     /**
@@ -548,10 +486,9 @@ namespace LuaLoot
      *
      * @return bool hasOverThresholdItem
      */
-    int HasOverThresholdItem(lua_State* L, Loot* loot)
+    bool HasOverThresholdItem(Loot* loot)
     {
-        ALE::Push(L, loot->hasOverThresholdItem());
-        return 1;
+        return loot->hasOverThresholdItem();
     }
 
     /**
@@ -559,10 +496,9 @@ namespace LuaLoot
      *
      * @return uint32 itemCount
      */
-    int GetItemCount(lua_State* L, Loot* loot)
+    uint32 GetItemCount(Loot* loot)
     {
-        ALE::Push(L, static_cast<uint32>(loot->items.size() + loot->quest_items.size()));
-        return 1;
+        return static_cast<uint32>(loot->items.size() + loot->quest_items.size());
     }
 
     /**
@@ -571,11 +507,9 @@ namespace LuaLoot
      * @param [Player] player : the player to check slots for
      * @return uint32 maxSlot
      */
-    int GetMaxSlotForPlayer(lua_State* L, Loot* loot)
+    uint32 GetMaxSlotForPlayer(Loot* loot, Player* player)
     {
-        Player* player = ALE::CHECKOBJ<Player>(L, 2);
-        ALE::Push(L, loot->GetMaxSlotInLootFor(player));
-        return 1;
+        return loot->GetMaxSlotInLootFor(player);
     }
 
     /**
@@ -583,11 +517,9 @@ namespace LuaLoot
      *
      * @param [Player] player : the player to add as a looter
      */
-    int AddLooter(lua_State* L, Loot* loot)
+    void AddLooter(Loot* loot, Player* player)
     {
-        Player* player = ALE::CHECKOBJ<Player>(L, 2);
         loot->AddLooter(player->GetGUID());
-        return 0;
     }
 
     /**
@@ -595,11 +527,46 @@ namespace LuaLoot
      *
      * @param [Player] player : the player to remove from looters
      */
-    int RemoveLooter(lua_State* L, Loot* loot)
+    void RemoveLooter(Loot* loot, Player* player)
     {
-        Player* player = ALE::CHECKOBJ<Player>(L, 2);
         loot->RemoveLooter(player->GetGUID());
-        return 0;
     }
-};
-#endif // LOOTMETHODS_H
+}
+
+void RegisterLootMethods(sol::state& lua)
+{
+    sol::usertype<ScopedRef<Loot>> type = ALEBind::NewHandleType<ScopedRef<Loot>>(lua, "Loot");
+
+    type["IsLooted"]             = ALEBind::Method(&LuaLoot::IsLooted);
+    type["AddItem"]              = ALEBind::Method(&LuaLoot::AddItem);
+    type["HasItem"]              = ALEBind::Method(&LuaLoot::HasItem);
+    type["RemoveItem"]           = ALEBind::Method(&LuaLoot::RemoveItem);
+    type["GetMoney"]             = ALEBind::Method(&LuaLoot::GetMoney);
+    type["SetMoney"]             = ALEBind::Method(&LuaLoot::SetMoney);
+    type["GenerateMoney"]        = ALEBind::Method(&LuaLoot::GenerateMoney);
+    type["Clear"]                = ALEBind::Method(&LuaLoot::Clear);
+    type["SetUnlootedCount"]     = ALEBind::Method(&LuaLoot::SetUnlootedCount);
+    type["GetUnlootedCount"]     = ALEBind::Method(&LuaLoot::GetUnlootedCount);
+    type["GetItems"]             = ALEBind::Method(&LuaLoot::GetItems);
+    type["GetQuestItems"]        = ALEBind::Method(&LuaLoot::GetQuestItems);
+    type["UpdateItemIndex"]      = ALEBind::Method(&LuaLoot::UpdateItemIndex);
+    type["SetItemLooted"]        = ALEBind::Method(&LuaLoot::SetItemLooted);
+    type["IsEmpty"]              = ALEBind::Method(&LuaLoot::IsEmpty);
+    type["GetLootType"]          = ALEBind::Method(&LuaLoot::GetLootType);
+    type["SetLootType"]          = ALEBind::Method(&LuaLoot::SetLootType);
+    type["GetRoundRobinPlayer"]  = ALEBind::Method(&LuaLoot::GetRoundRobinPlayer);
+    type["SetRoundRobinPlayer"]  = ALEBind::Method(&LuaLoot::SetRoundRobinPlayer);
+    type["GetLootOwner"]         = ALEBind::Method(&LuaLoot::GetLootOwner);
+    type["SetLootOwner"]         = ALEBind::Method(&LuaLoot::SetLootOwner);
+    type["GetContainer"]         = ALEBind::Method(&LuaLoot::GetContainer);
+    type["SetContainer"]         = ALEBind::Method(&LuaLoot::SetContainer);
+    type["GetSourceWorldObject"] = ALEBind::Method(&LuaLoot::GetSourceWorldObject);
+    type["SetSourceWorldObject"] = ALEBind::Method(&LuaLoot::SetSourceWorldObject);
+    type["HasQuestItems"]        = ALEBind::Method(&LuaLoot::HasQuestItems);
+    type["HasItemForAll"]        = ALEBind::Method(&LuaLoot::HasItemForAll);
+    type["HasOverThresholdItem"] = ALEBind::Method(&LuaLoot::HasOverThresholdItem);
+    type["GetItemCount"]         = ALEBind::Method(&LuaLoot::GetItemCount);
+    type["GetMaxSlotForPlayer"]  = ALEBind::Method(&LuaLoot::GetMaxSlotForPlayer);
+    type["AddLooter"]            = ALEBind::Method(&LuaLoot::AddLooter);
+    type["RemoveLooter"]         = ALEBind::Method(&LuaLoot::RemoveLooter);
+}

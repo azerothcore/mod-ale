@@ -4,8 +4,11 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef GROUPMETHODS_H
-#define GROUPMETHODS_H
+#include "ALEBind.h"
+
+#include "Group.h"
+#include "Player.h"
+#include "WorldPacket.h"
 
 /***
  * Represents a player group in the game, such as a party or raid.
@@ -20,11 +23,9 @@ namespace LuaGroup
      * @param ObjectGuid guid : guid of a possible leader
      * @return bool isLeader
      */
-    int IsLeader(lua_State* L, Group* group)
+    bool IsLeader(Group* group, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-        ALE::Push(L, group->IsLeader(guid));
-        return 1;
+        return group->IsLeader(guid);
     }
 
     /**
@@ -32,10 +33,9 @@ namespace LuaGroup
      *
      * @return bool isFull
      */
-    int IsFull(lua_State* L, Group* group)
+    bool IsFull(Group* group)
     {
-        ALE::Push(L, group->IsFull());
-        return 1;
+        return group->IsFull();
     }
 
     /**
@@ -43,10 +43,9 @@ namespace LuaGroup
      *
      * @return bool isLFGGroup
      */
-    int IsLFGGroup(lua_State* L, Group* group)
+    bool IsLFGGroup(Group* group)
     {
-        ALE::Push(L, group->isLFGGroup());
-        return 1;
+        return group->isLFGGroup();
     }
 
     /**
@@ -54,10 +53,9 @@ namespace LuaGroup
      *
      * @return bool isRaid
      */
-    int IsRaidGroup(lua_State* L, Group* group)
+    bool IsRaidGroup(Group* group)
     {
-        ALE::Push(L, group->isRaidGroup());
-        return 1;
+        return group->isRaidGroup();
     }
 
     /**
@@ -65,10 +63,9 @@ namespace LuaGroup
      *
      * @return bool isBG
      */
-    int IsBGGroup(lua_State* L, Group* group)
+    bool IsBGGroup(Group* group)
     {
-        ALE::Push(L, group->isBGGroup());
-        return 1;
+        return group->isBGGroup();
     }
 
     /**
@@ -77,11 +74,9 @@ namespace LuaGroup
      * @param ObjectGuid guid : guid of a player
      * @return bool isMember
      */
-    int IsMember(lua_State* L, Group* group)
+    bool IsMember(Group* group, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-        ALE::Push(L, group->IsMember(guid));
-        return 1;
+        return group->IsMember(guid);
     }
 
     /**
@@ -90,11 +85,9 @@ namespace LuaGroup
      * @param ObjectGuid guid : guid of a player
      * @return bool isAssistant
      */
-    int IsAssistant(lua_State* L, Group* group)
+    bool IsAssistant(Group* group, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-        ALE::Push(L, group->IsAssistant(guid));
-        return 1;
+        return group->IsAssistant(guid);
     }
 
     /**
@@ -104,12 +97,9 @@ namespace LuaGroup
      * @param [Player] player2 : second [Player] to check
      * @return bool sameSubGroup
      */
-    int SameSubGroup(lua_State* L, Group* group)
+    bool SameSubGroup(Group* group, Player* player1, Player* player2)
     {
-        Player* player1 = ALE::CHECKOBJ<Player>(L, 2);
-        Player* player2 = ALE::CHECKOBJ<Player>(L, 3);
-        ALE::Push(L, group->SameSubGroup(player1, player2));
-        return 1;
+        return group->SameSubGroup(player1, player2);
     }
 
     /**
@@ -118,18 +108,12 @@ namespace LuaGroup
      * @param uint8 subGroup : subGroup ID to check
      * @return bool hasFreeSlot
      */
-    int HasFreeSlotSubGroup(lua_State* L, Group* group)
+    bool HasFreeSlotSubGroup(Group* group, uint8 subGroup)
     {
-        uint8 subGroup = ALE::CHECKVAL<uint8>(L, 2);
-
         if (subGroup >= MAX_RAID_SUBGROUPS)
-        {
-            luaL_argerror(L, 2, "valid subGroup ID expected");
-            return 0;
-        }
+            throw std::invalid_argument("valid subGroup ID expected");
 
-        ALE::Push(L, group->HasFreeSlotSubGroup(subGroup));
-        return 1;
+        return group->HasFreeSlotSubGroup(subGroup);
     }
 
     /**
@@ -138,15 +122,10 @@ namespace LuaGroup
      * @param [Player] player : [Player] to add to the group
      * @return bool added : true if member was added
      */
-    int AddMember(lua_State* L, Group* group)
+    bool AddMember(Group* group, Player* player)
     {
-        Player* player = ALE::CHECKOBJ<Player>(L, 2);
-
         if (player->GetGroup() || !group->IsCreated() || group->IsFull())
-        {
-            ALE::Push(L, false);
-            return 1;
-        }
+            return false;
 
         if (player->GetGroupInvite())
             player->UninviteFromGroup();
@@ -155,20 +134,17 @@ namespace LuaGroup
         if (success)
             group->BroadcastGroupUpdate();
 
-        ALE::Push(L, success);
-        return 1;
+        return success;
     }
 
-    /*int IsLFGGroup(lua_State* L, Group* group) // TODO: Implementation
+    /*bool IsLFGGroup(Group* group) // TODO: Implementation
     {
-        ALE::Push(L, group->isLFGGroup());
-        return 1;
+        return group->isLFGGroup();
     }*/
 
-    /*int IsBFGroup(lua_State* L, Group* group) // TODO: Implementation
+    /*bool IsBFGroup(Group* group) // TODO: Implementation
     {
-        ALE::Push(L, group->isBFGroup());
-        return 1;
+        return group->isBFGroup();
     }*/
 
     /**
@@ -176,10 +152,9 @@ namespace LuaGroup
      *
      * @return table groupPlayers : table of [Player]s
      */
-    int GetMembers(lua_State* L, Group* group)
+    sol::table GetMembers(Group* group, sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (GroupReference* itr = group->GetFirstMember(); itr; itr = itr->next())
@@ -189,12 +164,10 @@ namespace LuaGroup
             if (!member || !member->GetSession())
                 continue;
 
-            ALE::Push(L, member);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = PlayerRef(member);
         }
 
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+        return tbl;
     }
 
     /**
@@ -202,10 +175,9 @@ namespace LuaGroup
      *
      * @return ObjectGuid leaderGUID
      */
-    int GetLeaderGUID(lua_State* L, Group* group)
+    ObjectGuid GetLeaderGUID(Group* group)
     {
-        ALE::Push(L, group->GetLeaderGUID());
-        return 1;
+        return group->GetLeaderGUID();
     }
 
     /**
@@ -213,10 +185,9 @@ namespace LuaGroup
      *
      * @return ObjectGuid groupGUID
      */
-    int GetGUID(lua_State* L, Group* group)
+    ObjectGuid GetGUID(Group* group)
     {
-        ALE::Push(L, group->GET_GUID());
-        return 1;
+        return group->GetGUID();
     }
 
     /**
@@ -225,12 +196,9 @@ namespace LuaGroup
      * @param string name : the [Player]'s name
      * @return ObjectGuid memberGUID
      */
-    int GetMemberGUID(lua_State* L, Group* group)
+    ObjectGuid GetMemberGUID(Group* group, std::string const& name)
     {
-        const char* name = ALE::CHECKVAL<const char*>(L, 2);
-
-        ALE::Push(L, group->GetMemberGUID(name));
-        return 1;
+        return group->GetMemberGUID(name);
     }
 
     /**
@@ -238,10 +206,9 @@ namespace LuaGroup
      *
      * @return uint32 memberCount
      */
-    int GetMembersCount(lua_State* L, Group* group)
+    uint32 GetMembersCount(Group* group)
     {
-        ALE::Push(L, group->GetMembersCount());
-        return 1;
+        return group->GetMembersCount();
     }
 
     /**
@@ -260,10 +227,9 @@ namespace LuaGroup
      *
      * @return [GroupType] groupType
      */
-    int GetGroupType(lua_State* L, Group* group)
+    GroupType GetGroupType(Group* group)
     {
-        ALE::Push(L, group->GetGroupType());
-        return 1;
+        return group->GetGroupType();
     }
 
     /**
@@ -272,11 +238,9 @@ namespace LuaGroup
      * @param ObjectGuid guid : guid of the player
      * @return uint8 subGroupID : a valid subgroup ID or MAX_RAID_SUBGROUPS+1
      */
-    int GetMemberGroup(lua_State* L, Group* group)
+    uint8 GetMemberGroup(Group* group, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-        ALE::Push(L, group->GetMemberGroup(guid));
-        return 1;
+        return group->GetMemberGroup(guid);
     }
 
     /**
@@ -284,12 +248,10 @@ namespace LuaGroup
      *
      * @param ObjectGuid guid : guid of the new leader
      */
-    int SetLeader(lua_State* L, Group* group)
+    void SetLeader(Group* group, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
         group->ChangeLeader(guid);
         group->SendUpdate();
-        return 0;
     }
 
     /**
@@ -299,14 +261,9 @@ namespace LuaGroup
      * @param bool ignorePlayersInBg : ignores [Player]s in a battleground
      * @param ObjectGuid ignore : ignore a [Player] by their GUID
      */
-    int SendPacket(lua_State* L, Group* group)
+    void SendPacket(Group* group, WorldPacket* data, bool ignorePlayersInBg, ObjectGuid ignore)
     {
-        WorldPacket* data = ALE::CHECKOBJ<WorldPacket>(L, 2);
-        bool ignorePlayersInBg = ALE::CHECKVAL<bool>(L, 3);
-        ObjectGuid ignore = ALE::CHECKVAL<ObjectGuid>(L, 4);
-
         group->BroadcastPacket(data, ignorePlayersInBg, -1, ignore);
-        return 0;
     }
 
     /**
@@ -326,33 +283,27 @@ namespace LuaGroup
      * @param [RemoveMethod] method : method used to remove the player
      * @return bool removed
      */
-    int RemoveMember(lua_State* L, Group* group)
+    bool RemoveMember(Group* group, ObjectGuid guid, sol::optional<uint32> method)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-        uint32 method = ALE::CHECKVAL<uint32>(L, 3, 0);
-
-        ALE::Push(L, group->RemoveMember(guid, (RemoveMethod)method));
-        return 1;
+        return group->RemoveMember(guid, (RemoveMethod)method.value_or(0));
     }
 
     /**
      * Disbands this [Group]
      *
      */
-    int Disband(lua_State* /*L*/, Group* group)
+    void Disband(Group* group)
     {
         group->Disband();
-        return 0;
     }
 
     /**
      * Converts this [Group] to a raid [Group]
      *
      */
-    int ConvertToRaid(lua_State* /*L*/, Group* group)
+    void ConvertToRaid(Group* group)
     {
         group->ConvertToRaid();
-        return 0;
     }
 
     /**
@@ -361,22 +312,15 @@ namespace LuaGroup
      * @param ObjectGuid guid : guid of the player to move
      * @param uint8 groupID : the subGroup's ID
      */
-    int SetMembersGroup(lua_State* L, Group* group)
+    void SetMembersGroup(Group* group, ObjectGuid guid, uint8 subGroup)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-        uint8 subGroup = ALE::CHECKVAL<uint8>(L, 3);
-
         if (subGroup >= MAX_RAID_SUBGROUPS)
-        {
-            luaL_argerror(L, 3, "valid subGroup ID expected");
-            return 0;
-        }
+            throw std::invalid_argument("valid subGroup ID expected");
 
         if (!group->HasFreeSlotSubGroup(subGroup))
-            return 0;
+            return;
 
         group->ChangeMembersGroup(guid, subGroup);
-        return 0;
     }
 
     /**
@@ -386,22 +330,17 @@ namespace LuaGroup
      * @param ObjectGuid target : GUID of the icon target, 0 is to clear the icon
      * @param ObjectGuid setter : GUID of the icon setter
      */
-    int SetTargetIcon(lua_State* L, Group* group)
+    void SetTargetIcon(Group* group, uint8 icon, ObjectGuid target, sol::optional<ObjectGuid> setter)
     {
-        uint8 icon = ALE::CHECKVAL<uint8>(L, 2);
-        ObjectGuid target = ALE::CHECKVAL<ObjectGuid>(L, 3);
-        ObjectGuid setter = ALE::CHECKVAL<ObjectGuid>(L, 4, ObjectGuid());
-
         if (icon >= TARGETICONCOUNT)
-            return luaL_argerror(L, 2, "valid target icon expected");
+            throw std::invalid_argument("valid target icon expected");
 
-        group->SetTargetIcon(icon, setter, target);
-        return 0;
+        group->SetTargetIcon(icon, setter.value_or(ObjectGuid()), target);
     }
 
     /**
      * Sets or removes a flag for a [Group] member
-     * 
+     *
      * <pre>
      * enum GroupMemberFlags
      * {
@@ -410,26 +349,49 @@ namespace LuaGroup
      *     MEMBER_FLAG_MAINASSIST  = 0x04,
      * };
      * </pre>
-     * 
+     *
      * @param ObjectGuid target : GUID of the target
      * @param bool apply : add the `flag` if `true`, remove the `flag` otherwise
      * @param [GroupMemberFlags] flag : the flag to set or unset
      */
-    int SetMemberFlag(lua_State* L, Group* group)
+    void SetMemberFlag(Group* group, ObjectGuid target, bool apply, uint32 flag)
     {
-        ObjectGuid target = ALE::CHECKVAL<ObjectGuid>(L, 2);
-        bool apply = ALE::CHECKVAL<bool>(L, 3);
-        GroupMemberFlags flag = static_cast<GroupMemberFlags>(ALE::CHECKVAL<uint32>(L, 4));
-
-        group->SetGroupMemberFlag(target, apply, flag);
-        return 0;
+        group->SetGroupMemberFlag(target, apply, static_cast<GroupMemberFlags>(flag));
     }
 
-    /*int ConvertToLFG(lua_State* L, Group* group) // TODO: Implementation
+    /*void ConvertToLFG(Group* group) // TODO: Implementation
     {
         group->ConvertToLFG();
-        return 0;
     }*/
-};
+}
 
-#endif
+void RegisterGroupMethods(sol::state& lua)
+{
+    sol::usertype<GroupRef> type = ALEBind::NewHandleType<GroupRef>(lua, "Group");
+
+    type["IsLeader"]            = ALEBind::Method(&LuaGroup::IsLeader);
+    type["IsFull"]              = ALEBind::Method(&LuaGroup::IsFull);
+    type["IsLFGGroup"]          = ALEBind::Method(&LuaGroup::IsLFGGroup);
+    type["IsRaidGroup"]         = ALEBind::Method(&LuaGroup::IsRaidGroup);
+    type["IsBGGroup"]           = ALEBind::Method(&LuaGroup::IsBGGroup);
+    type["IsMember"]            = ALEBind::Method(&LuaGroup::IsMember);
+    type["IsAssistant"]         = ALEBind::Method(&LuaGroup::IsAssistant);
+    type["SameSubGroup"]        = ALEBind::Method(&LuaGroup::SameSubGroup);
+    type["HasFreeSlotSubGroup"] = ALEBind::Method(&LuaGroup::HasFreeSlotSubGroup);
+    type["AddMember"]           = ALEBind::Method(&LuaGroup::AddMember);
+    type["GetMembers"]          = ALEBind::Method(&LuaGroup::GetMembers);
+    type["GetLeaderGUID"]       = ALEBind::Method(&LuaGroup::GetLeaderGUID);
+    type["GetGUID"]             = ALEBind::Method(&LuaGroup::GetGUID);
+    type["GetMemberGUID"]       = ALEBind::Method(&LuaGroup::GetMemberGUID);
+    type["GetMembersCount"]     = ALEBind::Method(&LuaGroup::GetMembersCount);
+    type["GetGroupType"]        = ALEBind::Method(&LuaGroup::GetGroupType);
+    type["GetMemberGroup"]      = ALEBind::Method(&LuaGroup::GetMemberGroup);
+    type["SetLeader"]           = ALEBind::Method(&LuaGroup::SetLeader);
+    type["SendPacket"]          = ALEBind::Method(&LuaGroup::SendPacket);
+    type["RemoveMember"]        = ALEBind::Method(&LuaGroup::RemoveMember);
+    type["Disband"]             = ALEBind::Method(&LuaGroup::Disband);
+    type["ConvertToRaid"]       = ALEBind::Method(&LuaGroup::ConvertToRaid);
+    type["SetMembersGroup"]     = ALEBind::Method(&LuaGroup::SetMembersGroup);
+    type["SetTargetIcon"]       = ALEBind::Method(&LuaGroup::SetTargetIcon);
+    type["SetMemberFlag"]       = ALEBind::Method(&LuaGroup::SetMemberFlag);
+}

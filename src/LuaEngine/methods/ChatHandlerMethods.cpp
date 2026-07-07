@@ -4,8 +4,7 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef CHATHANDLERMETHODS_H
-#define CHATHANDLERMETHODS_H
+#include "ALEBind.h"
 
 #include "Chat.h"
 
@@ -26,19 +25,18 @@ namespace LuaChatHandler
      * @param string text : text to display in chat or console
      * @param uint32 entry : id of the string to display
      */
-    int SendSysMessage(lua_State* L, ChatHandler* handler)
+    void SendSysMessage(ChatHandler* handler, sol::object msg)
     {
-        if (lua_isnumber(L, 2))
+        if (msg.get_type() == sol::type::number)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
+            uint32 entry = msg.as<uint32>();
             handler->SendSysMessage(entry);
         }
         else
         {
-            std::string text = ALE::CHECKVAL<std::string>(L, 2);
+            std::string text = msg.as<std::string>();
             handler->SendSysMessage(text);
         }
-        return 0;
     }
 
     /**
@@ -46,10 +44,9 @@ namespace LuaChatHandler
      *
      * @return bool isConsole
      */
-    int IsConsole(lua_State* L, ChatHandler* handler)
+    bool IsConsole(ChatHandler* handler)
     {
-        ALE::Push(L, handler->IsConsole());
-        return 1;
+        return handler->IsConsole();
     }
 
     /**
@@ -57,10 +54,9 @@ namespace LuaChatHandler
      *
      * @return [Player] player
      */
-    int GetPlayer(lua_State* L, ChatHandler* handler)
+    Player* GetPlayer(ChatHandler* handler)
     {
-        ALE::Push(L, handler->GetPlayer());
-        return 1;
+        return handler->GetPlayer();
     }
 
     /**
@@ -68,11 +64,9 @@ namespace LuaChatHandler
      *
      * @param string text : text to send
      */
-    int SendGlobalSysMessage(lua_State* L, ChatHandler* handler)
+    void SendGlobalSysMessage(ChatHandler* handler, std::string text)
     {
-        std::string text = ALE::CHECKVAL<std::string>(L, 2);
         handler->SendGlobalSysMessage(text.c_str());
-        return 0;
     }
 
     /**
@@ -80,11 +74,9 @@ namespace LuaChatHandler
      *
      * @param string text : text to send
      */
-    int SendGlobalGMSysMessage(lua_State* L, ChatHandler* handler)
+    void SendGlobalGMSysMessage(ChatHandler* handler, std::string text)
     {
-        std::string text = ALE::CHECKVAL<std::string>(L, 2);
         handler->SendGlobalGMSysMessage(text.c_str());
-        return 0;
     }
 
     /**
@@ -94,12 +86,9 @@ namespace LuaChatHandler
      * @param [bool] strong = false : Forces non-player accounts (security level greater than `0`) to go through the regular check if set to `true`.<br>Also, if set to `true`, the current security level will be considered as lower than the [Player]'s security level if the two levels are equal
      * @return [bool] lower
      */
-    int HasLowerSecurity(lua_State* L, ChatHandler* handler)
+    bool HasLowerSecurity(ChatHandler* handler, Player* player, sol::optional<bool> strong)
     {
-        Player* player = ALE::CHECKOBJ<Player>(L, 2);
-        bool strong = ALE::CHECKVAL<bool>(L, 3);
-        ALE::Push(L, handler->HasLowerSecurity(player, ObjectGuid::Empty, strong));
-        return 1;
+        return handler->HasLowerSecurity(player, ObjectGuid::Empty, strong.value_or(false));
     }
 
     /**
@@ -109,12 +98,9 @@ namespace LuaChatHandler
      * @param [bool] strong = false : Forces non-player accounts (security level greater than `0`) to go through the regular check if set to `true`.<br>Also, if set to `true`, the current security level will be considered as lower than the `account`'s security level if the two levels are equal
      * @return [bool] lower
      */
-    int HasLowerSecurityAccount(lua_State* L, ChatHandler* handler)
+    bool HasLowerSecurityAccount(ChatHandler* handler, uint32 account, sol::optional<bool> strong)
     {
-        uint32 account = ALE::CHECKVAL<uint32>(L, 2);
-        bool strong = ALE::CHECKVAL<bool>(L, 3);
-        ALE::Push(L, handler->HasLowerSecurityAccount(nullptr, account, strong));
-        return 1;
+        return handler->HasLowerSecurityAccount(nullptr, account, strong.value_or(false));
     }
 
     /**
@@ -122,10 +108,9 @@ namespace LuaChatHandler
      *
      * @return [Player] player
      */
-    int GetSelectedPlayer(lua_State* L, ChatHandler* handler)
+    Player* GetSelectedPlayer(ChatHandler* handler)
     {
-        ALE::Push(L, handler->getSelectedPlayer());
-        return 1;
+        return handler->getSelectedPlayer();
     }
 
     /**
@@ -133,10 +118,9 @@ namespace LuaChatHandler
      *
      * @return [Creature] creature
      */
-    int GetSelectedCreature(lua_State* L, ChatHandler* handler)
+    Creature* GetSelectedCreature(ChatHandler* handler)
     {
-        ALE::Push(L, handler->getSelectedCreature());
-        return 1;
+        return handler->getSelectedCreature();
     }
 
     /**
@@ -144,10 +128,9 @@ namespace LuaChatHandler
      *
      * @return [Unit] unit
      */
-    int GetSelectedUnit(lua_State* L, ChatHandler* handler)
+    Unit* GetSelectedUnit(ChatHandler* handler)
     {
-        ALE::Push(L, handler->getSelectedUnit());
-        return 1;
+        return handler->getSelectedUnit();
     }
 
     /**
@@ -155,10 +138,9 @@ namespace LuaChatHandler
      *
      * @return [WorldObject] object
      */
-    int GetSelectedObject(lua_State* L, ChatHandler* handler)
+    WorldObject* GetSelectedObject(ChatHandler* handler)
     {
-        ALE::Push(L, handler->getSelectedObject());
-        return 1;
+        return handler->getSelectedObject();
     }
 
     /**
@@ -166,10 +148,9 @@ namespace LuaChatHandler
      *
      * @return [Player] player
      */
-    int GetSelectedPlayerOrSelf(lua_State* L, ChatHandler* handler)
+    Player* GetSelectedPlayerOrSelf(ChatHandler* handler)
     {
-        ALE::Push(L, handler->getSelectedPlayerOrSelf());
-        return 1;
+        return handler->getSelectedPlayerOrSelf();
     }
 
     /**
@@ -178,11 +159,9 @@ namespace LuaChatHandler
      * @param [uint32] securityLevel
      * @return [bool] isAvailable
      */
-    int IsAvailable(lua_State* L, ChatHandler* handler)
+    bool IsAvailable(ChatHandler* handler, uint32 securityLevel)
     {
-        uint32 securityLevel = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, handler->IsAvailable(securityLevel));
-        return 1;
+        return handler->IsAvailable(securityLevel);
     }
 
     /**
@@ -190,10 +169,28 @@ namespace LuaChatHandler
      *
      * @return [bool] sentErrorMessage
      */
-    int HasSentErrorMessage(lua_State* L, ChatHandler* handler)
+    bool HasSentErrorMessage(ChatHandler* handler)
     {
-        ALE::Push(L, handler->HasSentErrorMessage());
-        return 1;
+        return handler->HasSentErrorMessage();
     }
 }
-#endif
+
+void RegisterChatHandlerMethods(sol::state& lua)
+{
+    sol::usertype<ScopedRef<ChatHandler>> type = ALEBind::NewHandleType<ScopedRef<ChatHandler>>(lua, "ChatHandler");
+
+    type["SendSysMessage"]          = ALEBind::Method(&LuaChatHandler::SendSysMessage);
+    type["IsConsole"]               = ALEBind::Method(&LuaChatHandler::IsConsole);
+    type["GetPlayer"]               = ALEBind::Method(&LuaChatHandler::GetPlayer);
+    type["SendGlobalSysMessage"]    = ALEBind::Method(&LuaChatHandler::SendGlobalSysMessage);
+    type["SendGlobalGMSysMessage"]  = ALEBind::Method(&LuaChatHandler::SendGlobalGMSysMessage);
+    type["HasLowerSecurity"]        = ALEBind::Method(&LuaChatHandler::HasLowerSecurity);
+    type["HasLowerSecurityAccount"] = ALEBind::Method(&LuaChatHandler::HasLowerSecurityAccount);
+    type["GetSelectedPlayer"]       = ALEBind::Method(&LuaChatHandler::GetSelectedPlayer);
+    type["GetSelectedCreature"]     = ALEBind::Method(&LuaChatHandler::GetSelectedCreature);
+    type["GetSelectedUnit"]         = ALEBind::Method(&LuaChatHandler::GetSelectedUnit);
+    type["GetSelectedObject"]       = ALEBind::Method(&LuaChatHandler::GetSelectedObject);
+    type["GetSelectedPlayerOrSelf"] = ALEBind::Method(&LuaChatHandler::GetSelectedPlayerOrSelf);
+    type["IsAvailable"]             = ALEBind::Method(&LuaChatHandler::IsAvailable);
+    type["HasSentErrorMessage"]     = ALEBind::Method(&LuaChatHandler::HasSentErrorMessage);
+}

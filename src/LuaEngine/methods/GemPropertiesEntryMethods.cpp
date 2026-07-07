@@ -4,8 +4,10 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef GEMPROPERTIESENTRYMETHODS_H
-#define GEMPROPERTIESENTRYMETHODS_H
+#include "ALEBind.h"
+
+#include "Common.h"
+#include "DBCStructure.h"
 
 /***
  * Represents static gem data used in item enhancement, including spell enchantments triggered by socketed gems.
@@ -20,15 +22,14 @@ namespace LuaGemPropertiesEntry
     /**
      * Returns the ID of a [GemPropertiesEntry].
      *
-     * This method retrieves the ID from a given GemPropertiesEntry instance 
+     * This method retrieves the ID from a given GemPropertiesEntry instance
      * and pushes it onto the Lua stack.
      *
      * @return uint32 id : The ID of the specified GemPropertiesEntry.
      */
-    int GetId(lua_State* L, GemPropertiesEntry* gemProperties)
+    uint32 GetId(GemPropertiesEntry* gempropertiesentry)
     {
-        ALE::Push(L, gemProperties->ID);
-        return 1;
+        return gempropertiesentry->ID;
     }
 
     /**
@@ -38,11 +39,16 @@ namespace LuaGemPropertiesEntry
      *
      * @return uint32 spellitemenchantement : The spell item enchantment ID.
      */
-    int GetSpellItemEnchantement(lua_State* L, GemPropertiesEntry* entry)
+    uint32 GetSpellItemEnchantement(GemPropertiesEntry* gempropertiesentry)
     {
-        ALE::Push(L, entry->spellitemenchantement);
-        return 1;
+        return gempropertiesentry->spellitemenchantement;
     }
 }
-#endif
 
+void RegisterGemPropertiesEntryMethods(sol::state& lua)
+{
+    sol::usertype<GemPropertiesEntry> type = lua.new_usertype<GemPropertiesEntry>("GemPropertiesEntry", sol::no_constructor);
+
+    type["GetId"]                    = &LuaGemPropertiesEntry::GetId;
+    type["GetSpellItemEnchantement"] = &LuaGemPropertiesEntry::GetSpellItemEnchantement;
+}

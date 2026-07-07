@@ -4,8 +4,9 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef QUESTMETHODS_H
-#define QUESTMETHODS_H
+#include "ALEBind.h"
+
+#include "QuestDef.h"
 
 /***
  * Represents a quest in the game, including its objectives, rewards, and conditions.
@@ -51,11 +52,9 @@ namespace LuaQuest
      * @param [QuestFlags] flag : all available flags can be seen above
      * @return bool hasFlag
      */
-    int HasFlag(lua_State* L, Quest* quest)
+    bool HasFlag(Quest* quest, uint32 flag)
     {
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, quest->HasFlag(flag));
-        return 1;
+        return quest->HasFlag(flag);
     }
 
     /**
@@ -63,10 +62,9 @@ namespace LuaQuest
      *
      * @return bool isDaily
      */
-    int IsDaily(lua_State* L, Quest* quest)
+    bool IsDaily(Quest* quest)
     {
-        ALE::Push(L, quest->IsDaily());
-        return 1;
+        return quest->IsDaily();
     }
 
     /**
@@ -74,10 +72,9 @@ namespace LuaQuest
      *
      * @return bool isRepeatable
      */
-    int IsRepeatable(lua_State* L, Quest* quest)
+    bool IsRepeatable(Quest* quest)
     {
-        ALE::Push(L, quest->IsRepeatable());
-        return 1;
+        return quest->IsRepeatable();
     }
 
     /**
@@ -85,10 +82,9 @@ namespace LuaQuest
      *
      * @return uint32 entryId
      */
-    int GetId(lua_State* L, Quest* quest)
+    uint32 GetId(Quest* quest)
     {
-        ALE::Push(L, quest->GetQuestId());
-        return 1;
+        return quest->GetQuestId();
     }
 
     /**
@@ -96,10 +92,9 @@ namespace LuaQuest
      *
      * @return uint32 level
      */
-    int GetLevel(lua_State* L, Quest* quest)
+    int32 GetLevel(Quest* quest)
     {
-        ALE::Push(L, quest->GetQuestLevel());
-        return 1;
+        return quest->GetQuestLevel();
     }
 
     /**
@@ -107,10 +102,9 @@ namespace LuaQuest
      *
      * @return uint32 minLevel
      */
-    int GetMinLevel(lua_State* L, Quest* quest)
+    uint32 GetMinLevel(Quest* quest)
     {
-        ALE::Push(L, quest->GetMinLevel());
-        return 1;
+        return quest->GetMinLevel();
     }
 
     /**
@@ -118,10 +112,9 @@ namespace LuaQuest
      *
      * @return int32 entryId
      */
-    int GetNextQuestId(lua_State* L, Quest* quest)
+    uint32 GetNextQuestId(Quest* quest)
     {
-        ALE::Push(L, quest->GetNextQuestId());
-        return 1;
+        return quest->GetNextQuestId();
     }
 
     /**
@@ -129,10 +122,9 @@ namespace LuaQuest
      *
      * @return int32 entryId
      */
-    int GetPrevQuestId(lua_State* L, Quest* quest)
+    int32 GetPrevQuestId(Quest* quest)
     {
-        ALE::Push(L, quest->GetPrevQuestId());
-        return 1;
+        return quest->GetPrevQuestId();
     }
 
     /**
@@ -140,10 +132,9 @@ namespace LuaQuest
      *
      * @return int32 entryId
      */
-    int GetNextQuestInChain(lua_State* L, Quest* quest)
+    uint32 GetNextQuestInChain(Quest* quest)
     {
-        ALE::Push(L, quest->GetNextQuestInChain());
-        return 1;
+        return quest->GetNextQuestInChain();
     }
 
     /**
@@ -151,10 +142,9 @@ namespace LuaQuest
      *
      * @return [QuestFlags] flags
      */
-    int GetFlags(lua_State* L, Quest* quest)
+    uint32 GetFlags(Quest* quest)
     {
-        ALE::Push(L, quest->GetFlags());
-        return 1;
+        return quest->GetFlags();
     }
 
     /**
@@ -164,16 +154,30 @@ namespace LuaQuest
      *
      * @return uint32 type
      */
-    int GetType(lua_State* L, Quest* quest)
+    uint32 GetType(Quest* quest)
     {
-        ALE::Push(L, quest->GetType());
-        return 1;
+        return quest->GetType();
     }
 
-    /*int GetMaxLevel(lua_State* L, Quest* quest)
+    /*uint32 GetMaxLevel(Quest* quest)
     {
-        ALE::Push(L, quest->GetMaxLevel());
-        return 1;
+        return quest->GetMaxLevel();
     }*/
-};
-#endif
+}
+
+void RegisterQuestMethods(sol::state& lua)
+{
+    sol::usertype<Quest> type = lua.new_usertype<Quest>("Quest", sol::no_constructor);
+
+    type["HasFlag"]             = &LuaQuest::HasFlag;
+    type["IsDaily"]             = &LuaQuest::IsDaily;
+    type["IsRepeatable"]        = &LuaQuest::IsRepeatable;
+    type["GetId"]               = &LuaQuest::GetId;
+    type["GetLevel"]            = &LuaQuest::GetLevel;
+    type["GetMinLevel"]         = &LuaQuest::GetMinLevel;
+    type["GetNextQuestId"]      = &LuaQuest::GetNextQuestId;
+    type["GetPrevQuestId"]      = &LuaQuest::GetPrevQuestId;
+    type["GetNextQuestInChain"] = &LuaQuest::GetNextQuestInChain;
+    type["GetFlags"]            = &LuaQuest::GetFlags;
+    type["GetType"]             = &LuaQuest::GetType;
+}

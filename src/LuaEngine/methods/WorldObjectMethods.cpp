@@ -4,8 +4,20 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef WORLDOBJECTMETHODS_H
-#define WORLDOBJECTMETHODS_H
+#include "ALEBind.h"
+#include "ALEEventMgr.h"
+#include "ALEUtility.h"
+
+#include "CellImpl.h"
+#include "DBCStores.h"
+#include "GameObject.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "Object.h"
+#include "Opcodes.h"
+#include "Player.h"
+#include "TemporarySummon.h"
+#include "WorldPacket.h"
 
 /***
  * Represents a [WorldObject] in the game world.
@@ -19,10 +31,9 @@ namespace LuaWorldObject
      *
      * @return string name
      */
-    int GetName(lua_State* L, WorldObject* obj)
+    std::string GetName(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetName());
-        return 1;
+        return worldobject->GetName();
     }
 
     /**
@@ -30,10 +41,9 @@ namespace LuaWorldObject
      *
      * @return [Map] mapObject
      */
-    int GetMap(lua_State* L, WorldObject* obj)
+    Map* GetMap(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetMap());
-        return 1;
+        return worldobject->GetMap();
     }
 
     /**
@@ -41,10 +51,9 @@ namespace LuaWorldObject
      *
      * @return uint32 phase
      */
-    int GetPhaseMask(lua_State* L, WorldObject* obj)
+    uint32 GetPhaseMask(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetPhaseMask());
-        return 1;
+        return worldobject->GetPhaseMask();
     }
 
     /**
@@ -53,12 +62,10 @@ namespace LuaWorldObject
     * @param uint32 phaseMask
     * @param bool update = true : update visibility to nearby objects
     */
-    int SetPhaseMask(lua_State* L, WorldObject* obj)
+    void SetPhaseMask(WorldObject* worldobject, uint32 phaseMask, sol::optional<bool> updateArg)
     {
-        uint32 phaseMask = ALE::CHECKVAL<uint32>(L, 2);
-        bool update = ALE::CHECKVAL<bool>(L, 3, true);
-        obj->SetPhaseMask(phaseMask, update);
-        return 0;
+        bool update = updateArg.value_or(true);
+        worldobject->SetPhaseMask(phaseMask, update);
     }
 
     /**
@@ -66,10 +73,9 @@ namespace LuaWorldObject
      *
      * @return uint32 instanceId
      */
-    int GetInstanceId(lua_State* L, WorldObject* obj)
+    uint32 GetInstanceId(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetInstanceId());
-        return 1;
+        return worldobject->GetInstanceId();
     }
 
     /**
@@ -77,10 +83,9 @@ namespace LuaWorldObject
      *
      * @return uint32 areaId
      */
-    int GetAreaId(lua_State* L, WorldObject* obj)
+    uint32 GetAreaId(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetAreaId());
-        return 1;
+        return worldobject->GetAreaId();
     }
 
     /**
@@ -88,10 +93,9 @@ namespace LuaWorldObject
      *
      * @return uint32 zoneId
      */
-    int GetZoneId(lua_State* L, WorldObject* obj)
+    uint32 GetZoneId(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetZoneId());
-        return 1;
+        return worldobject->GetZoneId();
     }
 
     /**
@@ -99,10 +103,9 @@ namespace LuaWorldObject
      *
      * @return uint32 mapId
      */
-    int GetMapId(lua_State* L, WorldObject* obj)
+    uint32 GetMapId(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetMapId());
-        return 1;
+        return worldobject->GetMapId();
     }
 
     /**
@@ -110,10 +113,9 @@ namespace LuaWorldObject
      *
      * @return float x
      */
-    int GetX(lua_State* L, WorldObject* obj)
+    float GetX(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetPositionX());
-        return 1;
+        return worldobject->GetPositionX();
     }
 
     /**
@@ -121,10 +123,9 @@ namespace LuaWorldObject
      *
      * @return float y
      */
-    int GetY(lua_State* L, WorldObject* obj)
+    float GetY(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetPositionY());
-        return 1;
+        return worldobject->GetPositionY();
     }
 
     /**
@@ -132,10 +133,9 @@ namespace LuaWorldObject
      *
      * @return float z
      */
-    int GetZ(lua_State* L, WorldObject* obj)
+    float GetZ(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetPositionZ());
-        return 1;
+        return worldobject->GetPositionZ();
     }
 
     /**
@@ -143,10 +143,9 @@ namespace LuaWorldObject
      *
      * @return float orientation / facing
      */
-    int GetO(lua_State* L, WorldObject* obj)
+    float GetO(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetOrientation());
-        return 1;
+        return worldobject->GetOrientation();
     }
 
     /**
@@ -157,13 +156,9 @@ namespace LuaWorldObject
      * @return float z : z coordinate (height) of the [WorldObject]
      * @return float o : facing / orientation of  the [WorldObject]
      */
-    int GetLocation(lua_State* L, WorldObject* obj)
+    std::tuple<float, float, float, float> GetLocation(WorldObject* worldobject)
     {
-        ALE::Push(L, obj->GetPositionX());
-        ALE::Push(L, obj->GetPositionY());
-        ALE::Push(L, obj->GetPositionZ());
-        ALE::Push(L, obj->GetOrientation());
-        return 4;
+        return std::tuple<float, float, float, float>(worldobject->GetPositionX(), worldobject->GetPositionY(), worldobject->GetPositionZ(), worldobject->GetOrientation());
     }
 
     /**
@@ -175,20 +170,19 @@ namespace LuaWorldObject
      *
      * @return [Player] nearestPlayer
      */
-    int GetNearestPlayer(lua_State* L, WorldObject* obj)
+    Unit* GetNearestPlayer(WorldObject* worldobject, sol::optional<float> rangeArg, sol::optional<uint32> hostileArg, sol::optional<uint32> deadArg)
     {
-        float range = ALE::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
-        uint32 hostile = ALE::CHECKVAL<uint32>(L, 3, 0);
-        uint32 dead = ALE::CHECKVAL<uint32>(L, 4, 1);
+        float range = rangeArg.value_or(SIZE_OF_GRIDS);
+        uint32 hostile = hostileArg.value_or(0);
+        uint32 dead = deadArg.value_or(1);
 
-        Unit* target = NULL;
-        ALEUtil::WorldObjectInRangeCheck checker(true, obj, range, TYPEMASK_PLAYER, 0, hostile, dead);
+        Unit* target = nullptr;
+        ALEUtil::WorldObjectInRangeCheck checker(true, worldobject, range, TYPEMASK_PLAYER, 0, hostile, dead);
 
-        Acore::UnitLastSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(obj, target, checker);
-        Cell::VisitObjects(obj, searcher, range);
+        Acore::UnitLastSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(worldobject, target, checker);
+        Cell::VisitObjects(worldobject, searcher, range);
 
-        ALE::Push(L, target);
-        return 1;
+        return target;
     }
 
     /**
@@ -200,20 +194,19 @@ namespace LuaWorldObject
      *
      * @return [GameObject] nearestGameObject
      */
-    int GetNearestGameObject(lua_State* L, WorldObject* obj)
+    GameObject* GetNearestGameObject(WorldObject* worldobject, sol::optional<float> rangeArg, sol::optional<uint32> entryArg, sol::optional<uint32> hostileArg)
     {
-        float range = ALE::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 3, 0);
-        uint32 hostile = ALE::CHECKVAL<uint32>(L, 4, 0);
+        float range = rangeArg.value_or(SIZE_OF_GRIDS);
+        uint32 entry = entryArg.value_or(0);
+        uint32 hostile = hostileArg.value_or(0);
 
-        GameObject* target = NULL;
-        ALEUtil::WorldObjectInRangeCheck checker(true, obj, range, TYPEMASK_GAMEOBJECT, entry, hostile);
+        GameObject* target = nullptr;
+        ALEUtil::WorldObjectInRangeCheck checker(true, worldobject, range, TYPEMASK_GAMEOBJECT, entry, hostile);
 
-        Acore::GameObjectLastSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(obj, target, checker);
-        Cell::VisitObjects(obj, searcher, range);
+        Acore::GameObjectLastSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(worldobject, target, checker);
+        Cell::VisitObjects(worldobject, searcher, range);
 
-        ALE::Push(L, target);
-        return 1;
+        return target;
     }
 
     /**
@@ -226,21 +219,20 @@ namespace LuaWorldObject
      *
      * @return [Creature] nearestCreature
      */
-    int GetNearestCreature(lua_State* L, WorldObject* obj)
+    Creature* GetNearestCreature(WorldObject* worldobject, sol::optional<float> rangeArg, sol::optional<uint32> entryArg, sol::optional<uint32> hostileArg, sol::optional<uint32> deadArg)
     {
-        float range = ALE::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 3, 0);
-        uint32 hostile = ALE::CHECKVAL<uint32>(L, 4, 0);
-        uint32 dead = ALE::CHECKVAL<uint32>(L, 5, 1);
+        float range = rangeArg.value_or(SIZE_OF_GRIDS);
+        uint32 entry = entryArg.value_or(0);
+        uint32 hostile = hostileArg.value_or(0);
+        uint32 dead = deadArg.value_or(1);
 
-        Creature* target = NULL;
-        ALEUtil::WorldObjectInRangeCheck checker(true, obj, range, TYPEMASK_UNIT, entry, hostile, dead);
+        Creature* target = nullptr;
+        ALEUtil::WorldObjectInRangeCheck checker(true, worldobject, range, TYPEMASK_UNIT, entry, hostile, dead);
 
-        Acore::CreatureLastSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(obj, target, checker);
-        Cell::VisitObjects(obj, searcher, range);
+        Acore::CreatureLastSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(worldobject, target, checker);
+        Cell::VisitObjects(worldobject, searcher, range);
 
-        ALE::Push(L, target);
-        return 1;
+        return target;
     }
 
     /**
@@ -252,30 +244,25 @@ namespace LuaWorldObject
      *
      * @return table playersInRange : table of [Player]s
      */
-    int GetPlayersInRange(lua_State* L, WorldObject* obj)
+    sol::table GetPlayersInRange(WorldObject* worldobject, sol::optional<float> rangeArg, sol::optional<uint32> hostileArg, sol::optional<uint32> deadArg, sol::this_state s)
     {
-        float range = ALE::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
-        uint32 hostile = ALE::CHECKVAL<uint32>(L, 3, 0);
-        uint32 dead = ALE::CHECKVAL<uint32>(L, 4, 1);
+        float range = rangeArg.value_or(SIZE_OF_GRIDS);
+        uint32 hostile = hostileArg.value_or(0);
+        uint32 dead = deadArg.value_or(1);
 
         std::list<Player*> list;
-        ALEUtil::WorldObjectInRangeCheck checker(false, obj, range, TYPEMASK_PLAYER, 0, hostile, dead);
+        ALEUtil::WorldObjectInRangeCheck checker(false, worldobject, range, TYPEMASK_PLAYER, 0, hostile, dead);
 
-        Acore::PlayerListSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(obj, list, checker);
-        Cell::VisitObjects(obj, searcher, range);
+        Acore::PlayerListSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(worldobject, list, checker);
+        Cell::VisitObjects(worldobject, searcher, range);
 
-        lua_createtable(L, list.size(), 0);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (std::list<Player*>::const_iterator it = list.begin(); it != list.end(); ++it)
-        {
-            ALE::Push(L, *it);
-            lua_rawseti(L, tbl, ++i);
-        }
+            tbl[++i] = PlayerRef(*it);
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
     /**
@@ -288,31 +275,26 @@ namespace LuaWorldObject
      *
      * @return table creaturesInRange : table of [Creature]s
      */
-    int GetCreaturesInRange(lua_State* L, WorldObject* obj)
+    sol::table GetCreaturesInRange(WorldObject* worldobject, sol::optional<float> rangeArg, sol::optional<uint32> entryArg, sol::optional<uint32> hostileArg, sol::optional<uint32> deadArg, sol::this_state s)
     {
-        float range = ALE::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 3, 0);
-        uint32 hostile = ALE::CHECKVAL<uint32>(L, 4, 0);
-        uint32 dead = ALE::CHECKVAL<uint32>(L, 5, 1);
+        float range = rangeArg.value_or(SIZE_OF_GRIDS);
+        uint32 entry = entryArg.value_or(0);
+        uint32 hostile = hostileArg.value_or(0);
+        uint32 dead = deadArg.value_or(1);
 
         std::list<Creature*> list;
-        ALEUtil::WorldObjectInRangeCheck checker(false, obj, range, TYPEMASK_UNIT, entry, hostile, dead);
+        ALEUtil::WorldObjectInRangeCheck checker(false, worldobject, range, TYPEMASK_UNIT, entry, hostile, dead);
 
-        Acore::CreatureListSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(obj, list, checker);
-        Cell::VisitObjects(obj, searcher, range);
+        Acore::CreatureListSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(worldobject, list, checker);
+        Cell::VisitObjects(worldobject, searcher, range);
 
-        lua_createtable(L, list.size(), 0);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (std::list<Creature*>::const_iterator it = list.begin(); it != list.end(); ++it)
-        {
-            ALE::Push(L, *it);
-            lua_rawseti(L, tbl, ++i);
-        }
+            tbl[++i] = CreatureRef(*it);
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
     /**
@@ -324,30 +306,25 @@ namespace LuaWorldObject
      *
      * @return table gameObjectsInRange : table of [GameObject]s
      */
-    int GetGameObjectsInRange(lua_State* L, WorldObject* obj)
+    sol::table GetGameObjectsInRange(WorldObject* worldobject, sol::optional<float> rangeArg, sol::optional<uint32> entryArg, sol::optional<uint32> hostileArg, sol::this_state s)
     {
-        float range = ALE::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 3, 0);
-        uint32 hostile = ALE::CHECKVAL<uint32>(L, 4, 0);
+        float range = rangeArg.value_or(SIZE_OF_GRIDS);
+        uint32 entry = entryArg.value_or(0);
+        uint32 hostile = hostileArg.value_or(0);
 
         std::list<GameObject*> list;
-        ALEUtil::WorldObjectInRangeCheck checker(false, obj, range, TYPEMASK_GAMEOBJECT, entry, hostile);
+        ALEUtil::WorldObjectInRangeCheck checker(false, worldobject, range, TYPEMASK_GAMEOBJECT, entry, hostile);
 
-        Acore::GameObjectListSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(obj, list, checker);
-        Cell::VisitObjects(obj, searcher, range);
+        Acore::GameObjectListSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(worldobject, list, checker);
+        Cell::VisitObjects(worldobject, searcher, range);
 
-        lua_createtable(L, list.size(), 0);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         for (std::list<GameObject*>::const_iterator it = list.begin(); it != list.end(); ++it)
-        {
-            ALE::Push(L, *it);
-            lua_rawseti(L, tbl, ++i);
-        }
+            tbl[++i] = GameObjectRef(*it);
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
     /**
@@ -362,25 +339,24 @@ namespace LuaWorldObject
      *
      * @return [WorldObject] worldObject
      */
-    int GetNearObject(lua_State* L, WorldObject* obj)
+    WorldObject* GetNearObject(WorldObject* worldobject, sol::optional<float> rangeArg, sol::optional<uint16> typeArg, sol::optional<uint32> entryArg, sol::optional<uint32> hostileArg, sol::optional<uint32> deadArg)
     {
-        float range = ALE::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
-        uint16 type = ALE::CHECKVAL<uint16>(L, 3, 0); // TypeMask
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 4, 0);
-        uint32 hostile = ALE::CHECKVAL<uint32>(L, 5, 0); // 0 none, 1 hostile, 2 friendly
-        uint32 dead = ALE::CHECKVAL<uint32>(L, 6, 1); // 0 both, 1 alive, 2 dead
+        float range = rangeArg.value_or(SIZE_OF_GRIDS);
+        uint16 type = typeArg.value_or(0); // TypeMask
+        uint32 entry = entryArg.value_or(0);
+        uint32 hostile = hostileArg.value_or(0); // 0 none, 1 hostile, 2 friendly
+        uint32 dead = deadArg.value_or(1); // 0 both, 1 alive, 2 dead
 
         float x, y, z;
-        obj->GetPosition(x, y, z);
-        ALEUtil::WorldObjectInRangeCheck checker(true, obj, range, type, entry, hostile, dead);
+        worldobject->GetPosition(x, y, z);
+        ALEUtil::WorldObjectInRangeCheck checker(true, worldobject, range, type, entry, hostile, dead);
 
-        WorldObject* target = NULL;
+        WorldObject* target = nullptr;
 
-        Acore::WorldObjectLastSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(obj, target, checker);
-        Cell::VisitObjects(obj, searcher, range);
+        Acore::WorldObjectLastSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(worldobject, target, checker);
+        Cell::VisitObjects(worldobject, searcher, range);
 
-        ALE::Push(L, target);
-        return 1;
+        return target;
     }
 
     /**
@@ -395,35 +371,31 @@ namespace LuaWorldObject
      *
      * @return table worldObjectList : table of [WorldObject]s
      */
-    int GetNearObjects(lua_State* L, WorldObject* obj)
+    sol::table GetNearObjects(WorldObject* worldobject, sol::optional<float> rangeArg, sol::optional<uint16> typeArg, sol::optional<uint32> entryArg, sol::optional<uint32> hostileArg, sol::optional<uint32> deadArg, sol::this_state s)
     {
-        float range = ALE::CHECKVAL<float>(L, 2, SIZE_OF_GRIDS);
-        uint16 type = ALE::CHECKVAL<uint16>(L, 3, 0); // TypeMask
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 4, 0);
-        uint32 hostile = ALE::CHECKVAL<uint32>(L, 5, 0); // 0 none, 1 hostile, 2 friendly
-        uint32 dead = ALE::CHECKVAL<uint32>(L, 6, 1); // 0 both, 1 alive, 2 dead
+        float range = rangeArg.value_or(SIZE_OF_GRIDS);
+        uint16 type = typeArg.value_or(0); // TypeMask
+        uint32 entry = entryArg.value_or(0);
+        uint32 hostile = hostileArg.value_or(0); // 0 none, 1 hostile, 2 friendly
+        uint32 dead = deadArg.value_or(1); // 0 both, 1 alive, 2 dead
 
         float x, y, z;
-        obj->GetPosition(x, y, z);
-        ALEUtil::WorldObjectInRangeCheck checker(false, obj, range, type, entry, hostile, dead);
+        worldobject->GetPosition(x, y, z);
+        ALEUtil::WorldObjectInRangeCheck checker(false, worldobject, range, type, entry, hostile, dead);
 
         std::list<WorldObject*> list;
 
-        Acore::WorldObjectListSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(obj, list, checker);
-        Cell::VisitObjects(obj, searcher, range);
+        Acore::WorldObjectListSearcher<ALEUtil::WorldObjectInRangeCheck> searcher(worldobject, list, checker);
+        Cell::VisitObjects(worldobject, searcher, range);
 
-        lua_createtable(L, list.size(), 0);
-        int tbl = lua_gettop(L);
+        sol::state_view lua(s);
+        sol::table tbl = lua.create_table();
         uint32 i = 0;
 
         for (std::list<WorldObject*>::const_iterator it = list.begin(); it != list.end(); ++it)
-        {
-            ALE::Push(L, *it);
-            lua_rawseti(L, tbl, ++i);
-        }
+            tbl[++i] = ALEBind::ToLuaDynamic(lua, *it);
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
     /**
@@ -441,19 +413,19 @@ namespace LuaWorldObject
      *
      * @return float dist : the distance in yards
      */
-    int GetDistance(lua_State* L, WorldObject* obj)
+    float GetDistance(WorldObject* worldobject, sol::object first, sol::optional<float> yArg, sol::optional<float> zArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2, false);
-        if (target)
-            ALE::Push(L, obj->GetDistance(target));
-        else
-        {
-            float X = ALE::CHECKVAL<float>(L, 2);
-            float Y = ALE::CHECKVAL<float>(L, 3);
-            float Z = ALE::CHECKVAL<float>(L, 4);
-            ALE::Push(L, obj->GetDistance(X, Y, Z));
-        }
-        return 1;
+        if (first.is<WorldObjectRef>())
+            if (WorldObject* target = first.as<WorldObjectRef>().Resolve())
+                return worldobject->GetDistance(target);
+
+        if (!first.is<float>() || !yArg || !zArg)
+            throw std::invalid_argument("WorldObject or coordinates (x, y, z) expected");
+
+        float X = first.as<float>();
+        float Y = *yArg;
+        float Z = *zArg;
+        return worldobject->GetDistance(X, Y, Z);
     }
 
     /**
@@ -471,11 +443,12 @@ namespace LuaWorldObject
      *
      * @return float dist : the distance in yards
      */
-    int GetExactDistance(lua_State* L, WorldObject* obj)
+    float GetExactDistance(WorldObject* worldobject, sol::object first, sol::optional<float> yArg, sol::optional<float> zArg)
     {
         float x, y, z;
-        obj->GetPosition(x, y, z);
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2, false);
+        worldobject->GetPosition(x, y, z);
+
+        WorldObject* target = first.is<WorldObjectRef>() ? first.as<WorldObjectRef>().Resolve() : nullptr;
         if (target)
         {
             float x2, y2, z2;
@@ -486,13 +459,15 @@ namespace LuaWorldObject
         }
         else
         {
-            x -= ALE::CHECKVAL<float>(L, 2);
-            y -= ALE::CHECKVAL<float>(L, 3);
-            z -= ALE::CHECKVAL<float>(L, 4);
+            if (!first.is<float>() || !yArg || !zArg)
+                throw std::invalid_argument("WorldObject or coordinates (x, y, z) expected");
+
+            x -= first.as<float>();
+            y -= *yArg;
+            z -= *zArg;
         }
 
-        ALE::Push(L, std::sqrt(x*x + y*y + z*z));
-        return 1;
+        return std::sqrt(x*x + y*y + z*z);
     }
 
     /**
@@ -509,18 +484,18 @@ namespace LuaWorldObject
      *
      * @return float dist : the distance in yards
      */
-    int GetDistance2d(lua_State* L, WorldObject* obj)
+    float GetDistance2d(WorldObject* worldobject, sol::object first, sol::optional<float> yArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2, false);
-        if (target)
-            ALE::Push(L, obj->GetDistance2d(target));
-        else
-        {
-            float X = ALE::CHECKVAL<float>(L, 2);
-            float Y = ALE::CHECKVAL<float>(L, 3);
-            ALE::Push(L, obj->GetDistance2d(X, Y));
-        }
-        return 1;
+        if (first.is<WorldObjectRef>())
+            if (WorldObject* target = first.as<WorldObjectRef>().Resolve())
+                return worldobject->GetDistance2d(target);
+
+        if (!first.is<float>() || !yArg)
+            throw std::invalid_argument("WorldObject or coordinates (x, y) expected");
+
+        float X = first.as<float>();
+        float Y = *yArg;
+        return worldobject->GetDistance2d(X, Y);
     }
 
     /**
@@ -537,11 +512,12 @@ namespace LuaWorldObject
      *
      * @return float dist : the distance in yards
      */
-    int GetExactDistance2d(lua_State* L, WorldObject* obj)
+    float GetExactDistance2d(WorldObject* worldobject, sol::object first, sol::optional<float> yArg)
     {
         float x, y, z;
-        obj->GetPosition(x, y, z);
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2, false);
+        worldobject->GetPosition(x, y, z);
+
+        WorldObject* target = first.is<WorldObjectRef>() ? first.as<WorldObjectRef>().Resolve() : nullptr;
         if (target)
         {
             float x2, y2, z2;
@@ -551,12 +527,14 @@ namespace LuaWorldObject
         }
         else
         {
-            x -= ALE::CHECKVAL<float>(L, 2);
-            y -= ALE::CHECKVAL<float>(L, 3);
+            if (!first.is<float>() || !yArg)
+                throw std::invalid_argument("WorldObject or coordinates (x, y) expected");
+
+            x -= first.as<float>();
+            y -= *yArg;
         }
 
-        ALE::Push(L, std::sqrt(x*x + y*y));
-        return 1;
+        return std::sqrt(x*x + y*y);
     }
 
     /**
@@ -569,18 +547,12 @@ namespace LuaWorldObject
      * @return float y
      * @return float z
      */
-    int GetRelativePoint(lua_State* L, WorldObject* obj)
+    std::tuple<float, float, float> GetRelativePoint(WorldObject* worldobject, float dist, float rad)
     {
-        float dist = ALE::CHECKVAL<float>(L, 2);
-        float rad = ALE::CHECKVAL<float>(L, 3);
-
         float x, y, z;
-        obj->GetClosePoint(x, y, z, 0.0f, dist, rad);
+        worldobject->GetClosePoint(x, y, z, 0.0f, dist, rad);
 
-        ALE::Push(L, x);
-        ALE::Push(L, y);
-        ALE::Push(L, z);
-        return 3;
+        return std::tuple<float, float, float>(x, y, z);
     }
 
     /**
@@ -597,19 +569,18 @@ namespace LuaWorldObject
      *
      * @return float angle : angle in radians in range 0..2*pi
      */
-    int GetAngle(lua_State* L, WorldObject* obj)
+    float GetAngle(WorldObject* worldobject, sol::object first, sol::optional<float> yArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2, false);
-        if (target)
-            ALE::Push(L, obj->GetAbsoluteAngle(target));
-        else
-        {
-            float x = ALE::CHECKVAL<float>(L, 2);
-            float y = ALE::CHECKVAL<float>(L, 3);
-            ALE::Push(L, obj->GetAbsoluteAngle(x, y));
-        }
+        if (first.is<WorldObjectRef>())
+            if (WorldObject* target = first.as<WorldObjectRef>().Resolve())
+                return worldobject->GetAbsoluteAngle(target);
 
-        return 1;
+        if (!first.is<float>() || !yArg)
+            throw std::invalid_argument("WorldObject or coordinates (x, y) expected");
+
+        float x = first.as<float>();
+        float y = *yArg;
+        return worldobject->GetAbsoluteAngle(x, y);
     }
 
     /**
@@ -617,10 +588,9 @@ namespace LuaWorldObject
      *
      * @return [Transport] transport
      */
-    int GetTransport(lua_State* L, WorldObject* obj)
+    Transport* GetTransport(WorldObject* worldobject)
     {
-        ALE::Push(L, static_cast<Transport*>(obj->GetTransport()));
-        return 1;
+        return static_cast<Transport*>(worldobject->GetTransport());
     }
 
     /**
@@ -628,11 +598,9 @@ namespace LuaWorldObject
      *
      * @param [WorldPacket] packet
      */
-    int SendPacket(lua_State* L, WorldObject* obj)
+    void SendPacket(WorldObject* worldobject, WorldPacket* data)
     {
-        WorldPacket* data = ALE::CHECKOBJ<WorldPacket>(L, 2);
-        obj->SendMessageToSet(data, true);
-        return 0;
+        worldobject->SendMessageToSet(data, true);
     }
 
     /**
@@ -646,17 +614,11 @@ namespace LuaWorldObject
      * @param uint32 respawnDelay = 30 : respawn time in seconds
      * @return [GameObject] gameObject
      */
-    int SummonGameObject(lua_State* L, WorldObject* obj)
+    GameObject* SummonGameObject(WorldObject* worldobject, uint32 entry, float x, float y, float z, float o, sol::optional<uint32> respawnDelayArg)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        float x = ALE::CHECKVAL<float>(L, 3);
-        float y = ALE::CHECKVAL<float>(L, 4);
-        float z = ALE::CHECKVAL<float>(L, 5);
-        float o = ALE::CHECKVAL<float>(L, 6);
-        uint32 respawnDelay = ALE::CHECKVAL<uint32>(L, 7, 30);
+        uint32 respawnDelay = respawnDelayArg.value_or(30);
 
-        ALE::Push(L, obj->SummonGameObject(entry, x, y, z, o, 0, 0, 0, 0, respawnDelay));
-        return 1;
+        return worldobject->SummonGameObject(entry, x, y, z, o, 0, 0, 0, 0, respawnDelay);
     }
 
     /**
@@ -685,15 +647,10 @@ namespace LuaWorldObject
      * @param uint32 despawnTimer = 0 : despawn time in milliseconds
      * @return [Creature] spawnedCreature
      */
-    int SpawnCreature(lua_State* L, WorldObject* obj)
+    Creature* SpawnCreature(WorldObject* worldobject, uint32 entry, float x, float y, float z, float o, sol::optional<uint32> spawnTypeArg, sol::optional<uint32> despawnTimerArg)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        float x = ALE::CHECKVAL<float>(L, 3);
-        float y = ALE::CHECKVAL<float>(L, 4);
-        float z = ALE::CHECKVAL<float>(L, 5);
-        float o = ALE::CHECKVAL<float>(L, 6);
-        uint32 spawnType = ALE::CHECKVAL<uint32>(L, 7, 8);
-        uint32 despawnTimer = ALE::CHECKVAL<uint32>(L, 8, 0);
+        uint32 spawnType = spawnTypeArg.value_or(8);
+        uint32 despawnTimer = despawnTimerArg.value_or(0);
 
         TempSummonType type;
         switch (spawnType)
@@ -723,11 +680,10 @@ namespace LuaWorldObject
                 type = TEMPSUMMON_MANUAL_DESPAWN;
                 break;
             default:
-                return luaL_argerror(L, 7, "valid SpawnType expected");
+                throw std::invalid_argument("valid SpawnType expected");
         }
 
-        ALE::Push(L, obj->SummonCreature(entry, x, y, z, o, type, despawnTimer));
-        return 1;
+        return worldobject->SummonCreature(entry, x, y, z, o, type, despawnTimer);
     }
 
     /**
@@ -755,35 +711,29 @@ namespace LuaWorldObject
      * @param uint32 repeats = 1 : how many times for the event to repeat, 0 is infinite
      * @return int eventId : unique ID for the timed event used to cancel it or nil
      */
-    int RegisterEvent(lua_State* L, WorldObject* obj)
+    uint64 RegisterEvent(WorldObject* worldobject, sol::protected_function function, sol::object delay, sol::optional<uint32> repeatsArg)
     {
-        luaL_checktype(L, 2, LUA_TFUNCTION);
         uint32 min, max;
-        if (lua_istable(L, 3))
+        if (delay.is<sol::table>())
         {
-            ALE::Push(L, 1);
-            lua_gettable(L, 3);
-            min = ALE::CHECKVAL<uint32>(L, -1);
-            ALE::Push(L, 2);
-            lua_gettable(L, 3);
-            max = ALE::CHECKVAL<uint32>(L, -1);
-            lua_pop(L, 2);
+            sol::table delayTable = delay.as<sol::table>();
+            min = delayTable.get<uint32>(1);
+            max = delayTable.get<uint32>(2);
         }
         else
-            min = max = ALE::CHECKVAL<uint32>(L, 3);
-        uint32 repeats = ALE::CHECKVAL<uint32>(L, 4, 1);
+        {
+            sol::optional<uint32> delayValue = delay.as<sol::optional<uint32>>();
+            if (!delayValue)
+                throw std::invalid_argument("number or table expected");
+
+            min = max = *delayValue;
+        }
+        uint32 repeats = repeatsArg.value_or(1);
 
         if (min > max)
-            return luaL_argerror(L, 3, "min is bigger than max delay");
+            throw std::invalid_argument("min is bigger than max delay");
 
-        lua_pushvalue(L, 2);
-        int functionRef = luaL_ref(L, LUA_REGISTRYINDEX);
-        if (functionRef != LUA_REFNIL && functionRef != LUA_NOREF)
-        {
-            obj->ALEEvents->AddEvent(functionRef, min, max, repeats);
-            ALE::Push(L, functionRef);
-        }
-        return 1;
+        return worldobject->ALEEvents->AddEvent(function, min, max, repeats);
     }
 
     /**
@@ -791,21 +741,18 @@ namespace LuaWorldObject
      *
      * @param int eventId : event Id to remove
      */
-    int RemoveEventById(lua_State* L, WorldObject* obj)
+    void RemoveEventById(WorldObject* worldobject, uint64 eventId)
     {
-        int eventId = ALE::CHECKVAL<int>(L, 2);
-        obj->ALEEvents->SetState(eventId, LUAEVENT_STATE_ABORT);
-        return 0;
+        worldobject->ALEEvents->SetState(eventId, LUAEVENT_STATE_ABORT);
     }
 
     /**
      * Removes all timed events from a [WorldObject]
      *
      */
-    int RemoveEvents(lua_State* /*L*/, WorldObject* obj)
+    void RemoveEvents(WorldObject* worldobject)
     {
-        obj->ALEEvents->SetStates(LUAEVENT_STATE_ABORT);
-        return 0;
+        worldobject->ALEEvents->SetStates(LUAEVENT_STATE_ABORT);
     }
 
     /**
@@ -820,21 +767,19 @@ namespace LuaWorldObject
      * @param float z
      * @return bool isInLoS
      */
-    int IsWithinLoS(lua_State* L, WorldObject* obj)
+    bool IsWithinLoS(WorldObject* worldobject, sol::object first, sol::optional<float> yArg, sol::optional<float> zArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2, false);
+        if (first.is<WorldObjectRef>())
+            if (WorldObject* target = first.as<WorldObjectRef>().Resolve())
+                return worldobject->IsWithinLOSInMap(target);
 
-        if (target)
-            ALE::Push(L, obj->IsWithinLOSInMap(target));
-        else
-        {
-            float x = ALE::CHECKVAL<float>(L, 2);
-            float y = ALE::CHECKVAL<float>(L, 3);
-            float z = ALE::CHECKVAL<float>(L, 4);
-            ALE::Push(L, obj->IsWithinLOS(x, y, z));
-        }
+        if (!first.is<float>() || !yArg || !zArg)
+            throw std::invalid_argument("WorldObject or coordinates (x, y, z) expected");
 
-        return 1;
+        float x = first.as<float>();
+        float y = *yArg;
+        float z = *zArg;
+        return worldobject->IsWithinLOS(x, y, z);
     }
 
     /**
@@ -843,11 +788,9 @@ namespace LuaWorldObject
      * @param [WorldObject] worldobject
      * @return bool isInMap
      */
-    int IsInMap(lua_State* L, WorldObject* obj)
+    bool IsInMap(WorldObject* worldobject, WorldObject* target)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2, true);
-        ALE::Push(L, obj->IsInMap(target));
-        return 1;
+        return worldobject->IsInMap(target);
     }
 
     /**
@@ -861,14 +804,9 @@ namespace LuaWorldObject
      * @param float distance
      * @return bool isInDistance
      */
-    int IsWithinDist3d(lua_State* L, WorldObject* obj)
+    bool IsWithinDist3d(WorldObject* worldobject, float x, float y, float z, float dist)
     {
-        float x = ALE::CHECKVAL<float>(L, 2);
-        float y = ALE::CHECKVAL<float>(L, 3);
-        float z = ALE::CHECKVAL<float>(L, 4);
-        float dist = ALE::CHECKVAL<float>(L, 5);
-        ALE::Push(L, obj->IsWithinDist3d(x, y, z, dist));
-        return 1;
+        return worldobject->IsWithinDist3d(x, y, z, dist);
     }
 
     /**
@@ -882,13 +820,9 @@ namespace LuaWorldObject
      * @param float distance
      * @return bool isInDistance
      */
-    int IsWithinDist2d(lua_State* L, WorldObject* obj)
+    bool IsWithinDist2d(WorldObject* worldobject, float x, float y, float dist)
     {
-        float x = ALE::CHECKVAL<float>(L, 2);
-        float y = ALE::CHECKVAL<float>(L, 3);
-        float dist = ALE::CHECKVAL<float>(L, 4);
-        ALE::Push(L, obj->IsWithinDist2d(x, y, dist));
-        return 1;
+        return worldobject->IsWithinDist2d(x, y, dist);
     }
 
     /**
@@ -901,13 +835,10 @@ namespace LuaWorldObject
      * @param bool is3D = true : if false, only x,y coordinates used for checking
      * @return bool isInDistance
      */
-    int IsWithinDist(lua_State* L, WorldObject* obj)
+    bool IsWithinDist(WorldObject* worldobject, WorldObject* target, float distance, sol::optional<bool> is3DArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2, true);
-        float distance = ALE::CHECKVAL<float>(L, 3);
-        bool is3D = ALE::CHECKVAL<bool>(L, 4, true);
-        ALE::Push(L, obj->IsWithinDist(target, distance, is3D));
-        return 1;
+        bool is3D = is3DArg.value_or(true);
+        return worldobject->IsWithinDist(target, distance, is3D);
     }
 
     /**
@@ -920,14 +851,11 @@ namespace LuaWorldObject
      * @param bool is3D = true : if false, only x,y coordinates used for checking
      * @return bool isInDistance
      */
-    int IsWithinDistInMap(lua_State* L, WorldObject* obj)
+    bool IsWithinDistInMap(WorldObject* worldobject, WorldObject* target, float distance, sol::optional<bool> is3DArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2);
-        float distance = ALE::CHECKVAL<float>(L, 3);
-        bool is3D = ALE::CHECKVAL<bool>(L, 4, true);
+        bool is3D = is3DArg.value_or(true);
 
-        ALE::Push(L, obj->IsWithinDistInMap(target, distance, is3D));
-        return 1;
+        return worldobject->IsWithinDistInMap(target, distance, is3D);
     }
 
     /**
@@ -941,15 +869,11 @@ namespace LuaWorldObject
      * @param bool is3D = true : if false, only x,y coordinates used for checking
      * @return bool isInDistance
      */
-    int IsInRange(lua_State* L, WorldObject* obj)
+    bool IsInRange(WorldObject* worldobject, WorldObject* target, float minrange, float maxrange, sol::optional<bool> is3DArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2);
-        float minrange = ALE::CHECKVAL<float>(L, 3);
-        float maxrange = ALE::CHECKVAL<float>(L, 4);
-        bool is3D = ALE::CHECKVAL<bool>(L, 5, true);
+        bool is3D = is3DArg.value_or(true);
 
-        ALE::Push(L, obj->IsInRange(target, minrange, maxrange, is3D));
-        return 1;
+        return worldobject->IsInRange(target, minrange, maxrange, is3D);
     }
 
     /**
@@ -963,15 +887,9 @@ namespace LuaWorldObject
      * @param float maxrange
      * @return bool isInDistance
      */
-    int IsInRange2d(lua_State* L, WorldObject* obj)
+    bool IsInRange2d(WorldObject* worldobject, float x, float y, float minrange, float maxrange)
     {
-        float x = ALE::CHECKVAL<float>(L, 2);
-        float y = ALE::CHECKVAL<float>(L, 3);
-        float minrange = ALE::CHECKVAL<float>(L, 4);
-        float maxrange = ALE::CHECKVAL<float>(L, 5);
-
-        ALE::Push(L, obj->IsInRange2d(x, y, minrange, maxrange));
-        return 1;
+        return worldobject->IsInRange2d(x, y, minrange, maxrange);
     }
 
     /**
@@ -986,16 +904,9 @@ namespace LuaWorldObject
      * @param float maxrange
      * @return bool isInDistance
      */
-    int IsInRange3d(lua_State* L, WorldObject* obj)
+    bool IsInRange3d(WorldObject* worldobject, float x, float y, float z, float minrange, float maxrange)
     {
-        float x = ALE::CHECKVAL<float>(L, 2);
-        float y = ALE::CHECKVAL<float>(L, 3);
-        float z = ALE::CHECKVAL<float>(L, 4);
-        float minrange = ALE::CHECKVAL<float>(L, 5);
-        float maxrange = ALE::CHECKVAL<float>(L, 6);
-
-        ALE::Push(L, obj->IsInRange3d(x, y, z, minrange, maxrange));
-        return 1;
+        return worldobject->IsInRange3d(x, y, z, minrange, maxrange);
     }
 
     /**
@@ -1005,13 +916,11 @@ namespace LuaWorldObject
      * @param float arc = pi
      * @return bool isInFront
      */
-    int IsInFront(lua_State* L, WorldObject* obj)
+    bool IsInFront(WorldObject* worldobject, WorldObject* target, sol::optional<float> arcArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2);
-        float arc = ALE::CHECKVAL<float>(L, 3, static_cast<float>(M_PI));
+        float arc = arcArg.value_or(static_cast<float>(M_PI));
 
-        ALE::Push(L, obj->isInFront(target, arc));
-        return 1;
+        return worldobject->isInFront(target, arc);
     }
 
     /**
@@ -1021,13 +930,11 @@ namespace LuaWorldObject
      * @param float arc = pi
      * @return bool isInBack
      */
-    int IsInBack(lua_State* L, WorldObject* obj)
+    bool IsInBack(WorldObject* worldobject, WorldObject* target, sol::optional<float> arcArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2);
-        float arc = ALE::CHECKVAL<float>(L, 3, static_cast<float>(M_PI));
+        float arc = arcArg.value_or(static_cast<float>(M_PI));
 
-        ALE::Push(L, obj->isInBack(target, arc));
-        return 1;
+        return worldobject->isInBack(target, arc);
     }
 
     /**
@@ -1041,18 +948,16 @@ namespace LuaWorldObject
      * @param uint32 music : entry of a music
      * @param [Player] player = nil : [Player] to play the music to
      */
-    int PlayMusic(lua_State* L, WorldObject* obj)
+    void PlayMusic(WorldObject* worldobject, uint32 musicid, sol::optional<PlayerRef> playerArg)
     {
-        uint32 musicid = ALE::CHECKVAL<uint32>(L, 2);
-        Player* player = ALE::CHECKOBJ<Player>(L, 3, false);
+        Player* player = playerArg ? playerArg->Resolve() : nullptr;
 
         WorldPacket data(SMSG_PLAY_MUSIC, 4);
         data << uint32(musicid);
         if (player)
             player->SendDirectMessage(&data);
         else
-            obj->SendMessageToSet(&data, true);
-        return 0;
+            worldobject->SendMessageToSet(&data, true);
     }
 
     /**
@@ -1066,18 +971,16 @@ namespace LuaWorldObject
      * @param uint32 sound : entry of a sound
      * @param [Player] player = nil : [Player] to play the sound to
      */
-    int PlayDirectSound(lua_State* L, WorldObject* obj)
+    void PlayDirectSound(WorldObject* worldobject, uint32 soundId, sol::optional<PlayerRef> playerArg)
     {
-        uint32 soundId = ALE::CHECKVAL<uint32>(L, 2);
-        Player* player = ALE::CHECKOBJ<Player>(L, 3, false);
+        Player* player = playerArg ? playerArg->Resolve() : nullptr;
         if (!sSoundEntriesStore.LookupEntry(soundId))
-            return 0;
+            return;
 
         if (player)
-            obj->PlayDirectSound(soundId, player);
+            worldobject->PlayDirectSound(soundId, player);
         else
-            obj->PlayDirectSound(soundId);
-        return 0;
+            worldobject->PlayDirectSound(soundId);
     }
 
     /**
@@ -1092,18 +995,69 @@ namespace LuaWorldObject
      * @param uint32 sound : entry of a sound
      * @param [Player] player = nil : [Player] to play the sound to
      */
-    int PlayDistanceSound(lua_State* L, WorldObject* obj)
+    void PlayDistanceSound(WorldObject* worldobject, uint32 soundId, sol::optional<PlayerRef> playerArg)
     {
-        uint32 soundId = ALE::CHECKVAL<uint32>(L, 2);
-        Player* player = ALE::CHECKOBJ<Player>(L, 3, false);
+        Player* player = playerArg ? playerArg->Resolve() : nullptr;
         if (!sSoundEntriesStore.LookupEntry(soundId))
-            return 0;
+            return;
 
         if (player)
-            obj->PlayDistanceSound(soundId, player);
+            worldobject->PlayDistanceSound(soundId, player);
         else
-            obj->PlayDistanceSound(soundId);
-        return 0;
+            worldobject->PlayDistanceSound(soundId);
     }
-};
-#endif
+}
+
+void RegisterWorldObjectMethods(sol::state& lua)
+{
+    sol::usertype<WorldObjectRef> type = ALEBind::NewHandleType<WorldObjectRef, ObjectRef>(lua, "WorldObject");
+
+    type["GetName"]               = ALEBind::Method(&LuaWorldObject::GetName);
+    type["GetMap"]                = ALEBind::Method(&LuaWorldObject::GetMap);
+    type["GetPhaseMask"]          = ALEBind::Method(&LuaWorldObject::GetPhaseMask);
+    type["SetPhaseMask"]          = ALEBind::Method(&LuaWorldObject::SetPhaseMask);
+    type["GetInstanceId"]         = ALEBind::Method(&LuaWorldObject::GetInstanceId);
+    type["GetAreaId"]             = ALEBind::Method(&LuaWorldObject::GetAreaId);
+    type["GetZoneId"]             = ALEBind::Method(&LuaWorldObject::GetZoneId);
+    type["GetMapId"]              = ALEBind::Method(&LuaWorldObject::GetMapId);
+    type["GetX"]                  = ALEBind::Method(&LuaWorldObject::GetX);
+    type["GetY"]                  = ALEBind::Method(&LuaWorldObject::GetY);
+    type["GetZ"]                  = ALEBind::Method(&LuaWorldObject::GetZ);
+    type["GetO"]                  = ALEBind::Method(&LuaWorldObject::GetO);
+    type["GetLocation"]           = ALEBind::Method(&LuaWorldObject::GetLocation);
+    type["GetNearestPlayer"]      = ALEBind::Method(&LuaWorldObject::GetNearestPlayer);
+    type["GetNearestGameObject"]  = ALEBind::Method(&LuaWorldObject::GetNearestGameObject);
+    type["GetNearestCreature"]    = ALEBind::Method(&LuaWorldObject::GetNearestCreature);
+    type["GetPlayersInRange"]     = ALEBind::Method(&LuaWorldObject::GetPlayersInRange);
+    type["GetCreaturesInRange"]   = ALEBind::Method(&LuaWorldObject::GetCreaturesInRange);
+    type["GetGameObjectsInRange"] = ALEBind::Method(&LuaWorldObject::GetGameObjectsInRange);
+    type["GetNearObject"]         = ALEBind::Method(&LuaWorldObject::GetNearObject);
+    type["GetNearObjects"]        = ALEBind::Method(&LuaWorldObject::GetNearObjects);
+    type["GetDistance"]           = ALEBind::Method(&LuaWorldObject::GetDistance);
+    type["GetExactDistance"]      = ALEBind::Method(&LuaWorldObject::GetExactDistance);
+    type["GetDistance2d"]         = ALEBind::Method(&LuaWorldObject::GetDistance2d);
+    type["GetExactDistance2d"]    = ALEBind::Method(&LuaWorldObject::GetExactDistance2d);
+    type["GetRelativePoint"]      = ALEBind::Method(&LuaWorldObject::GetRelativePoint);
+    type["GetAngle"]              = ALEBind::Method(&LuaWorldObject::GetAngle);
+    type["GetTransport"]          = ALEBind::Method(&LuaWorldObject::GetTransport);
+    type["SendPacket"]            = ALEBind::Method(&LuaWorldObject::SendPacket);
+    type["SummonGameObject"]      = ALEBind::Method(&LuaWorldObject::SummonGameObject);
+    type["SpawnCreature"]         = ALEBind::Method(&LuaWorldObject::SpawnCreature);
+    type["RegisterEvent"]         = ALEBind::Method(&LuaWorldObject::RegisterEvent);
+    type["RemoveEventById"]       = ALEBind::Method(&LuaWorldObject::RemoveEventById);
+    type["RemoveEvents"]          = ALEBind::Method(&LuaWorldObject::RemoveEvents);
+    type["IsWithinLoS"]           = ALEBind::Method(&LuaWorldObject::IsWithinLoS);
+    type["IsInMap"]               = ALEBind::Method(&LuaWorldObject::IsInMap);
+    type["IsWithinDist3d"]        = ALEBind::Method(&LuaWorldObject::IsWithinDist3d);
+    type["IsWithinDist2d"]        = ALEBind::Method(&LuaWorldObject::IsWithinDist2d);
+    type["IsWithinDist"]          = ALEBind::Method(&LuaWorldObject::IsWithinDist);
+    type["IsWithinDistInMap"]     = ALEBind::Method(&LuaWorldObject::IsWithinDistInMap);
+    type["IsInRange"]             = ALEBind::Method(&LuaWorldObject::IsInRange);
+    type["IsInRange2d"]           = ALEBind::Method(&LuaWorldObject::IsInRange2d);
+    type["IsInRange3d"]           = ALEBind::Method(&LuaWorldObject::IsInRange3d);
+    type["IsInFront"]             = ALEBind::Method(&LuaWorldObject::IsInFront);
+    type["IsInBack"]              = ALEBind::Method(&LuaWorldObject::IsInBack);
+    type["PlayMusic"]             = ALEBind::Method(&LuaWorldObject::PlayMusic);
+    type["PlayDirectSound"]       = ALEBind::Method(&LuaWorldObject::PlayDirectSound);
+    type["PlayDistanceSound"]     = ALEBind::Method(&LuaWorldObject::PlayDistanceSound);
+}

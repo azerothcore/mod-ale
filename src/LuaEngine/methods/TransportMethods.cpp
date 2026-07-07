@@ -4,8 +4,7 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef TRANSPORTMETHODS_H
-#define TRANSPORTMETHODS_H
+#include "ALEBind.h"
 
 #include "Transport.h"
 
@@ -21,17 +20,17 @@ namespace LuaTransport
      *
      * @return table passengers
      */
-    int GetPassengers(lua_State* L, Transport* transport)
+    sol::table GetPassengers(Transport* transport, sol::this_state s)
     {
+        sol::state_view lua(s);
+        sol::table tbl = lua.create_table();
+
         Transport::PassengerSet const& passengers = transport->GetPassengers();
-        lua_createtable(L, static_cast<int>(passengers.size()), 0);
         int i = 1;
         for (WorldObject* passenger : passengers)
-        {
-            ALE::Push(L, passenger);
-            lua_rawseti(L, -2, i++);
-        }
-        return 1;
+            tbl[i++] = ALEBind::ToLuaDynamic(lua, passenger);
+
+        return tbl;
     }
 
     /**
@@ -39,10 +38,9 @@ namespace LuaTransport
      *
      * @return bool isMotionTransport
      */
-    int IsMotionTransport(lua_State* L, Transport* transport)
+    bool IsMotionTransport(Transport* transport)
     {
-        ALE::Push(L, dynamic_cast<MotionTransport*>(transport) != nullptr);
-        return 1;
+        return dynamic_cast<MotionTransport*>(transport) != nullptr;
     }
 
     /**
@@ -51,12 +49,9 @@ namespace LuaTransport
      * @param [WorldObject] passenger : the object to add as a passenger
      * @param bool withAll = true : if true, also sets transport movement info on the passenger
      */
-    int AddPassenger(lua_State* L, Transport* transport)
+    void AddPassenger(Transport* transport, WorldObject* passenger, sol::optional<bool> withAll)
     {
-        WorldObject* passenger = ALE::CHECKOBJ<WorldObject>(L, 2);
-        bool withAll = ALE::CHECKVAL<bool>(L, 3, true);
-        transport->AddPassenger(passenger, withAll);
-        return 0;
+        transport->AddPassenger(passenger, withAll.value_or(true));
     }
 
     /**
@@ -65,12 +60,9 @@ namespace LuaTransport
      * @param [WorldObject] passenger : the object to remove
      * @param bool withAll = true : if true, also clears transport movement info from the passenger
      */
-    int RemovePassenger(lua_State* L, Transport* transport)
+    void RemovePassenger(Transport* transport, WorldObject* passenger, sol::optional<bool> withAll)
     {
-        WorldObject* passenger = ALE::CHECKOBJ<WorldObject>(L, 2);
-        bool withAll = ALE::CHECKVAL<bool>(L, 3, true);
-        transport->RemovePassenger(passenger, withAll);
-        return 0;
+        transport->RemovePassenger(passenger, withAll.value_or(true));
     }
 
     /**
@@ -80,14 +72,21 @@ namespace LuaTransport
      *
      * @param bool enabled : true to enable movement, false to stop
      */
-    int EnableMovement(lua_State* L, Transport* transport)
+    void EnableMovement(Transport* transport, bool enabled)
     {
-        bool enabled = ALE::CHECKVAL<bool>(L, 2);
         MotionTransport* mt = dynamic_cast<MotionTransport*>(transport);
         if (mt)
             mt->EnableMovement(enabled);
-        return 0;
     }
 }
 
-#endif
+void RegisterTransportMethods(sol::state& lua)
+{
+    sol::usertype<TransportRef> type = ALEBind::NewHandleType<TransportRef, GameObjectRef, WorldObjectRef, ObjectRef>(lua, "Transport");
+
+    type["GetPassengers"]     = ALEBind::Method(&LuaTransport::GetPassengers);
+    type["IsMotionTransport"] = ALEBind::Method(&LuaTransport::IsMotionTransport);
+    type["AddPassenger"]      = ALEBind::Method(&LuaTransport::AddPassenger);
+    type["RemovePassenger"]   = ALEBind::Method(&LuaTransport::RemovePassenger);
+    type["EnableMovement"]    = ALEBind::Method(&LuaTransport::EnableMovement);
+}

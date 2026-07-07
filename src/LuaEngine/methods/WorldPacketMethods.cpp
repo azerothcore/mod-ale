@@ -4,8 +4,10 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef WORLDPACKETMETHODS_H
-#define WORLDPACKETMETHODS_H
+#include "ALEBind.h"
+
+#include "Opcodes.h"
+#include "WorldPacket.h"
 
 /***
  * A packet used to pass messages between the server and a client.
@@ -18,17 +20,16 @@
  *
  * Inherits all methods from: none
  */
-namespace LuaPacket
+namespace LuaWorldPacket
 {
     /**
      * Returns the opcode of the [WorldPacket].
      *
      * @return uint16 opcode
      */
-    int GetOpcode(lua_State* L, WorldPacket* packet)
+    uint16 GetOpcode(WorldPacket* packet)
     {
-        ALE::Push(L, packet->GetOpcode());
-        return 1;
+        return packet->GetOpcode();
     }
 
     /**
@@ -36,10 +37,9 @@ namespace LuaPacket
      *
      * @return uint32 size
      */
-    int GetSize(lua_State* L, WorldPacket* packet)
+    uint32 GetSize(WorldPacket* packet)
     {
-        ALE::Push(L, packet->size());
-        return 1;
+        return packet->size();
     }
 
     /**
@@ -47,13 +47,11 @@ namespace LuaPacket
      *
      * @param [Opcodes] opcode : see Opcodes.h for all known opcodes
      */
-    int SetOpcode(lua_State* L, WorldPacket* packet)
+    void SetOpcode(WorldPacket* packet, uint32 opcode)
     {
-        uint32 opcode = ALE::CHECKVAL<uint32>(L, 2);
         if (opcode >= NUM_MSG_TYPES)
-            return luaL_argerror(L, 2, "valid opcode expected");
-        packet->SetOpcode((OpcodesList)opcode);
-        return 0;
+            throw std::invalid_argument("valid opcode expected");
+        packet->SetOpcode(static_cast<Opcodes>(opcode));
     }
 
     /**
@@ -61,12 +59,11 @@ namespace LuaPacket
      *
      * @return int8 value
      */
-    int ReadByte(lua_State* L, WorldPacket* packet)
+    int8 ReadByte(WorldPacket* packet)
     {
         int8 _byte;
         (*packet) >> _byte;
-        ALE::Push(L, _byte);
-        return 1;
+        return _byte;
     }
 
     /**
@@ -74,12 +71,11 @@ namespace LuaPacket
      *
      * @return uint8 value
      */
-    int ReadUByte(lua_State* L, WorldPacket* packet)
+    uint8 ReadUByte(WorldPacket* packet)
     {
         uint8 _ubyte;
         (*packet) >> _ubyte;
-        ALE::Push(L, _ubyte);
-        return 1;
+        return _ubyte;
     }
 
     /**
@@ -87,12 +83,11 @@ namespace LuaPacket
      *
      * @return int16 value
      */
-    int ReadShort(lua_State* L, WorldPacket* packet)
+    int16 ReadShort(WorldPacket* packet)
     {
         int16 _short;
         (*packet) >> _short;
-        ALE::Push(L, _short);
-        return 1;
+        return _short;
     }
 
     /**
@@ -100,12 +95,11 @@ namespace LuaPacket
      *
      * @return uint16 value
      */
-    int ReadUShort(lua_State* L, WorldPacket* packet)
+    uint16 ReadUShort(WorldPacket* packet)
     {
         uint16 _ushort;
         (*packet) >> _ushort;
-        ALE::Push(L, _ushort);
-        return 1;
+        return _ushort;
     }
 
     /**
@@ -113,12 +107,11 @@ namespace LuaPacket
      *
      * @return int32 value
      */
-    int ReadLong(lua_State* L, WorldPacket* packet)
+    int32 ReadLong(WorldPacket* packet)
     {
         int32 _long;
         (*packet) >> _long;
-        ALE::Push(L, _long);
-        return 1;
+        return _long;
     }
 
     /**
@@ -126,12 +119,11 @@ namespace LuaPacket
      *
      * @return uint32 value
      */
-    int ReadULong(lua_State* L, WorldPacket* packet)
+    uint32 ReadULong(WorldPacket* packet)
     {
         uint32 _ulong;
         (*packet) >> _ulong;
-        ALE::Push(L, _ulong);
-        return 1;
+        return _ulong;
     }
 
     /**
@@ -139,12 +131,11 @@ namespace LuaPacket
      *
      * @return float value
      */
-    int ReadFloat(lua_State* L, WorldPacket* packet)
+    float ReadFloat(WorldPacket* packet)
     {
         float _val;
         (*packet) >> _val;
-        ALE::Push(L, _val);
-        return 1;
+        return _val;
     }
 
     /**
@@ -152,12 +143,11 @@ namespace LuaPacket
      *
      * @return double value
      */
-    int ReadDouble(lua_State* L, WorldPacket* packet)
+    double ReadDouble(WorldPacket* packet)
     {
         double _val;
         (*packet) >> _val;
-        ALE::Push(L, _val);
-        return 1;
+        return _val;
     }
 
     /**
@@ -165,12 +155,11 @@ namespace LuaPacket
      *
      * @return ObjectGuid value : value returned as string
      */
-    int ReadGUID(lua_State* L, WorldPacket* packet)
+    ObjectGuid ReadGUID(WorldPacket* packet)
     {
         ObjectGuid guid;
         (*packet) >> guid;
-        ALE::Push(L, guid);
-        return 1;
+        return guid;
     }
 
     /**
@@ -179,25 +168,23 @@ namespace LuaPacket
      *
      * @return uint64 value : value returned as string
      */
-    int ReadPackedGUID(lua_State* L, WorldPacket* packet)
+    uint64 ReadPackedGUID(WorldPacket* packet)
     {
         uint64 guid;
         packet->readPackGUID(guid);
-        ALE::Push(L, guid);
-        return 1;
+        return guid;
     }
-	
+
     /**
      * Reads and returns a string value from the [WorldPacket].
      *
      * @return string value
      */
-    int ReadString(lua_State* L, WorldPacket* packet)
+    std::string ReadString(WorldPacket* packet)
     {
         std::string _val;
         (*packet) >> _val;
-        ALE::Push(L, _val);
-        return 1;
+        return _val;
     }
 
     /**
@@ -205,11 +192,9 @@ namespace LuaPacket
      *
      * @param ObjectGuid value : the value to be written to the [WorldPacket]
      */
-    int WriteGUID(lua_State* L, WorldPacket* packet)
+    void WriteGUID(WorldPacket* packet, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
         (*packet) << guid;
-        return 0;
     }
 
     /**
@@ -217,12 +202,10 @@ namespace LuaPacket
      *
      * @param ObjectGuid value : the ObjectGuid to be packed to the [WorldPacket]
      */
-    int WritePackedGUID(lua_State* L, WorldPacket* packet)
+    void WritePackedGUID(WorldPacket* packet, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
         PackedGuid packedGuid(guid);
         (*packet) << packedGuid;
-        return 0;
     }
 
     /**
@@ -230,11 +213,9 @@ namespace LuaPacket
      *
      * @param string value : the string to be written to the [WorldPacket]
      */
-    int WriteString(lua_State* L, WorldPacket* packet)
+    void WriteString(WorldPacket* packet, std::string _val)
     {
-        std::string _val = ALE::CHECKVAL<std::string>(L, 2);
         (*packet) << _val;
-        return 0;
     }
 
     /**
@@ -242,11 +223,9 @@ namespace LuaPacket
      *
      * @param int8 value : the int8 value to be written to the [WorldPacket]
      */
-    int WriteByte(lua_State* L, WorldPacket* packet)
+    void WriteByte(WorldPacket* packet, int8 byte)
     {
-        int8 byte = ALE::CHECKVAL<int8>(L, 2);
         (*packet) << byte;
-        return 0;
     }
 
     /**
@@ -254,11 +233,9 @@ namespace LuaPacket
      *
      * @param uint8 value : the uint8 value to be written to the [WorldPacket]
      */
-    int WriteUByte(lua_State* L, WorldPacket* packet)
+    void WriteUByte(WorldPacket* packet, uint8 byte)
     {
-        uint8 byte = ALE::CHECKVAL<uint8>(L, 2);
         (*packet) << byte;
-        return 0;
     }
 
     /**
@@ -266,11 +243,9 @@ namespace LuaPacket
      *
      * @param int16 value : the int16 value to be written to the [WorldPacket]
      */
-    int WriteShort(lua_State* L, WorldPacket* packet)
+    void WriteShort(WorldPacket* packet, int16 _short)
     {
-        int16 _short = ALE::CHECKVAL<int16>(L, 2);
         (*packet) << _short;
-        return 0;
     }
 
     /**
@@ -278,11 +253,9 @@ namespace LuaPacket
      *
      * @param uint16 value : the uint16 value to be written to the [WorldPacket]
      */
-    int WriteUShort(lua_State* L, WorldPacket* packet)
+    void WriteUShort(WorldPacket* packet, uint16 _ushort)
     {
-        uint16 _ushort = ALE::CHECKVAL<uint16>(L, 2);
         (*packet) << _ushort;
-        return 0;
     }
 
     /**
@@ -290,11 +263,9 @@ namespace LuaPacket
      *
      * @param int32 value : the int32 value to be written to the [WorldPacket]
      */
-    int WriteLong(lua_State* L, WorldPacket* packet)
+    void WriteLong(WorldPacket* packet, int32 _long)
     {
-        int32 _long = ALE::CHECKVAL<int32>(L, 2);
         (*packet) << _long;
-        return 0;
     }
 
     /**
@@ -302,11 +273,9 @@ namespace LuaPacket
      *
      * @param uint32 value : the uint32 value to be written to the [WorldPacket]
      */
-    int WriteULong(lua_State* L, WorldPacket* packet)
+    void WriteULong(WorldPacket* packet, uint32 _ulong)
     {
-        uint32 _ulong = ALE::CHECKVAL<uint32>(L, 2);
         (*packet) << _ulong;
-        return 0;
     }
 
     /**
@@ -314,11 +283,9 @@ namespace LuaPacket
      *
      * @param float value : the float value to be written to the [WorldPacket]
      */
-    int WriteFloat(lua_State* L, WorldPacket* packet)
+    void WriteFloat(WorldPacket* packet, float _val)
     {
-        float _val = ALE::CHECKVAL<float>(L, 2);
         (*packet) << _val;
-        return 0;
     }
 
     /**
@@ -326,12 +293,39 @@ namespace LuaPacket
      *
      * @param double value : the double value to be written to the [WorldPacket]
      */
-    int WriteDouble(lua_State* L, WorldPacket* packet)
+    void WriteDouble(WorldPacket* packet, double _val)
     {
-        double _val = ALE::CHECKVAL<double>(L, 2);
         (*packet) << _val;
-        return 0;
     }
-};
+}
 
-#endif
+void RegisterWorldPacketMethods(sol::state& lua)
+{
+    sol::usertype<WorldPacket> type = lua.new_usertype<WorldPacket>("WorldPacket", sol::no_constructor);
+
+    type["GetOpcode"]       = &LuaWorldPacket::GetOpcode;
+    type["GetSize"]         = &LuaWorldPacket::GetSize;
+    type["SetOpcode"]       = &LuaWorldPacket::SetOpcode;
+    type["ReadByte"]        = &LuaWorldPacket::ReadByte;
+    type["ReadUByte"]       = &LuaWorldPacket::ReadUByte;
+    type["ReadShort"]       = &LuaWorldPacket::ReadShort;
+    type["ReadUShort"]      = &LuaWorldPacket::ReadUShort;
+    type["ReadLong"]        = &LuaWorldPacket::ReadLong;
+    type["ReadULong"]       = &LuaWorldPacket::ReadULong;
+    type["ReadFloat"]       = &LuaWorldPacket::ReadFloat;
+    type["ReadDouble"]      = &LuaWorldPacket::ReadDouble;
+    type["ReadGUID"]        = &LuaWorldPacket::ReadGUID;
+    type["ReadPackedGUID"]  = &LuaWorldPacket::ReadPackedGUID;
+    type["ReadString"]      = &LuaWorldPacket::ReadString;
+    type["WriteGUID"]       = &LuaWorldPacket::WriteGUID;
+    type["WritePackedGUID"] = &LuaWorldPacket::WritePackedGUID;
+    type["WriteString"]     = &LuaWorldPacket::WriteString;
+    type["WriteByte"]       = &LuaWorldPacket::WriteByte;
+    type["WriteUByte"]      = &LuaWorldPacket::WriteUByte;
+    type["WriteShort"]      = &LuaWorldPacket::WriteShort;
+    type["WriteUShort"]     = &LuaWorldPacket::WriteUShort;
+    type["WriteLong"]       = &LuaWorldPacket::WriteLong;
+    type["WriteULong"]      = &LuaWorldPacket::WriteULong;
+    type["WriteFloat"]      = &LuaWorldPacket::WriteFloat;
+    type["WriteDouble"]     = &LuaWorldPacket::WriteDouble;
+}

@@ -4,8 +4,16 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef CREATUREMETHODS_H
-#define CREATUREMETHODS_H
+#include "ALEBind.h"
+#include "ALEUtility.h"
+
+#include "Creature.h"
+#include "CreatureAI.h"
+#include "MotionMaster.h"
+#include "ObjectMgr.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
+#include "ThreatManager.h"
 
 /***
  * Non-[Player] controlled [Unit]s (i.e. NPCs).
@@ -20,10 +28,9 @@ namespace LuaCreature
      *
      * @return bool isRegenerating
      */
-    int IsRegeneratingHealth(lua_State* L, Creature* creature)
+    bool IsRegeneratingHealth(Creature* creature)
     {
-        ALE::Push(L, creature->isRegeneratingHealth());
-        return 1;
+        return creature->isRegeneratingHealth();
     }
 
     /**
@@ -31,12 +38,9 @@ namespace LuaCreature
      *
      * @param bool enable = true : `true` to enable health regeneration, `false` to disable it
      */
-    int SetRegeneratingHealth(lua_State* L, Creature* creature)
+    void SetRegeneratingHealth(Creature* creature, sol::optional<bool> enable)
     {
-        bool enable = ALE::CHECKVAL<bool>(L, 2, true);
-
-        creature->SetRegeneratingHealth(enable);
-        return 0;
+        creature->SetRegeneratingHealth(enable.value_or(true));
     }
 
     /**
@@ -45,10 +49,9 @@ namespace LuaCreature
      *
      * @return bool reputationDisabled
      */
-    int IsReputationGainDisabled(lua_State* L, Creature* creature)
+    bool IsReputationGainDisabled(Creature* creature)
     {
-        ALE::Push(L, creature->IsReputationRewardDisabled());
-        return 1;
+        return creature->IsReputationRewardDisabled();
     }
 
     /**
@@ -58,12 +61,9 @@ namespace LuaCreature
      * @param uint32 questID : the ID of a [Quest]
      * @return bool completesQuest
      */
-    int CanCompleteQuest(lua_State* L, Creature* creature)
+    bool CanCompleteQuest(Creature* creature, uint32 quest_id)
     {
-        uint32 quest_id = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, creature->hasInvolvedQuest(quest_id));
-        return 1;
+        return creature->hasInvolvedQuest(quest_id);
     }
 
     /**
@@ -73,12 +73,9 @@ namespace LuaCreature
      * @param bool mustBeDead = false : if `true`, only returns `true` if the [Creature] is also dead. Otherwise, it must be alive.
      * @return bool targetable
      */
-    int IsTargetableForAttack(lua_State* L, Creature* creature)
+    bool IsTargetableForAttack(Creature* creature, sol::optional<bool> mustBeDead)
     {
-        bool mustBeDead = ALE::CHECKVAL<bool>(L, 2, false);
-
-        ALE::Push(L, creature->isTargetableForAttack(mustBeDead));
-        return 1;
+        return creature->isTargetableForAttack(mustBeDead.value_or(false));
     }
 
     /**
@@ -90,14 +87,9 @@ namespace LuaCreature
      * @param bool checkFaction = true : if `true`, the [Creature] must be the same faction as `friend` to assist
      * @return bool canAssist
      */
-    int CanAssistTo(lua_State* L, Creature* creature)
+    bool CanAssistTo(Creature* creature, Unit* u, Unit* enemy, sol::optional<bool> checkfaction)
     {
-        Unit* u = ALE::CHECKOBJ<Unit>(L, 2);
-        Unit* enemy = ALE::CHECKOBJ<Unit>(L, 3);
-        bool checkfaction = ALE::CHECKVAL<bool>(L, 4, true);
-
-        ALE::Push(L, creature->CanAssistTo(u, enemy, checkfaction));
-        return 1;
+        return creature->CanAssistTo(u, enemy, checkfaction.value_or(true));
     }
 
     /**
@@ -106,10 +98,9 @@ namespace LuaCreature
      *
      * @return bool searchedForAssistance
      */
-    int HasSearchedAssistance(lua_State* L, Creature* creature)
+    bool HasSearchedAssistance(Creature* creature)
     {
-        ALE::Push(L, creature->HasSearchedAssistance());
-        return 1;
+        return creature->HasSearchedAssistance();
     }
 
     /**
@@ -118,12 +109,9 @@ namespace LuaCreature
      *
      * @return bool tapped
      */
-    int IsTappedBy(lua_State* L, Creature* creature)
+    bool IsTappedBy(Creature* creature, Player* player)
     {
-        Player* player = ALE::CHECKOBJ<Player>(L, 2);
-
-        ALE::Push(L, creature->isTappedBy(player));
-        return 1;
+        return creature->isTappedBy(player);
     }
 
     /**
@@ -132,10 +120,9 @@ namespace LuaCreature
      *
      * @return bool hasLootRecipient
      */
-    int HasLootRecipient(lua_State* L, Creature* creature)
+    bool HasLootRecipient(Creature* creature)
     {
-        ALE::Push(L, creature->hasLootRecipient());
-        return 1;
+        return creature->hasLootRecipient();
     }
 
     /**
@@ -144,10 +131,9 @@ namespace LuaCreature
      *
      * @return bool canAggro
      */
-    int CanAggro(lua_State* L, Creature* creature)
+    bool CanAggro(Creature* creature)
     {
-        ALE::Push(L, !creature->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC));
-        return 1;
+        return !creature->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC);
     }
 
     /**
@@ -156,10 +142,9 @@ namespace LuaCreature
      *
      * @return bool canSwim
      */
-    int CanSwim(lua_State* L, Creature* creature)
+    bool CanSwim(Creature* creature)
     {
-        ALE::Push(L, creature->CanSwim());
-        return 1;
+        return creature->CanSwim();
     }
 
     /**
@@ -168,10 +153,9 @@ namespace LuaCreature
      *
      * @return bool canWalk
      */
-    int CanWalk(lua_State* L, Creature* creature)
+    bool CanWalk(Creature* creature)
     {
-        ALE::Push(L, creature->CanWalk());
-        return 1;
+        return creature->CanWalk();
     }
 
     /**
@@ -180,10 +164,9 @@ namespace LuaCreature
      *
      * @return bool inEvadeMode
      */
-    int IsInEvadeMode(lua_State* L, Creature* creature)
+    bool IsInEvadeMode(Creature* creature)
     {
-        ALE::Push(L, creature->IsInEvadeMode());
-        return 1;
+        return creature->IsInEvadeMode();
     }
 
     /**
@@ -192,10 +175,9 @@ namespace LuaCreature
      *
      * @return bool isElite
      */
-    int IsElite(lua_State* L, Creature* creature)
+    bool IsElite(Creature* creature)
     {
-        ALE::Push(L, creature->isElite());
-        return 1;
+        return creature->isElite();
     }
 
     /**
@@ -204,10 +186,9 @@ namespace LuaCreature
      *
      * @return bool isGuard
      */
-    int IsGuard(lua_State* L, Creature* creature)
+    bool IsGuard(Creature* creature)
     {
-        ALE::Push(L, creature->IsGuard());
-        return 1;
+        return creature->IsGuard();
     }
 
     /**
@@ -216,10 +197,9 @@ namespace LuaCreature
      *
      * @return bool isCivilian
      */
-    int IsCivilian(lua_State* L, Creature* creature)
+    bool IsCivilian(Creature* creature)
     {
-        ALE::Push(L, creature->IsCivilian());
-        return 1;
+        return creature->IsCivilian();
     }
 
     /**
@@ -228,10 +208,9 @@ namespace LuaCreature
      *
      * @return bool isLeader
      */
-    int IsRacialLeader(lua_State* L, Creature* creature)
+    bool IsRacialLeader(Creature* creature)
     {
-        ALE::Push(L, creature->IsRacialLeader());
-        return 1;
+        return creature->IsRacialLeader();
     }
 
     /**
@@ -240,10 +219,9 @@ namespace LuaCreature
      *
      * @return bool isDungeonBoss
      */
-    int IsDungeonBoss(lua_State* L, Creature* creature)
+    bool IsDungeonBoss(Creature* creature)
     {
-        ALE::Push(L, creature->IsDungeonBoss());
-        return 1;
+        return creature->IsDungeonBoss();
     }
 
     /**
@@ -252,10 +230,9 @@ namespace LuaCreature
      *
      * @return bool isWorldBoss
      */
-    int IsWorldBoss(lua_State* L, Creature* creature)
+    bool IsWorldBoss(Creature* creature)
     {
-        ALE::Push(L, creature->isWorldBoss());
-        return 1;
+        return creature->isWorldBoss();
     }
 
     /**
@@ -265,15 +242,12 @@ namespace LuaCreature
      * @param uint32 spellId : the ID of a [Spell]
      * @return bool hasCooldown
      */
-    int HasCategoryCooldown(lua_State* L, Creature* creature)
+    bool HasCategoryCooldown(Creature* creature, uint32 spell)
     {
-        uint32 spell = ALE::CHECKVAL<uint32>(L, 2);
+        if (SpellInfo const* info = sSpellMgr->GetSpellInfo(spell))
+            return info->GetCategory() && creature->HasSpellCooldown(spell);
 
-        if (const SpellInfo* info = sSpellMgr->GetSpellInfo(spell))
-            ALE::Push(L, info->GetCategory() && creature->HasSpellCooldown(spell));
-        else
-            ALE::Push(L, false);
-        return 1;
+        return false;
     }
 
     /**
@@ -283,12 +257,9 @@ namespace LuaCreature
      * @param uint32 spellId : the ID of a [Spell]
      * @return bool hasSpell
      */
-    int HasSpell(lua_State* L, Creature* creature)
+    bool HasSpell(Creature* creature, uint32 id)
     {
-        uint32 id = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, creature->HasSpell(id));
-        return 1;
+        return creature->HasSpell(id);
     }
 
     /**
@@ -298,12 +269,9 @@ namespace LuaCreature
      * @param uint32 questId : the ID of a [Quest]
      * @return bool hasQuest
      */
-    int HasQuest(lua_State* L, Creature* creature)
+    bool HasQuest(Creature* creature, uint32 questId)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, creature->hasQuest(questId));
-        return 1;
+        return creature->hasQuest(questId);
     }
 
     /**
@@ -313,12 +281,9 @@ namespace LuaCreature
      * @param uint32 spellId : the ID of a [Spell]
      * @return bool hasCooldown
      */
-    int HasSpellCooldown(lua_State* L, Creature* creature)
+    bool HasSpellCooldown(Creature* creature, uint32 spellId)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, creature->HasSpellCooldown(spellId));
-        return 1;
+        return creature->HasSpellCooldown(spellId);
     }
 
     /**
@@ -327,10 +292,9 @@ namespace LuaCreature
      *
      * @return bool canFly
      */
-    int CanFly(lua_State* L, Creature* creature)
+    bool CanFly(Creature* creature)
     {
-        ALE::Push(L, creature->CanFly());
-        return 1;
+        return creature->CanFly();
     }
 
     /**
@@ -339,10 +303,9 @@ namespace LuaCreature
      *
      * @return bool canFly
      */
-    int IsTrigger(lua_State* L, Creature* creature)
+    bool IsTrigger(Creature* creature)
     {
-        ALE::Push(L, creature->IsTrigger());
-        return 1;
+        return creature->IsTrigger();
     }
 
     /**
@@ -350,10 +313,9 @@ namespace LuaCreature
      *
      * @return bool isDamagedEnough
      */
-    int IsDamageEnoughForLootingAndReward(lua_State* L, Creature* creature)
+    bool IsDamageEnoughForLootingAndReward(Creature* creature)
     {
-        ALE::Push(L, creature->IsDamageEnoughForLootingAndReward());
-        return 1;
+        return creature->IsDamageEnoughForLootingAndReward();
     }
 
     /**
@@ -364,12 +326,9 @@ namespace LuaCreature
      * @param [Unit] target
      * @param bool force = true : force [Creature] to attack
      */
-    int CanStartAttack(lua_State* L, Creature* creature) // TODO: Implement core side
+    bool CanStartAttack(Creature* creature, Unit* target) // TODO: Implement core side
     {
-        Unit* target = ALE::CHECKOBJ<Unit>(L, 2);
-
-        ALE::Push(L, creature->CanStartAttack(target));
-        return 1;
+        return creature->CanStartAttack(target);
     }
 
     /**
@@ -378,12 +337,9 @@ namespace LuaCreature
      * @param uint16 lootMode
      * @return bool hasLootMode
      */
-    int HasLootMode(lua_State* L, Creature* creature) // TODO: Implement LootMode features
+    bool HasLootMode(Creature* creature, uint16 lootMode) // TODO: Implement LootMode features
     {
-        uint16 lootMode = ALE::CHECKVAL<uint16>(L, 2);
-
-        ALE::Push(L, creature->HasLootMode(lootMode));
-        return 1;
+        return creature->HasLootMode(lootMode);
     }
 
     /**
@@ -394,10 +350,9 @@ namespace LuaCreature
      *
      * @return uint32 respawnDelay : the respawn delay, in seconds
      */
-    int GetRespawnDelay(lua_State* L, Creature* creature)
+    uint32 GetRespawnDelay(Creature* creature)
     {
-        ALE::Push(L, creature->GetRespawnDelay());
-        return 1;
+        return creature->GetRespawnDelay();
     }
 
     /**
@@ -406,10 +361,9 @@ namespace LuaCreature
      *
      * @return float wanderRadius
      */
-    int GetWanderRadius(lua_State* L, Creature* creature)
+    float GetWanderRadius(Creature* creature)
     {
-        ALE::Push(L, creature->GetWanderDistance());
-        return 1;
+        return creature->GetWanderDistance();
     }
 
     /**
@@ -417,10 +371,9 @@ namespace LuaCreature
      *
      * @return uint32 pathId
      */
-    int GetWaypointPath(lua_State* L, Creature* creature)
+    uint32 GetWaypointPath(Creature* creature)
     {
-        ALE::Push(L, creature->GetWaypointPath());
-        return 1;
+        return creature->GetWaypointPath();
     }
 
     /**
@@ -428,10 +381,9 @@ namespace LuaCreature
      *
      * @return uint32 wpId
      */
-    int GetCurrentWaypointId(lua_State* L, Creature* creature)
+    uint32 GetCurrentWaypointId(Creature* creature)
     {
-        ALE::Push(L, creature->GetCurrentWaypointID());
-        return 1;
+        return creature->GetCurrentWaypointID();
     }
 
     /**
@@ -439,10 +391,9 @@ namespace LuaCreature
     *
     * @return uint32 spawnId
     */
-    int GetSpawnId(lua_State* L, Creature* creature)
+    uint32 GetSpawnId(Creature* creature)
     {
-        ALE::Push(L, creature->GetSpawnId());
-        return 1;
+        return creature->GetSpawnId();
     }
 
     /**
@@ -450,10 +401,9 @@ namespace LuaCreature
      *
      * @return [MovementGeneratorType] defaultMovementType
      */
-    int GetDefaultMovementType(lua_State* L, Creature* creature)
+    MovementGeneratorType GetDefaultMovementType(Creature* creature)
     {
-        ALE::Push(L, creature->GetDefaultMovementType());
-        return 1;
+        return creature->GetDefaultMovementType();
     }
 
     /**
@@ -462,12 +412,9 @@ namespace LuaCreature
      * @param [Unit] target
      * @return float aggroRange
      */
-    int GetAggroRange(lua_State* L, Creature* creature)
+    float GetAggroRange(Creature* creature, Unit* target)
     {
-        Unit* target = ALE::CHECKOBJ<Unit>(L, 2);
-
-        ALE::Push(L, creature->GetAggroRange(target));
-        return 1;
+        return creature->GetAggroRange(target);
     }
 
     /**
@@ -475,10 +422,9 @@ namespace LuaCreature
      *
      * @return [Group] lootRecipientGroup : the group or `nil`
      */
-    int GetLootRecipientGroup(lua_State* L, Creature* creature)
+    Group* GetLootRecipientGroup(Creature* creature)
     {
-        ALE::Push(L, creature->GetLootRecipientGroup());
-        return 1;
+        return creature->GetLootRecipientGroup();
     }
 
     /**
@@ -486,10 +432,9 @@ namespace LuaCreature
      *
      * @return [Player] lootRecipient : the player or `nil`
      */
-    int GetLootRecipient(lua_State* L, Creature* creature)
+    Player* GetLootRecipient(Creature* creature)
     {
-        ALE::Push(L, creature->GetLootRecipient());
-        return 1;
+        return creature->GetLootRecipient();
     }
 
     /**
@@ -501,10 +446,9 @@ namespace LuaCreature
      *
      * @return string scriptName
      */
-    int GetScriptName(lua_State* L, Creature* creature)
+    std::string GetScriptName(Creature* creature)
     {
-        ALE::Push(L, creature->GetScriptName());
-        return 1;
+        return creature->GetScriptName();
     }
 
     /**
@@ -516,10 +460,9 @@ namespace LuaCreature
      *
      * @return string AIName
      */
-    int GetAIName(lua_State* L, Creature* creature)
+    std::string GetAIName(Creature* creature)
     {
-        ALE::Push(L, creature->GetAIName());
-        return 1;
+        return creature->GetAIName();
     }
 
     /**
@@ -530,10 +473,9 @@ namespace LuaCreature
      *
      * @return uint32 scriptID
      */
-    int GetScriptId(lua_State* L, Creature* creature)
+    uint32 GetScriptId(Creature* creature)
     {
-        ALE::Push(L, creature->GetScriptId());
-        return 1;
+        return creature->GetScriptId();
     }
 
     /**
@@ -542,16 +484,12 @@ namespace LuaCreature
      * @param uint32 spellID
      * @return uint32 cooldown : the cooldown, in milliseconds
      */
-    int GetCreatureSpellCooldownDelay(lua_State* L, Creature* creature)
+    uint32 GetCreatureSpellCooldownDelay(Creature* creature, uint32 spell)
     {
-        uint32 spell = ALE::CHECKVAL<uint32>(L, 2);
-
         if (sSpellMgr->GetSpellInfo(spell))
-            ALE::Push(L, creature->GetSpellCooldown(spell));
-        else
-            ALE::Push(L, 0);
+            return creature->GetSpellCooldown(spell);
 
-        return 1;
+        return 0;
     }
 
     /**
@@ -559,10 +497,9 @@ namespace LuaCreature
      *
      * @return uint32 corpseDelay : the delay, in seconds
      */
-    int GetCorpseDelay(lua_State* L, Creature* creature)
+    uint32 GetCorpseDelay(Creature* creature)
     {
-        ALE::Push(L, creature->GetCorpseDelay());
-        return 1;
+        return creature->GetCorpseDelay();
     }
 
     /**
@@ -574,16 +511,12 @@ namespace LuaCreature
      * @return float z
      * @return float o
      */
-    int GetHomePosition(lua_State* L, Creature* creature)
+    std::tuple<float, float, float, float> GetHomePosition(Creature* creature)
     {
         float x, y, z, o;
         creature->GetHomePosition(x, y, z, o);
 
-        ALE::Push(L, x);
-        ALE::Push(L, y);
-        ALE::Push(L, z);
-        ALE::Push(L, o);
-        return 4;
+        return std::tuple<float, float, float, float>(x, y, z, o);
     }
 
     /**
@@ -595,15 +528,9 @@ namespace LuaCreature
      * @param float z
      * @param float o
      */
-    int SetHomePosition(lua_State* L, Creature* creature)
+    void SetHomePosition(Creature* creature, float x, float y, float z, float o)
     {
-        float x = ALE::CHECKVAL<float>(L, 2);
-        float y = ALE::CHECKVAL<float>(L, 3);
-        float z = ALE::CHECKVAL<float>(L, 4);
-        float o = ALE::CHECKVAL<float>(L, 5);
-
         creature->SetHomePosition(x, y, z, o);
-        return 0;
     }
 
     enum SelectAggroTarget
@@ -641,20 +568,19 @@ namespace LuaCreature
     * @param int32 aura = 0 : if positive, the target must have this [Aura]. If negative, the the target must not have this Aura
     * @return [Unit] target : the target, or `nil`
     */
-    int GetAITarget(lua_State* L, Creature* creature)
+    Unit* GetAITarget(Creature* creature, uint32 targetType, sol::optional<bool> playerOnlyArg, sol::optional<uint32> positionArg, sol::optional<float> distArg, sol::optional<int32> auraArg)
     {
-        uint32 targetType = ALE::CHECKVAL<uint32>(L, 2);
-        bool playerOnly = ALE::CHECKVAL<bool>(L, 3, false);
-        uint32 position = ALE::CHECKVAL<uint32>(L, 4, 0);
-        float dist = ALE::CHECKVAL<float>(L, 5, 0.0f);
-        int32 aura = ALE::CHECKVAL<int32>(L, 6, 0);
+        bool playerOnly = playerOnlyArg.value_or(false);
+        uint32 position = positionArg.value_or(0);
+        float dist = distArg.value_or(0.0f);
+        int32 aura = auraArg.value_or(0);
 
         ThreatManager const& threatMgr = creature->GetThreatMgr();
 
         if (threatMgr.IsThreatListEmpty())
-            return 1;
+            return nullptr;
         if (position >= threatMgr.GetThreatListSize())
-            return 1;
+            return nullptr;
 
         std::list<Unit*> targetList;
 
@@ -678,9 +604,9 @@ namespace LuaCreature
         }
 
         if (targetList.empty())
-            return 1;
+            return nullptr;
         if (position >= targetList.size())
-            return 1;
+            return nullptr;
 
         if (targetType == SELECT_TARGET_NEAREST || targetType == SELECT_TARGET_FARTHEST)
             targetList.sort(ALEUtil::ObjectDistanceOrderPred(creature));
@@ -693,18 +619,16 @@ namespace LuaCreature
                     std::list<Unit*>::const_iterator itr = targetList.begin();
                     if (position)
                         std::advance(itr, position);
-                    ALE::Push(L, *itr);
+                    return *itr;
                 }
-                break;
             case SELECT_TARGET_FARTHEST:
             case SELECT_TARGET_BOTTOMAGGRO:
                 {
                     std::list<Unit*>::reverse_iterator ritr = targetList.rbegin();
                     if (position)
                         std::advance(ritr, position);
-                    ALE::Push(L, *ritr);
+                    return *ritr;
                 }
-                break;
             case SELECT_TARGET_RANDOM:
                 {
                     std::list<Unit*>::const_iterator itr = targetList.begin();
@@ -712,15 +636,13 @@ namespace LuaCreature
                         std::advance(itr, urand(0, position));
                     else
                         std::advance(itr, urand(0, targetList.size() - 1));
-                    ALE::Push(L, *itr);
+                    return *itr;
                 }
-                break;
             default:
-                luaL_argerror(L, 2, "SelectAggroTarget expected");
-                break;
+                throw std::invalid_argument("SelectAggroTarget expected");
         }
 
-        return 1;
+        return nullptr;
     }
 
     /**
@@ -728,21 +650,18 @@ namespace LuaCreature
      *
      * @return table targets
      */
-    int GetAITargets(lua_State* L, Creature* creature)
+    sol::table GetAITargets(Creature* creature, sol::this_state s)
     {
         ThreatManager const& threatMgr = creature->GetThreatMgr();
 
-        lua_createtable(L, threatMgr.GetThreatListSize(), 0);
-        int tbl = lua_gettop(L);
+        sol::state_view lua(s);
+        sol::table tbl = lua.create_table(static_cast<int>(threatMgr.GetThreatListSize()), 0);
         uint32 i = 0;
-        for (ThreatReference const* ref : threatMgr.GetSortedThreatList())
-        {
-            ALE::Push(L, ref->GetVictim());
-            lua_rawseti(L, tbl, ++i);
-        }
 
-        lua_settop(L, tbl);
-        return 1;
+        for (ThreatReference const* ref : threatMgr.GetSortedThreatList())
+            tbl[++i] = ALEBind::ToLuaDynamic(lua, ref->GetVictim());
+
+        return tbl;
     }
 
     /**
@@ -750,10 +669,9 @@ namespace LuaCreature
      *
      * @return int targetsCount
      */
-    int GetAITargetsCount(lua_State* L, Creature* creature)
+    std::size_t GetAITargetsCount(Creature* creature)
     {
-        ALE::Push(L, creature->GetThreatMgr().GetThreatListSize());
-        return 1;
+        return creature->GetThreatMgr().GetThreatListSize();
     }
 
     /**
@@ -764,10 +682,9 @@ namespace LuaCreature
      *
      * @return [NPCFlags] npcFlags
      */
-    int GetNPCFlags(lua_State* L, Creature* creature)
+    uint32 GetNPCFlags(Creature* creature)
     {
-        ALE::Push(L, creature->GetUInt32Value(UNIT_NPC_FLAGS));
-        return 1;
+        return creature->GetUInt32Value(UNIT_NPC_FLAGS);
     }
 
     /**
@@ -777,10 +694,9 @@ namespace LuaCreature
      *
      * @return [UnitFlags] unitFlags
      */
-    int GetUnitFlags(lua_State* L, Creature* creature)
+    uint32 GetUnitFlags(Creature* creature)
     {
-        ALE::Push(L, creature->GetUInt32Value(UNIT_FIELD_FLAGS));
-        return 1;
+        return creature->GetUInt32Value(UNIT_FIELD_FLAGS);
     }
 
     /**
@@ -788,10 +704,9 @@ namespace LuaCreature
      *
      * @return [UnitFlags2] unitFlags2
      */
-    int GetUnitFlagsTwo(lua_State* L, Creature* creature)
+    uint32 GetUnitFlagsTwo(Creature* creature)
     {
-        ALE::Push(L, creature->GetUInt32Value(UNIT_FIELD_FLAGS_2));
-        return 1;
+        return creature->GetUInt32Value(UNIT_FIELD_FLAGS_2);
     }
 
     /**
@@ -802,10 +717,9 @@ namespace LuaCreature
      *
      * @return [ExtraFlags] extraFlags
      */
-    int GetExtraFlags(lua_State* L, Creature* creature)
+    uint32 GetExtraFlags(Creature* creature)
     {
-        ALE::Push(L, creature->GetCreatureTemplate()->flags_extra);
-        return 1;
+        return creature->GetCreatureTemplate()->flags_extra;
     }
 
     /**
@@ -813,10 +727,9 @@ namespace LuaCreature
      *
      * @return [Rank] rank
      */
-    int GetRank(lua_State* L, Creature* creature)
+    uint32 GetRank(Creature* creature)
     {
-        ALE::Push(L, creature->GetCreatureTemplate()->rank);
-        return 1;
+        return creature->GetCreatureTemplate()->rank;
     }
 
     /**
@@ -824,10 +737,9 @@ namespace LuaCreature
      *
      * @return uint32 shieldBlockValue
      */
-    int GetShieldBlockValue(lua_State* L, Creature* creature)
+    uint32 GetShieldBlockValue(Creature* creature)
     {
-        ALE::Push(L, creature->GetShieldBlockValue());
-        return 1;
+        return creature->GetShieldBlockValue();
     }
 
     /**
@@ -836,10 +748,9 @@ namespace LuaCreature
      * @param [Creature] creature : the creature whose loot mode to get
      * @return uint16 lootMode : the loot mode bitmask of the creature
      */
-    int GetLootMode(lua_State* L, Creature* creature) // TODO: Implement LootMode features
+    uint16 GetLootMode(Creature* creature) // TODO: Implement LootMode features
     {
-        ALE::Push(L, creature->GetLootMode());
-        return 1;
+        return creature->GetLootMode();
     }
 
     /**
@@ -847,10 +758,9 @@ namespace LuaCreature
      *
      * @return uint32 dbguid
      */
-    int GetDBTableGUIDLow(lua_State* L, Creature* creature)
+    uint32 GetDBTableGUIDLow(Creature* creature)
     {
-        ALE::Push(L, creature->GetSpawnId());
-        return 1;
+        return creature->GetSpawnId();
     }
 
     /**
@@ -867,11 +777,10 @@ namespace LuaCreature
      *
      * @return [ReactState] state
      */
-    int GetReactState(lua_State* L, Creature* creature)
+    int32 GetReactState(Creature* creature)
     {
         ReactStates state = creature->GetReactState();
-        lua_pushinteger(L, (int)state);
-        return 1;
+        return static_cast<int32>(state);
     }
 
     /**
@@ -879,24 +788,19 @@ namespace LuaCreature
      *
      * @param [NPCFlags] flags
      */
-    int SetNPCFlags(lua_State* L, Creature* creature)
+    void SetNPCFlags(Creature* creature, uint32 flags)
     {
-        uint32 flags = ALE::CHECKVAL<uint32>(L, 2);
-
         creature->SetUInt32Value(UNIT_NPC_FLAGS, flags);
-        return 0;
     }
-    
+
     /**
      * Sets the [Creature]'s Unit flags to `flags`.
      *
      * @param [UnitFlags] flags
      */
-    int SetUnitFlags(lua_State* L, Creature* creature)
+    void SetUnitFlags(Creature* creature, uint32 flags)
     {
-        uint32 flags = ALE::CHECKVAL<uint32>(L, 2);
         creature->SetUInt32Value(UNIT_FIELD_FLAGS, flags);
-        return 0;
     }
 
     /**
@@ -904,11 +808,9 @@ namespace LuaCreature
      *
      * @param [UnitFlags2] flags
      */
-    int SetUnitFlagsTwo(lua_State* L, Creature* creature)
+    void SetUnitFlagsTwo(Creature* creature, uint32 flags)
     {
-        uint32 flags = ALE::CHECKVAL<uint32>(L, 2);
         creature->SetUInt32Value(UNIT_FIELD_FLAGS_2, flags);
-        return 0;
     }
 
     /**
@@ -916,12 +818,9 @@ namespace LuaCreature
      *
      * @param [ReactState] state
      */
-    int SetReactState(lua_State* L, Creature* creature)
+    void SetReactState(Creature* creature, uint32 state)
     {
-        uint32 state = ALE::CHECKVAL<uint32>(L, 2);
-
         creature->SetReactState((ReactStates)state);
-        return 0;
     }
 
     /**
@@ -929,12 +828,9 @@ namespace LuaCreature
      *
      * @param bool disable
      */
-    int SetDisableGravity(lua_State* L, Creature* creature)
+    void SetDisableGravity(Creature* creature, bool disable)
     {
-        bool disable = ALE::CHECKVAL<bool>(L, 2);
-
         creature->SetDisableGravity(disable);
-        return 0;
     }
 
     /**
@@ -943,12 +839,9 @@ namespace LuaCreature
      * @param [Creature] creature : the creature whose loot mode to set
      * @param uint16 lootMode : the loot mode bitmask to apply
      */
-    int SetLootMode(lua_State* L, Creature* creature) // TODO: Implement LootMode features
+    void SetLootMode(Creature* creature, uint16 lootMode) // TODO: Implement LootMode features
     {
-        uint16 lootMode = ALE::CHECKVAL<uint16>(L, 2);
-
         creature->SetLootMode(lootMode);
-        return 0;
     }
 
     /**
@@ -956,12 +849,9 @@ namespace LuaCreature
      *
      * @param [DeathState] deathState
      */
-    int SetDeathState(lua_State* L, Creature* creature)
+    void SetDeathState(Creature* creature, int32 state)
     {
-        int32 state = ALE::CHECKVAL<int32>(L, 2);
-
         creature->setDeathState((DeathState)state);
-        return 0;
     }
 
     /**
@@ -969,12 +859,9 @@ namespace LuaCreature
      *
      * @param bool enable = true : `true` to enable walking, `false` for running
      */
-    int SetWalk(lua_State* L, Creature* creature)           // TODO: Move same to Player ?
+    void SetWalk(Creature* creature, sol::optional<bool> enable)           // TODO: Move same to Player ?
     {
-        bool enable = ALE::CHECKVAL<bool>(L, 2, true);
-
-        creature->SetWalk(enable);
-        return 0;
+        creature->SetWalk(enable.value_or(true));
     }
 
     /**
@@ -984,17 +871,11 @@ namespace LuaCreature
      * @param uint32 off_hand : off hand [Item]'s entry
      * @param uint32 ranged : ranged [Item]'s entry
      */
-    int SetEquipmentSlots(lua_State* L, Creature* creature)
+    void SetEquipmentSlots(Creature* creature, uint32 main_hand, uint32 off_hand, uint32 ranged)
     {
-        uint32 main_hand = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 off_hand = ALE::CHECKVAL<uint32>(L, 3);
-        uint32 ranged = ALE::CHECKVAL<uint32>(L, 4);
-
         creature->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 0, main_hand);
         creature->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 1, off_hand);
         creature->SetUInt32Value(UNIT_VIRTUAL_ITEM_SLOT_ID + 2, ranged);
-
-        return 0;
     }
 
     /**
@@ -1002,16 +883,14 @@ namespace LuaCreature
      *
      * @param bool allow = true : `true` to allow aggro, `false` to disable aggro
      */
-    int SetAggroEnabled(lua_State* L, Creature* creature)
+    void SetAggroEnabled(Creature* creature, sol::optional<bool> allowArg)
     {
-        bool allow = ALE::CHECKVAL<bool>(L, 2, true);
+        bool allow = allowArg.value_or(true);
 
         if (allow)
             creature->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC);
         else
             creature->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC);
-
-        return 0;
     }
 
     /**
@@ -1019,12 +898,9 @@ namespace LuaCreature
      *
      * @param bool disable = true : `true` to disable reputation, `false` to enable
      */
-    int SetDisableReputationGain(lua_State* L, Creature* creature)
+    void SetDisableReputationGain(Creature* creature, sol::optional<bool> disable)
     {
-        bool disable = ALE::CHECKVAL<bool>(L, 2, true);
-
-        creature->SetReputationRewardDisabled(disable);
-        return 0;
+        creature->SetReputationRewardDisabled(disable.value_or(true));
     }
 
     /**
@@ -1033,12 +909,10 @@ namespace LuaCreature
      * This is used by raid bosses to prevent Players from using out-of-combat
      *   actions once the encounter has begun.
      */
-    int SetInCombatWithZone(lua_State* /*L*/, Creature* creature)
+    void SetInCombatWithZone(Creature* creature)
     {
         if (creature->IsAIEnabled)
             creature->AI()->DoZoneInCombat();
-
-        return 0;
     }
 
     /**
@@ -1046,13 +920,9 @@ namespace LuaCreature
      *
      * @param float distance
      */
-    int SetWanderRadius(lua_State* L, Creature* creature)
+    void SetWanderRadius(Creature* creature, float dist)
     {
-        float dist = ALE::CHECKVAL<float>(L, 2);
-
         creature->SetWanderDistance(dist);
-
-        return 0;
     }
 
     /**
@@ -1060,12 +930,9 @@ namespace LuaCreature
      *
      * @param uint32 delay : the delay, in seconds
      */
-    int SetRespawnDelay(lua_State* L, Creature* creature)
+    void SetRespawnDelay(Creature* creature, uint32 delay)
     {
-        uint32 delay = ALE::CHECKVAL<uint32>(L, 2);
-
         creature->SetRespawnDelay(delay);
-        return 0;
     }
 
     /**
@@ -1073,12 +940,9 @@ namespace LuaCreature
      *
      * @param [MovementGeneratorType] type
      */
-    int SetDefaultMovementType(lua_State* L, Creature* creature)
+    void SetDefaultMovementType(Creature* creature, int32 type)
     {
-        int32 type = ALE::CHECKVAL<int32>(L, 2);
-
         creature->SetDefaultMovementType((MovementGeneratorType)type);
-        return 0;
     }
 
     /**
@@ -1086,12 +950,9 @@ namespace LuaCreature
      *
      * @param bool enable = true : `true` to disable searching, `false` to allow
      */
-    int SetNoSearchAssistance(lua_State* L, Creature* creature)
+    void SetNoSearchAssistance(Creature* creature, sol::optional<bool> val)
     {
-        bool val = ALE::CHECKVAL<bool>(L, 2, true);
-
-        creature->SetNoSearchAssistance(val);
-        return 0;
+        creature->SetNoSearchAssistance(val.value_or(true));
     }
 
     /**
@@ -1099,12 +960,9 @@ namespace LuaCreature
      *
      * @param bool enable = true : `true` to disable calling for help, `false` to enable
      */
-    int SetNoCallAssistance(lua_State* L, Creature* creature)
+    void SetNoCallAssistance(Creature* creature, sol::optional<bool> val)
     {
-        bool val = ALE::CHECKVAL<bool>(L, 2, true);
-
-        creature->SetNoCallAssistance(val);
-        return 0;
+        creature->SetNoCallAssistance(val.value_or(true));
     }
 
     /**
@@ -1112,13 +970,9 @@ namespace LuaCreature
      *
      * @param bool enable = true : `true` to enable hovering, `false` to disable
      */
-    int SetHover(lua_State* L, Creature* creature)
+    void SetHover(Creature* creature, sol::optional<bool> enable)
     {
-        bool enable = ALE::CHECKVAL<bool>(L, 2, true);
-
-        creature->SetHover(enable);
-
-        return 0;
+        creature->SetHover(enable.value_or(true));
     }
 
     /**
@@ -1126,39 +980,33 @@ namespace LuaCreature
      *
      * @param uint32 delay = 0 : dely to despawn in milliseconds
      */
-    int DespawnOrUnsummon(lua_State* L, Creature* creature)
+    void DespawnOrUnsummon(Creature* creature, sol::optional<uint32> msTimeToDespawn)
     {
-        uint32 msTimeToDespawn = ALE::CHECKVAL<uint32>(L, 2, 0);
-        creature->DespawnOrUnsummon(Milliseconds(msTimeToDespawn));
-
-        return 0;
+        creature->DespawnOrUnsummon(Milliseconds(msTimeToDespawn.value_or(0)));
     }
 
     /**
      * Respawn this [Creature].
      */
-    int Respawn(lua_State* /*L*/, Creature* creature)
+    void Respawn(Creature* creature)
     {
         creature->Respawn();
-        return 0;
     }
 
     /**
      * Remove this [Creature]'s corpse.
      */
-    int RemoveCorpse(lua_State* /*L*/, Creature* creature)
+    void RemoveCorpse(Creature* creature)
     {
         creature->RemoveCorpse();
-        return 0;
     }
 
     /**
      * Handles this [Creature]'s corpse state after all loot is removed.
      */
-    int AllLootRemovedFromCorpse(lua_State* /*L*/, Creature* creature)
+    void AllLootRemovedFromCorpse(Creature* creature)
     {
         creature->AllLootRemovedFromCorpse();
-        return 0;
     }
 
     /**
@@ -1166,30 +1014,25 @@ namespace LuaCreature
      *
      * @param uint32 delay : the delay, in seconds
      */
-    int SetCorpseDelay(lua_State* L, Creature* creature)
+    void SetCorpseDelay(Creature* creature, uint32 delay)
     {
-        uint32 delay = ALE::CHECKVAL<uint32>(L, 2);
         creature->SetCorpseDelay(delay);
-        return 0;
     }
 
     /**
      * Make the [Creature] start following its waypoint path.
      */
-    int MoveWaypoint(lua_State* /*L*/, Creature* creature)
+    void MoveWaypoint(Creature* creature)
     {
         creature->GetMotionMaster()->MoveWaypoint(creature->GetWaypointPath(), true);
-
-        return 0;
     }
 
     /**
      * Make the [Creature] call for assistance in combat from other nearby [Creature]s.
      */
-    int CallAssistance(lua_State* /*L*/, Creature* creature)
+    void CallAssistance(Creature* creature)
     {
         creature->CallAssistance();
-        return 0;
     }
 
     /**
@@ -1197,21 +1040,17 @@ namespace LuaCreature
      *
      * @param float radius
      */
-    int CallForHelp(lua_State* L, Creature* creature)
+    void CallForHelp(Creature* creature, float radius)
     {
-        float radius = ALE::CHECKVAL<float>(L, 2);
-
         creature->CallForHelp(radius);
-        return 0;
     }
 
     /**
      * Make the [Creature] flee combat to get assistance from a nearby friendly [Creature].
      */
-    int FleeToGetAssistance(lua_State* /*L*/, Creature* creature)
+    void FleeToGetAssistance(Creature* creature)
     {
         creature->DoFleeToGetAssistance();
-        return 0;
     }
 
     /**
@@ -1219,21 +1058,17 @@ namespace LuaCreature
      *
      * @param [Unit] target
      */
-    int AttackStart(lua_State* L, Creature* creature)
+    void AttackStart(Creature* creature, Unit* target)
     {
-        Unit* target = ALE::CHECKOBJ<Unit>(L, 2);
-
         creature->AI()->AttackStart(target);
-        return 0;
     }
 
     /**
      * Save the [Creature] in the database.
      */
-    int SaveToDB(lua_State* /*L*/, Creature* creature)
+    void SaveToDB(Creature* creature)
     {
         creature->SaveToDB();
-        return 0;
     }
 
     /**
@@ -1241,10 +1076,9 @@ namespace LuaCreature
      *
      * This should be called every update cycle for the Creature's AI.
      */
-    int SelectVictim(lua_State* L, Creature* creature)
+    Unit* SelectVictim(Creature* creature)
     {
-        ALE::Push(L, creature->SelectVictim());
-        return 1;
+        return creature->SelectVictim();
     }
 
     /**
@@ -1253,22 +1087,19 @@ namespace LuaCreature
      * @param uint32 entry : the Creature ID to transform into
      * @param uint32 dataGUIDLow = 0 : use this Creature's model and equipment instead of the defaults
      */
-    int UpdateEntry(lua_State* L, Creature* creature)
+    void UpdateEntry(Creature* creature, uint32 entry, sol::optional<uint32> dataGuidLowArg)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 dataGuidLow = ALE::CHECKVAL<uint32>(L, 3, 0);
+        uint32 dataGuidLow = dataGuidLowArg.value_or(0);
 
-        creature->UpdateEntry(entry, dataGuidLow ? eObjectMgr->GetCreatureData(dataGuidLow) : NULL);
-        return 0;
+        creature->UpdateEntry(entry, dataGuidLow ? sObjectMgr->GetCreatureData(dataGuidLow) : nullptr);
     }
 
     /**
      * Resets [Creature]'s loot mode to default
      */
-    int ResetLootMode(lua_State* /*L*/, Creature* creature) // TODO: Implement LootMode features
+    void ResetLootMode(Creature* creature) // TODO: Implement LootMode features
     {
         creature->ResetLootMode();
-        return 0;
     }
 
     /**
@@ -1276,12 +1107,9 @@ namespace LuaCreature
      *
      * @param uint16 lootMode
      */
-    int RemoveLootMode(lua_State* L, Creature* creature) // TODO: Implement LootMode features
+    void RemoveLootMode(Creature* creature, uint16 lootMode) // TODO: Implement LootMode features
     {
-        uint16 lootMode = ALE::CHECKVAL<uint16>(L, 2);
-
         creature->RemoveLootMode(lootMode);
-        return 0;
     }
 
     /**
@@ -1289,12 +1117,9 @@ namespace LuaCreature
      *
      * @param uint16 lootMode
      */
-    int AddLootMode(lua_State* L, Creature* creature) // TODO: Implement LootMode features
+    void AddLootMode(Creature* creature, uint16 lootMode) // TODO: Implement LootMode features
     {
-        uint16 lootMode = ALE::CHECKVAL<uint16>(L, 2);
-
         creature->AddLootMode(lootMode);
-        return 0;
     }
 
     /**
@@ -1351,15 +1176,15 @@ namespace LuaCreature
      *
      * @return [CreatureFamily] creatureFamily
      */
-    int GetCreatureFamily(lua_State* L, Creature* creature)
+    sol::optional<uint32> GetCreatureFamily(Creature* creature)
     {
         uint32 entry = creature->GetEntry();
 
         CreatureTemplate const* cInfo = sObjectMgr->GetCreatureTemplate(entry);
         if (cInfo)
-            ALE::Push(L, cInfo->family);
+            return cInfo->family;
 
-        return 1;
+        return sol::nullopt;
     }
 
     /**
@@ -1367,10 +1192,106 @@ namespace LuaCreature
      *
      * @return [Loot] loot : the loot object
      */
-    int GetLoot(lua_State* L, Creature* creature)
+    Loot* GetLoot(Creature* creature)
     {
-        ALE::Push(L, &creature->loot);
-        return 1;
+        return &creature->loot;
     }
-};
-#endif
+}
+
+void RegisterCreatureMethods(sol::state& lua)
+{
+    sol::usertype<CreatureRef> type = ALEBind::NewHandleType<CreatureRef, UnitRef, WorldObjectRef, ObjectRef>(lua, "Creature");
+
+    type["IsRegeneratingHealth"]              = ALEBind::Method(&LuaCreature::IsRegeneratingHealth);
+    type["SetRegeneratingHealth"]             = ALEBind::Method(&LuaCreature::SetRegeneratingHealth);
+    type["IsReputationGainDisabled"]          = ALEBind::Method(&LuaCreature::IsReputationGainDisabled);
+    type["CanCompleteQuest"]                  = ALEBind::Method(&LuaCreature::CanCompleteQuest);
+    type["IsTargetableForAttack"]             = ALEBind::Method(&LuaCreature::IsTargetableForAttack);
+    type["CanAssistTo"]                       = ALEBind::Method(&LuaCreature::CanAssistTo);
+    type["HasSearchedAssistance"]             = ALEBind::Method(&LuaCreature::HasSearchedAssistance);
+    type["IsTappedBy"]                        = ALEBind::Method(&LuaCreature::IsTappedBy);
+    type["HasLootRecipient"]                  = ALEBind::Method(&LuaCreature::HasLootRecipient);
+    type["CanAggro"]                          = ALEBind::Method(&LuaCreature::CanAggro);
+    type["CanSwim"]                           = ALEBind::Method(&LuaCreature::CanSwim);
+    type["CanWalk"]                           = ALEBind::Method(&LuaCreature::CanWalk);
+    type["IsInEvadeMode"]                     = ALEBind::Method(&LuaCreature::IsInEvadeMode);
+    type["IsElite"]                           = ALEBind::Method(&LuaCreature::IsElite);
+    type["IsGuard"]                           = ALEBind::Method(&LuaCreature::IsGuard);
+    type["IsCivilian"]                        = ALEBind::Method(&LuaCreature::IsCivilian);
+    type["IsRacialLeader"]                    = ALEBind::Method(&LuaCreature::IsRacialLeader);
+    type["IsDungeonBoss"]                     = ALEBind::Method(&LuaCreature::IsDungeonBoss);
+    type["IsWorldBoss"]                       = ALEBind::Method(&LuaCreature::IsWorldBoss);
+    type["HasCategoryCooldown"]               = ALEBind::Method(&LuaCreature::HasCategoryCooldown);
+    type["HasSpell"]                          = ALEBind::Method(&LuaCreature::HasSpell);
+    type["HasQuest"]                          = ALEBind::Method(&LuaCreature::HasQuest);
+    type["HasSpellCooldown"]                  = ALEBind::Method(&LuaCreature::HasSpellCooldown);
+    type["CanFly"]                            = ALEBind::Method(&LuaCreature::CanFly);
+    type["IsTrigger"]                         = ALEBind::Method(&LuaCreature::IsTrigger);
+    type["IsDamageEnoughForLootingAndReward"] = ALEBind::Method(&LuaCreature::IsDamageEnoughForLootingAndReward);
+    type["CanStartAttack"]                    = ALEBind::Method(&LuaCreature::CanStartAttack);
+    type["HasLootMode"]                       = ALEBind::Method(&LuaCreature::HasLootMode);
+    type["GetRespawnDelay"]                   = ALEBind::Method(&LuaCreature::GetRespawnDelay);
+    type["GetWanderRadius"]                   = ALEBind::Method(&LuaCreature::GetWanderRadius);
+    type["GetWaypointPath"]                   = ALEBind::Method(&LuaCreature::GetWaypointPath);
+    type["GetCurrentWaypointId"]              = ALEBind::Method(&LuaCreature::GetCurrentWaypointId);
+    type["GetSpawnId"]                        = ALEBind::Method(&LuaCreature::GetSpawnId);
+    type["GetDefaultMovementType"]            = ALEBind::Method(&LuaCreature::GetDefaultMovementType);
+    type["GetAggroRange"]                     = ALEBind::Method(&LuaCreature::GetAggroRange);
+    type["GetLootRecipientGroup"]             = ALEBind::Method(&LuaCreature::GetLootRecipientGroup);
+    type["GetLootRecipient"]                  = ALEBind::Method(&LuaCreature::GetLootRecipient);
+    type["GetScriptName"]                     = ALEBind::Method(&LuaCreature::GetScriptName);
+    type["GetAIName"]                         = ALEBind::Method(&LuaCreature::GetAIName);
+    type["GetScriptId"]                       = ALEBind::Method(&LuaCreature::GetScriptId);
+    type["GetCreatureSpellCooldownDelay"]     = ALEBind::Method(&LuaCreature::GetCreatureSpellCooldownDelay);
+    type["GetCorpseDelay"]                    = ALEBind::Method(&LuaCreature::GetCorpseDelay);
+    type["GetHomePosition"]                   = ALEBind::Method(&LuaCreature::GetHomePosition);
+    type["SetHomePosition"]                   = ALEBind::Method(&LuaCreature::SetHomePosition);
+    type["GetAITarget"]                       = ALEBind::Method(&LuaCreature::GetAITarget);
+    type["GetAITargets"]                      = ALEBind::Method(&LuaCreature::GetAITargets);
+    type["GetAITargetsCount"]                 = ALEBind::Method(&LuaCreature::GetAITargetsCount);
+    type["GetNPCFlags"]                       = ALEBind::Method(&LuaCreature::GetNPCFlags);
+    type["GetUnitFlags"]                      = ALEBind::Method(&LuaCreature::GetUnitFlags);
+    type["GetUnitFlagsTwo"]                   = ALEBind::Method(&LuaCreature::GetUnitFlagsTwo);
+    type["GetExtraFlags"]                     = ALEBind::Method(&LuaCreature::GetExtraFlags);
+    type["GetRank"]                           = ALEBind::Method(&LuaCreature::GetRank);
+    type["GetShieldBlockValue"]               = ALEBind::Method(&LuaCreature::GetShieldBlockValue);
+    type["GetLootMode"]                       = ALEBind::Method(&LuaCreature::GetLootMode);
+    type["GetDBTableGUIDLow"]                 = ALEBind::Method(&LuaCreature::GetDBTableGUIDLow);
+    type["GetReactState"]                     = ALEBind::Method(&LuaCreature::GetReactState);
+    type["SetNPCFlags"]                       = ALEBind::Method(&LuaCreature::SetNPCFlags);
+    type["SetUnitFlags"]                      = ALEBind::Method(&LuaCreature::SetUnitFlags);
+    type["SetUnitFlagsTwo"]                   = ALEBind::Method(&LuaCreature::SetUnitFlagsTwo);
+    type["SetReactState"]                     = ALEBind::Method(&LuaCreature::SetReactState);
+    type["SetDisableGravity"]                 = ALEBind::Method(&LuaCreature::SetDisableGravity);
+    type["SetLootMode"]                       = ALEBind::Method(&LuaCreature::SetLootMode);
+    type["SetDeathState"]                     = ALEBind::Method(&LuaCreature::SetDeathState);
+    type["SetWalk"]                           = ALEBind::Method(&LuaCreature::SetWalk);
+    type["SetEquipmentSlots"]                 = ALEBind::Method(&LuaCreature::SetEquipmentSlots);
+    type["SetAggroEnabled"]                   = ALEBind::Method(&LuaCreature::SetAggroEnabled);
+    type["SetDisableReputationGain"]          = ALEBind::Method(&LuaCreature::SetDisableReputationGain);
+    type["SetInCombatWithZone"]               = ALEBind::Method(&LuaCreature::SetInCombatWithZone);
+    type["SetWanderRadius"]                   = ALEBind::Method(&LuaCreature::SetWanderRadius);
+    type["SetRespawnDelay"]                   = ALEBind::Method(&LuaCreature::SetRespawnDelay);
+    type["SetDefaultMovementType"]            = ALEBind::Method(&LuaCreature::SetDefaultMovementType);
+    type["SetNoSearchAssistance"]             = ALEBind::Method(&LuaCreature::SetNoSearchAssistance);
+    type["SetNoCallAssistance"]               = ALEBind::Method(&LuaCreature::SetNoCallAssistance);
+    type["SetHover"]                          = ALEBind::Method(&LuaCreature::SetHover);
+    type["DespawnOrUnsummon"]                 = ALEBind::Method(&LuaCreature::DespawnOrUnsummon);
+    type["Respawn"]                           = ALEBind::Method(&LuaCreature::Respawn);
+    type["RemoveCorpse"]                      = ALEBind::Method(&LuaCreature::RemoveCorpse);
+    type["AllLootRemovedFromCorpse"]          = ALEBind::Method(&LuaCreature::AllLootRemovedFromCorpse);
+    type["SetCorpseDelay"]                    = ALEBind::Method(&LuaCreature::SetCorpseDelay);
+    type["MoveWaypoint"]                      = ALEBind::Method(&LuaCreature::MoveWaypoint);
+    type["CallAssistance"]                    = ALEBind::Method(&LuaCreature::CallAssistance);
+    type["CallForHelp"]                       = ALEBind::Method(&LuaCreature::CallForHelp);
+    type["FleeToGetAssistance"]               = ALEBind::Method(&LuaCreature::FleeToGetAssistance);
+    type["AttackStart"]                       = ALEBind::Method(&LuaCreature::AttackStart);
+    type["SaveToDB"]                          = ALEBind::Method(&LuaCreature::SaveToDB);
+    type["SelectVictim"]                      = ALEBind::Method(&LuaCreature::SelectVictim);
+    type["UpdateEntry"]                       = ALEBind::Method(&LuaCreature::UpdateEntry);
+    type["ResetLootMode"]                     = ALEBind::Method(&LuaCreature::ResetLootMode);
+    type["RemoveLootMode"]                    = ALEBind::Method(&LuaCreature::RemoveLootMode);
+    type["AddLootMode"]                       = ALEBind::Method(&LuaCreature::AddLootMode);
+    type["GetCreatureFamily"]                 = ALEBind::Method(&LuaCreature::GetCreatureFamily);
+    type["GetLoot"]                           = ALEBind::Method(&LuaCreature::GetLoot);
+}

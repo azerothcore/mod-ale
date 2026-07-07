@@ -4,8 +4,10 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef VEHICLEMETHODS_H
-#define VEHICLEMETHODS_H
+#include "ALEBind.h"
+
+#include "Unit.h"
+#include "Vehicle.h"
 
 /***
  * Represents a vehicle in the game, which can carry passengers and provide special abilities or movement.
@@ -20,11 +22,9 @@ namespace LuaVehicle
      * @param [Unit] passenger
      * @return bool isOnBoard
      */
-    int IsOnBoard(lua_State* L, Vehicle* vehicle)
+    bool IsOnBoard(Vehicle* vehicle, Unit* passenger)
     {
-        Unit* passenger = ALE::CHECKOBJ<Unit>(L, 2);
-        ALE::Push(L, passenger->IsOnVehicle(vehicle->GetBase()));
-        return 1;
+        return passenger->IsOnVehicle(vehicle->GetBase());
     }
 
     /**
@@ -32,10 +32,9 @@ namespace LuaVehicle
      *
      * @return [Unit] owner
      */
-    int GetOwner(lua_State* L, Vehicle* vehicle)
+    Unit* GetOwner(Vehicle* vehicle)
     {
-        ALE::Push(L, vehicle->GetBase());
-        return 1;
+        return vehicle->GetBase();
     }
 
     /**
@@ -43,10 +42,9 @@ namespace LuaVehicle
      *
      * @return uint32 entry
      */
-    int GetEntry(lua_State* L, Vehicle* vehicle)
+    uint32 GetEntry(Vehicle* vehicle)
     {
-        ALE::Push(L, vehicle->GetVehicleInfo()->m_ID);
-        return 1;
+        return vehicle->GetVehicleInfo()->m_ID;
     }
 
     /**
@@ -55,11 +53,9 @@ namespace LuaVehicle
      * @param int8 seat
      * @return [Unit] passenger
      */
-    int GetPassenger(lua_State* L, Vehicle* vehicle)
+    Unit* GetPassenger(Vehicle* vehicle, int8 seatId)
     {
-        int8 seatId = ALE::CHECKVAL<int8>(L, 2);
-        ALE::Push(L, vehicle->GetPassenger(seatId));
-        return 1;
+        return vehicle->GetPassenger(seatId);
     }
 
     /**
@@ -68,13 +64,9 @@ namespace LuaVehicle
      * @param [Unit] passenger
      * @param int8 seat
      */
-    int AddPassenger(lua_State* L, Vehicle* vehicle)
+    void AddPassenger(Vehicle* vehicle, Unit* passenger, int8 seatId)
     {
-        Unit* passenger = ALE::CHECKOBJ<Unit>(L, 2);
-        int8 seatId = ALE::CHECKVAL<int8>(L, 3);
-
         vehicle->AddPassenger(passenger, seatId);
-        return 0;
     }
 
     /**
@@ -82,12 +74,20 @@ namespace LuaVehicle
      *
      * @param [Unit] passenger
      */
-    int RemovePassenger(lua_State* L, Vehicle* vehicle)
+    void RemovePassenger(Vehicle* vehicle, Unit* passenger)
     {
-        Unit* passenger = ALE::CHECKOBJ<Unit>(L, 2);
         vehicle->RemovePassenger(passenger);
-        return 0;
     }
 }
 
-#endif // VEHICLEMETHODS_H
+void RegisterVehicleMethods(sol::state& lua)
+{
+    sol::usertype<ScopedRef<Vehicle>> type = ALEBind::NewHandleType<ScopedRef<Vehicle>>(lua, "Vehicle");
+
+    type["IsOnBoard"]       = ALEBind::Method(&LuaVehicle::IsOnBoard);
+    type["GetOwner"]        = ALEBind::Method(&LuaVehicle::GetOwner);
+    type["GetEntry"]        = ALEBind::Method(&LuaVehicle::GetEntry);
+    type["GetPassenger"]    = ALEBind::Method(&LuaVehicle::GetPassenger);
+    type["AddPassenger"]    = ALEBind::Method(&LuaVehicle::AddPassenger);
+    type["RemovePassenger"] = ALEBind::Method(&LuaVehicle::RemovePassenger);
+}

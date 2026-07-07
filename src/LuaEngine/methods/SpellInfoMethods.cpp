@@ -4,8 +4,11 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef SPELLINFOMETHODS_H
-#define SPELLINFOMETHODS_H
+#include "ALEBind.h"
+
+#include "Common.h"
+#include "SharedDefines.h"
+#include "SpellInfo.h"
 
 /***
  * Represents spell metadata used for behavior, targeting, attributes, mechanics, auras, and conditions.
@@ -39,13 +42,11 @@ namespace LuaSpellInfo
      * @param [LocaleConstant] locale = DEFAULT_LOCALE : locale to return the [SpellInfo]'s name
      * @return [string] name
      */
-    int GetName(lua_State* L, SpellInfo* spell_info)
+    char const* GetName(SpellInfo* spell_info, sol::optional<uint8> locale)
     {
-        uint8 locale = ALE::CHECKVAL<uint8>(L, 2, DEFAULT_LOCALE);
-        ALE::Push(L, spell_info->SpellName[static_cast<LocaleConstant>(locale)]);
-        return 1;
+        return spell_info->SpellName[static_cast<LocaleConstant>(locale.value_or(DEFAULT_LOCALE))];
     }
-    
+
     /**
      * Checks if the [SpellInfo] has a specific attribute.
      *
@@ -53,7 +54,7 @@ namespace LuaSpellInfo
      * Attributes are divided into different categories (from 0 to 8 in this context).
      *
      * Here is how each attribute is inspected:
-     * 
+     *
      * <pre>
      * 0 : SpellAttr0
      * 1 : SpellAttr1
@@ -70,16 +71,14 @@ namespace LuaSpellInfo
      * @param [uint32] attribute : the specific attribute to check.
      * @return [bool] has_attribute
      */
-    int HasAttribute(lua_State* L, SpellInfo* spell_info)
+    bool HasAttribute(SpellInfo* spell_info, int8 attributeType, uint32 attribute)
     {
-        int8 attributeType = ALE::CHECKVAL<int8>(L, 2);
-        uint32 attribute    = ALE::CHECKVAL<uint32>(L, 3);
-
         bool hasAttribute = false;
-        if ( attributeType == -1 ) {
-            hasAttribute = spell_info->HasAttribute(static_cast<SpellCustomAttributes>(attribute));           ;
-        }else{
-            switch(attributeType)
+        if (attributeType == -1)
+            hasAttribute = spell_info->HasAttribute(static_cast<SpellCustomAttributes>(attribute));
+        else
+        {
+            switch (attributeType)
             {
                 case 0:
                     hasAttribute = spell_info->HasAttribute(static_cast<SpellAttr0>(attribute));
@@ -110,10 +109,9 @@ namespace LuaSpellInfo
             }
         }
 
-        ALE::Push(L, hasAttribute);
-        return 1;
+        return hasAttribute;
     }
-    
+
     /**
      * Retrieves the attributes of the [SpellInfo] based on the attribute type.
      *
@@ -136,16 +134,15 @@ namespace LuaSpellInfo
      * @param [int8] attributeType : The type of the attribute.
      * @return [uint32] attributes
      */
-    int GetAttributes(lua_State* L, SpellInfo* spell_info)
+    uint32 GetAttributes(SpellInfo* spell_info, int8 attributeType)
     {
-        int8 attributeType = ALE::CHECKVAL<int8>(L, 2);
-        uint32 attributes;
+        uint32 attributes = 0;
 
-        if ( attributeType == -1 ) {
+        if (attributeType == -1)
             attributes = spell_info->AttributesCu;
-        }
-        else {
-            switch(attributeType)
+        else
+        {
+            switch (attributeType)
             {
                 case 0:
                     attributes = spell_info->Attributes;
@@ -174,42 +171,39 @@ namespace LuaSpellInfo
             }
         }
 
-        ALE::Push(L, attributes);
-        return 1;
+        return attributes;
     }
-    
+
     /**
      * Determines whether the [SpellInfo] affects an area (AOE - Area of Effect)
      *
      * The affected area will depend upon the specifics of the spell.
      * A target can be an individual unit, player, or an area, and the spellInfo stores these details.
-     * 
+     *
      * The function checks the spell's attributes to determine if the spell is designed to affect an area or not.
      * The outcome relies on spell's attributes field.
-     * 
+     *
      * @return [bool] is_affecting_area
      */
-    int IsAffectingArea(lua_State* L, SpellInfo* spell_info)
+    bool IsAffectingArea(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsAffectingArea());
-        return 1;
+        return spell_info->IsAffectingArea();
     }
-    
+
     /**
      * Retrieves the category of the [SpellInfo].
      *
      * A spell's category is a way of grouping similar spells together.
-     * It might define the spell's nature or its effect. 
+     * It might define the spell's nature or its effect.
      * For instance, damage spells, heal spells, and crowd-control spells might each have a different category.
      *
      * @return [uint32] category
      */
-    int GetCategory(lua_State* L, SpellInfo* spell_info)
+    uint32 GetCategory(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->GetCategory());
-        return 1;
+        return spell_info->GetCategory();
     }
-    
+
     /**
      * Checks if the [SpellInfo] has a specific effect.
      *
@@ -217,57 +211,50 @@ namespace LuaSpellInfo
      * These effects are identified by a predefined set of constants represented by the 'SpellEffects' enumeration.
      *
      * @param [uint8] effect : The specific effect to check.
-     * @return [bool] has_effect 
+     * @return [bool] has_effect
      */
-    int HasEffect(lua_State* L, SpellInfo* spell_info)
+    bool HasEffect(SpellInfo* spell_info, uint8 effect)
     {
-        uint8 effect = ALE::CHECKVAL<uint8>(L, 2);
-        ALE::Push(L, spell_info->HasEffect(static_cast<SpellEffects>(effect)));
-        return 1;
+        return spell_info->HasEffect(static_cast<SpellEffects>(effect));
     }
-    
+
     /**
      * Checks if the [SpellInfo] has a specific aura.
      *
-     * An aura represents a status change or modification due to a spell or ability. 
+     * An aura represents a status change or modification due to a spell or ability.
      * These auras are identified by a predefined set of constants represented by the 'AuraType' enumeration.
      *
      * @param [uint32] aura : The specific aura to check.
      * @return [bool] has_aura
      */
-    int HasAura(lua_State* L, SpellInfo* spell_info)
+    bool HasAura(SpellInfo* spell_info, uint32 aura)
     {
-        uint32 aura = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, spell_info->HasAura(static_cast<AuraType>(aura)));
-        return 1;
+        return spell_info->HasAura(static_cast<AuraType>(aura));
     }
-    
+
     /**
      * Checks if the [SpellInfo] has an area aura effect.
      *
      * Area aura is a type of spell effect that affects multiple targets within a certain area.
-     * 
+     *
      * @return [bool] has_area_aura_effect
      */
-    int HasAreaAuraEffect(lua_State* L, SpellInfo* spell_info)
+    bool HasAreaAuraEffect(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->HasAreaAuraEffect());
-        return 1;
+        return spell_info->HasAreaAuraEffect();
     }
-    
-   
+
     /**
      * Checks if the [SpellInfo] is an explicit discovery.
      *
-     * An "explicit discovery" may refer to a spell that is not intuitive or is hidden and must be specifically 
+     * An "explicit discovery" may refer to a spell that is not intuitive or is hidden and must be specifically
      * discovered by the player through some sort of action or event.
      *
      * @return [bool] is_explicit_discovery
      */
-    int IsExplicitDiscovery(lua_State* L, SpellInfo* spell_info)
+    bool IsExplicitDiscovery(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsExplicitDiscovery());
-        return 1;
+        return spell_info->IsExplicitDiscovery();
     }
 
     /**
@@ -278,10 +265,9 @@ namespace LuaSpellInfo
      *
      * @return [bool] is_loot_crafting
      */
-    int IsLootCrafting(lua_State* L, SpellInfo* spell_info)
+    bool IsLootCrafting(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsLootCrafting());
-        return 1;
+        return spell_info->IsLootCrafting();
     }
 
     /**
@@ -292,83 +278,76 @@ namespace LuaSpellInfo
      *
      * @return [bool] is_profression_or_riding
      */
-    int IsProfessionOrRiding(lua_State* L, SpellInfo* spell_info)
+    bool IsProfessionOrRiding(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsProfessionOrRiding());
-        return 1;
+        return spell_info->IsProfessionOrRiding();
     }
 
     /**
      * Checks if the [SpellInfo] is related to a profession skill.
      *
-     * Profession skills may refer to abilities related to a specific occupation or trade, 
+     * Profession skills may refer to abilities related to a specific occupation or trade,
      * such as blacksmithing, alchemy, fishing, etc.
      *
      * @return [bool] is_profession
      */
-    int IsProfession(lua_State* L, SpellInfo* spell_info)
+    bool IsProfession(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsProfession());
-        return 1;
+        return spell_info->IsProfession();
     }
 
     /**
      * Checks if the [SpellInfo] is related to a primary profession skill.
      *
-     * Primary profession skills usually refer to main occupations or trades of the player character, 
+     * Primary profession skills usually refer to main occupations or trades of the player character,
      * such as blacksmithing, alchemy, mining, etc.
      *
      * @return [bool] is_primary_profession
      */
-    int IsPrimaryProfession(lua_State* L, SpellInfo* spell_info)
+    bool IsPrimaryProfession(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsPrimaryProfession());
-        return 1;
+        return spell_info->IsPrimaryProfession();
     }
 
     /**
      * Checks if the [SpellInfo] represents the first rank of a primary profession skill.
-     * 
-     * Primary profession skills usually refer to main occupations or trades of the player character. 
+     *
+     * Primary profession skills usually refer to main occupations or trades of the player character.
      * The first rank typically indicates the introductory level of the profession.
      *
      * @return [bool] is_primary_profession_first_rank
      */
-    int IsPrimaryProfessionFirstRank(lua_State* L, SpellInfo* spell_info)
+    bool IsPrimaryProfessionFirstRank(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsPrimaryProfessionFirstRank());
-        return 1;
+        return spell_info->IsPrimaryProfessionFirstRank();
     }
 
     /**
      * Checks if the [SpellInfo] represents an ability learned with a profession skill.
      *
-     * Certain abilities or skills (like crafting item or gathering materials) 
+     * Certain abilities or skills (like crafting item or gathering materials)
      * can be learned as part of a profession.
      *
      * @return [bool] is_ability_learned_with_profession
      */
-    int IsAbilityLearnedWithProfession(lua_State* L, SpellInfo* spell_info)
+    bool IsAbilityLearnedWithProfession(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsAbilityLearnedWithProfession());
-        return 1;
+        return spell_info->IsAbilityLearnedWithProfession();
     }
 
     /**
      * Checks if the [SpellInfo] represents an ability of a specific skill type.
      *
-     * This function allows checking if a spell or ability belongs to a specific skill type. 
-     * The skill type is often represented as an integral value (in this case, uint32), 
+     * This function allows checking if a spell or ability belongs to a specific skill type.
+     * The skill type is often represented as an integral value (in this case, uint32),
      * where each value may correspond to a different skill category such as crafting, combat, magic, etc.
      *
      * @param [uint32] skillType: The skill type to check against. Should be an integral value representing the skill type.
      * @return [bool] is_ability_of_skill_type
      */
-    int IsAbilityOfSkillType(lua_State* L, SpellInfo* spell_info)
+    bool IsAbilityOfSkillType(SpellInfo* spell_info, uint32 skillType)
     {
-        uint32 skillType = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, spell_info->IsAbilityOfSkillType(skillType));
-        return 1;
+        return spell_info->IsAbilityOfSkillType(skillType);
     }
 
     /**
@@ -378,129 +357,119 @@ namespace LuaSpellInfo
      *
      * @return [bool] is_targeting_area
      */
-    int IsTargetingArea(lua_State* L, SpellInfo* spell_info)
+    bool IsTargetingArea(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsTargetingArea());
-        return 1;
+        return spell_info->IsTargetingArea();
     }
 
     /**
      * Checks if the [SpellInfo] requires an explicit unit target.
      *
-     * Certain spells or abilities can only be cast or used when a specific unit (like a player character, NPC, or enemy) is targeted. 
+     * Certain spells or abilities can only be cast or used when a specific unit (like a player character, NPC, or enemy) is targeted.
      * This function checks if the spell or ability represented by [SpellInfo] has this requirement.
      *
      * @return [bool] needs_explicit_unit_target
      */
-    int NeedsExplicitUnitTarget(lua_State* L, SpellInfo* spell_info)
+    bool NeedsExplicitUnitTarget(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->NeedsExplicitUnitTarget());
-        return 1;
+        return spell_info->NeedsExplicitUnitTarget();
     }
 
     /**
      * Checks if the [SpellInfo] requires to be triggered by the caster of another specified [SpellInfo].
      *
-     * Certain spells or abilities can only be activated or become effective when they are triggered by the caster 
-     * of another specific spell (the `triggeringSpell`). This function examines if the spell or ability represented 
+     * Certain spells or abilities can only be activated or become effective when they are triggered by the caster
+     * of another specific spell (the `triggeringSpell`). This function examines if the spell or ability represented
      * by [SpellInfo] has such requirement.
      *
      * @param [SpellInfo] triggeringSpell : the spell by the casting of which the ability or spell represented by [SpellInfo] is triggered
      * @return [bool] needs_to_be_triggered_by_caster
      */
-    int NeedsToBeTriggeredByCaster(lua_State* L, SpellInfo* spell_info)
+    bool NeedsToBeTriggeredByCaster(SpellInfo* spell_info, SpellInfo const* triggeringSpell)
     {
-        const SpellInfo* triggeringSpell = ALE::CHECKOBJ<SpellInfo>(L, 2);
-        ALE::Push(L, spell_info->NeedsToBeTriggeredByCaster(triggeringSpell));
-        return 1;
+        return spell_info->NeedsToBeTriggeredByCaster(triggeringSpell);
     }
 
     /**
      * Checks if the [SpellInfo] represents a self-casting spell or ability.
      *
-     * Self-casting spells or abilities are those that the casters use on themselves. This can include 
-     * defensive spells, healing spells, buffs, or any other type of effect that a player character or 
+     * Self-casting spells or abilities are those that the casters use on themselves. This can include
+     * defensive spells, healing spells, buffs, or any other type of effect that a player character or
      * NPC applies on themselves.
      *
      * @return [bool] is_self_cast
      */
-    int IsSelfCast(lua_State* L, SpellInfo* spell_info)
+    bool IsSelfCast(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsSelfCast());
-        return 1;
+        return spell_info->IsSelfCast();
     }
 
     /**
      * Checks if the [SpellInfo] represents a passive spell or ability.
      *
-     * Passive spells or abilities are those that are always in effect, without the need for the player or 
+     * Passive spells or abilities are those that are always in effect, without the need for the player or
      * NPC to manually activate them. They usually provide their bonus or effect as long as certain conditions are met.
      *
      * @return [bool] is_passive
      */
-    int IsPassive(lua_State* L, SpellInfo* spell_info)
+    bool IsPassive(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsPassive());
-        return 1;
+        return spell_info->IsPassive();
     }
 
     /**
      * Checks if the [SpellInfo] represents a spell or ability that can be set to autocast.
      *
-     * Autocasting is a feature that allows certain abilities or spells to be cast automatically by the game's 
-     * AI when certain conditions are met. This function checks if the spell or ability represented by [SpellInfo] 
+     * Autocasting is a feature that allows certain abilities or spells to be cast automatically by the game's
+     * AI when certain conditions are met. This function checks if the spell or ability represented by [SpellInfo]
      * can be set to autocast.
      *
      * @return [bool] is_autocastable
      */
-    int IsAutocastable(lua_State* L, SpellInfo* spell_info)
+    bool IsAutocastable(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsAutocastable());
-        return 1;
+        return spell_info->IsAutocastable();
     }
 
     /**
      * Determines if the [SpellInfo] represents a spell or ability that stack with different ranks.
      *
-     * Some spells or abilities can accumulate or "stack" their effects with multiple activations 
-     * and these effects can sometimes vary based on the rank or level of the spell. This function checks 
+     * Some spells or abilities can accumulate or "stack" their effects with multiple activations
+     * and these effects can sometimes vary based on the rank or level of the spell. This function checks
      * if the spell represented by [SpellInfo] has this capacity.
      *
      * @return [bool] is_stackable_with_ranks
      */
-    int IsStackableWithRanks(lua_State* L, SpellInfo* spell_info)
+    bool IsStackableWithRanks(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsStackableWithRanks());
-        return 1;
+        return spell_info->IsStackableWithRanks();
     }
 
     /**
      * Checks if the [SpellInfo] represents a passive spell or ability that is stackable with different ranks.
      *
-     * Some passive spells or abilities are designed to stack their effects with multiple activations, and these effects 
-     * can also vary depending on the rank of the spell. This function assesses whether the spell or ability represented 
+     * Some passive spells or abilities are designed to stack their effects with multiple activations, and these effects
+     * can also vary depending on the rank of the spell. This function assesses whether the spell or ability represented
      * by [SpellInfo] has this property.
      *
      * @return [bool] is_passive_stackable_with_ranks
      */
-    int IsPassiveStackableWithRanks(lua_State* L, SpellInfo* spell_info)
+    bool IsPassiveStackableWithRanks(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsPassiveStackableWithRanks());
-        return 1;
+        return spell_info->IsPassiveStackableWithRanks();
     }
 
     /**
      * Checks if the [SpellInfo] represents a multi-slot aura spell or effect.
      *
-     * A multi-slot aura is one that takes up more than one slot or position in the game's effect array or system. 
+     * A multi-slot aura is one that takes up more than one slot or position in the game's effect array or system.
      * This function checks if the spell or ability represented by [SpellInfo] has this property.
      *
      * @return [bool] is_multi_slot_aura
      */
-    int IsMultiSlotAura(lua_State* L, SpellInfo* spell_info)
+    bool IsMultiSlotAura(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsMultiSlotAura());
-        return 1;
+        return spell_info->IsMultiSlotAura();
     }
 
     /**
@@ -508,10 +477,9 @@ namespace LuaSpellInfo
      *
      * @return [bool] is_cooldown_started_on_event
      */
-    int IsCooldownStartedOnEvent(lua_State* L, SpellInfo* spell_info)
+    bool IsCooldownStartedOnEvent(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsCooldownStartedOnEvent());
-        return 1;
+        return spell_info->IsCooldownStartedOnEvent();
     }
 
     /**
@@ -519,10 +487,9 @@ namespace LuaSpellInfo
      *
      * @return [bool] is_death_persistant
      */
-    int IsDeathPersistent(lua_State* L, SpellInfo* spell_info)
+    bool IsDeathPersistent(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsDeathPersistent());
-        return 1;
+        return spell_info->IsDeathPersistent();
     }
 
     /**
@@ -530,10 +497,9 @@ namespace LuaSpellInfo
      *
      * @return [bool] : true if the [SpellInfo] requires a dead target; false otherwise
      */
-    int IsRequiringDeadTarget(lua_State* L, SpellInfo* spell_info)
+    bool IsRequiringDeadTarget(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsRequiringDeadTarget());
-        return 1;
+        return spell_info->IsRequiringDeadTarget();
     }
 
     /**
@@ -541,10 +507,9 @@ namespace LuaSpellInfo
      *
      * @return bool allowsDeadTarget
      */
-    int IsAllowingDeadTarget(lua_State* L, SpellInfo* spell_info)
+    bool IsAllowingDeadTarget(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsAllowingDeadTarget());
-        return 1;
+        return spell_info->IsAllowingDeadTarget();
     }
 
     /**
@@ -552,10 +517,9 @@ namespace LuaSpellInfo
      *
      * @return bool usableInCombat
      */
-    int CanBeUsedInCombat(lua_State* L, SpellInfo* spell_info)
+    bool CanBeUsedInCombat(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->CanBeUsedInCombat());
-        return 1;
+        return spell_info->CanBeUsedInCombat();
     }
 
     /**
@@ -563,10 +527,9 @@ namespace LuaSpellInfo
      *
      * @return bool isPositive
      */
-    int IsPositive(lua_State* L, SpellInfo* spell_info)
+    bool IsPositive(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsPositive());
-        return 1;
+        return spell_info->IsPositive();
     }
 
     /**
@@ -575,11 +538,9 @@ namespace LuaSpellInfo
      * @param uint8 effIndex
      * @return bool isPositiveEffect
      */
-    int IsPositiveEffect(lua_State* L, SpellInfo* spell_info)
+    bool IsPositiveEffect(SpellInfo* spell_info, uint8 effIndex)
     {
-        uint8 effIndex = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, spell_info->IsPositiveEffect(effIndex));
-        return 1;
+        return spell_info->IsPositiveEffect(effIndex);
     }
 
     /**
@@ -587,10 +548,9 @@ namespace LuaSpellInfo
      *
      * @return bool isChanneled
      */
-    int IsChanneled(lua_State* L, SpellInfo* spell_info)
+    bool IsChanneled(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsChanneled());
-        return 1;
+        return spell_info->IsChanneled();
     }
 
     /**
@@ -598,10 +558,9 @@ namespace LuaSpellInfo
      *
      * @return bool needsComboPoints
      */
-    int NeedsComboPoints(lua_State* L, SpellInfo* spell_info)
+    bool NeedsComboPoints(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->NeedsComboPoints());
-        return 1;
+        return spell_info->NeedsComboPoints();
     }
 
     /**
@@ -609,10 +568,9 @@ namespace LuaSpellInfo
      *
      * @return bool breaksStealth
      */
-    int IsBreakingStealth(lua_State* L, SpellInfo* spell_info)
+    bool IsBreakingStealth(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsBreakingStealth());
-        return 1;
+        return spell_info->IsBreakingStealth();
     }
 
     /**
@@ -620,10 +578,9 @@ namespace LuaSpellInfo
      *
      * @return bool isRangedWeaponSpell
      */
-    int IsRangedWeaponSpell(lua_State* L, SpellInfo* spell_info)
+    bool IsRangedWeaponSpell(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsRangedWeaponSpell());
-        return 1;
+        return spell_info->IsRangedWeaponSpell();
     }
 
     /**
@@ -631,107 +588,92 @@ namespace LuaSpellInfo
      *
      * @return bool isAutoRepeat
      */
-    int IsAutoRepeatRangedSpell(lua_State* L, SpellInfo* spell_info)
+    bool IsAutoRepeatRangedSpell(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsAutoRepeatRangedSpell());
-        return 1;
-    }  
+        return spell_info->IsAutoRepeatRangedSpell();
+    }
 
     /**
      * Returns `true` if the [SpellInfo] is affected by spell modifiers (e.g., talents, auras), `false` otherwise.
      *
      * @return bool isAffectedByMods
      */
-    int IsAffectedBySpellMods(lua_State* L, SpellInfo* spell_info)
+    bool IsAffectedBySpellMods(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsAffectedBySpellMods());
-        return 1;
+        return spell_info->IsAffectedBySpellMods();
     }
-    
-    /*  int IsAffectedBySpellMod(lua_State* L, SpellInfo* spell_info)
+
+    /*  bool IsAffectedBySpellMod(SpellInfo* spell_info, SpellInfo const* auraSpellInfo)
         {
-            const SpellInfo* auraSpellInfo = ALE::CHECKOBJ<SpellInfo>(L, 2);
-            ALE::Push(L, spell_info->IsAffectedBySpellMod(auraSpellInfo));
-            return 1;
+            return spell_info->IsAffectedBySpellMod(auraSpellInfo);
         }
     */
-    
+
     /**
      * Returns `true` if the [SpellInfo] can pierce through an immunity aura defined by the given [SpellInfo], `false` otherwise.
      *
      * @param [SpellInfo] auraSpellInfo : the spell representing the immunity aura
      * @return bool canPierce
      */
-    int CanPierceImmuneAura(lua_State* L, SpellInfo* spell_info)
+    bool CanPierceImmuneAura(SpellInfo* spell_info, SpellInfo const* auraSpellInfo)
     {
-        const SpellInfo* auraSpellInfo = ALE::CHECKOBJ<SpellInfo>(L, 2);
-        ALE::Push(L, spell_info->CanPierceImmuneAura(auraSpellInfo));
-        return 1;
+        return spell_info->CanPierceImmuneAura(auraSpellInfo);
     }
-    
+
     /**
      * Returns `true` if the [SpellInfo] can dispel the specified aura [SpellInfo], `false` otherwise.
      *
      * @param [SpellInfo] auraSpellInfo : the aura spell to check
      * @return bool canDispel
      */
-    int CanDispelAura(lua_State* L, SpellInfo* spell_info)
+    bool CanDispelAura(SpellInfo* spell_info, SpellInfo const* auraSpellInfo)
     {
-        const SpellInfo* auraSpellInfo = ALE::CHECKOBJ<SpellInfo>(L, 2);
-        ALE::Push(L, spell_info->CanDispelAura(auraSpellInfo));
-        return 1;
+        return spell_info->CanDispelAura(auraSpellInfo);
     }
-    
+
     /**
      * Returns `true` if the [SpellInfo] only affects a single target, `false` if it affects multiple or area targets.
      *
      * @return bool isSingleTarget
      */
-    int IsSingleTarget(lua_State* L, SpellInfo* spell_info)
+    bool IsSingleTarget(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->IsSingleTarget());
-        return 1;
+        return spell_info->IsSingleTarget();
     }
-    
+
     /**
      * Returns `true` if the [SpellInfo] is mutually exclusive with the specified [SpellInfo] due to specific aura exclusivity rules.
      *
      * @param [SpellInfo] otherSpellInfo : the spell to compare exclusivity with
      * @return bool isExclusive
      */
-    int IsAuraExclusiveBySpecificWith(lua_State* L, SpellInfo* spell_info)
+    bool IsAuraExclusiveBySpecificWith(SpellInfo* spell_info, SpellInfo const* spellInfo)
     {
-        const SpellInfo* spellInfo = ALE::CHECKOBJ<SpellInfo>(L, 2);
-        ALE::Push(L, spell_info->IsAuraExclusiveBySpecificWith(spellInfo));
-        return 1;
+        return spell_info->IsAuraExclusiveBySpecificWith(spellInfo);
     }
-    
+
     /**
      * Returns `true` if the [SpellInfo] is exclusive with the specified [SpellInfo] per caster, based on aura exclusivity rules.
      *
      * @param [SpellInfo] otherSpellInfo : the spell to compare exclusivity with
      * @return bool isExclusivePerCaster
      */
-    int IsAuraExclusiveBySpecificPerCasterWith(lua_State* L, SpellInfo* spell_info)
+    bool IsAuraExclusiveBySpecificPerCasterWith(SpellInfo* spell_info, SpellInfo const* spellInfo)
     {
-        const SpellInfo* spellInfo = ALE::CHECKOBJ<SpellInfo>(L, 2);
-        ALE::Push(L, spell_info->IsAuraExclusiveBySpecificPerCasterWith(spellInfo));
-        return 1;
+        return spell_info->IsAuraExclusiveBySpecificPerCasterWith(spellInfo);
     }
-    
+
     /**
      * Returns `true` if the [SpellInfo] can be cast while in the specified shapeshift form.
      *
      * @param uint32 form : the shapeshift form to check
      * @return bool isAllowed
      */
-    int CheckShapeshift(lua_State* L, SpellInfo* spell_info)
+    SpellCastResult CheckShapeshift(SpellInfo* spell_info, uint32 form)
     {
-        uint32 form = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, spell_info->CheckShapeshift(form));
-        return 1;
+        return spell_info->CheckShapeshift(form);
     }
-    
+
     /**
      * Returns `true` if the [SpellInfo] can be cast in the specified location.
      *
@@ -742,18 +684,11 @@ namespace LuaSpellInfo
      * @param bool strict = false : whether all conditions must strictly match
      * @return bool isAllowed
      */
-    int CheckLocation(lua_State* L, SpellInfo* spell_info)
+    SpellCastResult CheckLocation(SpellInfo* spell_info, uint32 map_id, uint32 zone_id, uint32 area_id, Player* player, sol::optional<bool> strict)
     {
-        uint32 map_id = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 zone_id = ALE::CHECKVAL<uint32>(L, 3);
-        uint32 area_id = ALE::CHECKVAL<uint32>(L, 4);
-        Player* player = ALE::CHECKOBJ<Player>(L, 5);
-        bool strict = ALE::CHECKVAL<bool>(L, 6, false);
-
-        ALE::Push(L, spell_info->CheckLocation(map_id, zone_id, area_id, player, strict));
-        return 1;
+        return spell_info->CheckLocation(map_id, zone_id, area_id, player, strict.value_or(false));
     }
-    
+
     /**
      * Returns `true` if the target is valid for the [SpellInfo].
      *
@@ -762,16 +697,11 @@ namespace LuaSpellInfo
      * @param bool implicit = true : whether implicit target checks should apply
      * @return bool isValid
      */
-    int CheckTarget(lua_State* L, SpellInfo* spell_info)
+    SpellCastResult CheckTarget(SpellInfo* spell_info, Unit const* caster, WorldObject const* target, sol::optional<bool> implicit)
     {
-        const Unit* caster = ALE::CHECKOBJ<Unit>(L, 2);
-        const WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 3);
-        bool implicit = ALE::CHECKVAL<bool>(L, 4, true);
-
-        ALE::Push(L, spell_info->CheckTarget(caster, target, implicit));
-        return 1;
+        return spell_info->CheckTarget(caster, target, implicit.value_or(true));
     }
-    
+
     /**
      * Returns `true` if the [SpellInfo] can be explicitly cast on the given [target] with the optional [Item].
      *
@@ -780,30 +710,22 @@ namespace LuaSpellInfo
      * @param [Item] item : optional item used in the cast
      * @return bool isValid
      */
-    int CheckExplicitTarget(lua_State* L, SpellInfo* spell_info)
+    SpellCastResult CheckExplicitTarget(SpellInfo* spell_info, Unit const* caster, WorldObject const* target, Item const* item)
     {
-        const Unit* caster = ALE::CHECKOBJ<Unit>(L, 2);
-        const WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 3);
-        const Item* item = ALE::CHECKOBJ<Item>(L, 4, true);
-
-        ALE::Push(L, spell_info->CheckExplicitTarget(caster, target, item));
-        return 1;
+        return spell_info->CheckExplicitTarget(caster, target, item);
     }
-    
+
     /**
      * Returns `true` if the [SpellInfo] can affect the [Unit] based on its creature type.
      *
      * @param [Unit] target : the [Unit] whose creature type is evaluated
      * @return bool isValid
      */
-    int CheckTargetCreatureType(lua_State* L, SpellInfo* spell_info)
+    bool CheckTargetCreatureType(SpellInfo* spell_info, Unit const* target)
     {
-        const Unit* target = ALE::CHECKOBJ<Unit>(L, 2);
-
-        ALE::Push(L, spell_info->CheckTargetCreatureType(target));
-        return 1;
+        return spell_info->CheckTargetCreatureType(target);
     }
-    
+
     /**
      * Returns the school mask of the [SpellInfo].
      *
@@ -811,12 +733,11 @@ namespace LuaSpellInfo
      *
      * @return uint32 schoolMask
      */
-    int GetSchoolMask(lua_State* L, SpellInfo* spell_info)
+    SpellSchoolMask GetSchoolMask(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->GetSchoolMask());
-        return 1;
+        return spell_info->GetSchoolMask();
     }
-    
+
     /**
      * Returns a combined mechanic mask of all effects for the [SpellInfo].
      *
@@ -824,54 +745,44 @@ namespace LuaSpellInfo
      *
      * @return uint32 mechanicMask
      */
-    int GetAllEffectsMechanicMask(lua_State* L, SpellInfo* spell_info)
+    uint64 GetAllEffectsMechanicMask(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->GetAllEffectsMechanicMask());
-        return 1;
+        return spell_info->GetAllEffectsMechanicMask();
     }
-    
+
     /**
      * Returns the mechanic mask of a specific effect of the [SpellInfo].
      *
      * @param uint32 effIndex
      * @return uint32 mechanicMask
      */
-    int GetEffectMechanicMask(lua_State* L, SpellInfo* spell_info)
+    uint64 GetEffectMechanicMask(SpellInfo* spell_info, uint32 effIndex)
     {
-        uint32 effIndex = ALE::CHECKVAL<uint32>(L, 2);
-        
-        ALE::Push(L, spell_info->GetEffectMechanicMask(static_cast<SpellEffIndex>(effIndex)));
-        return 1;
+        return spell_info->GetEffectMechanicMask(static_cast<SpellEffIndex>(effIndex));
     }
-    
+
     /**
      * Returns the mechanic mask for the [SpellInfo] based on an effect bitmask.
      *
      * @param uint32 effectmask : bitmask of effects to include
      * @return uint32 mechanicMask
      */
-    int GetSpellMechanicMaskByEffectMask(lua_State* L, SpellInfo* spell_info)
+    uint64 GetSpellMechanicMaskByEffectMask(SpellInfo* spell_info, uint32 effectmask)
     {
-        uint32 effectmask = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, spell_info->GetSpellMechanicMaskByEffectMask(effectmask));
-        return 1;
+        return spell_info->GetSpellMechanicMaskByEffectMask(effectmask);
     }
-    
+
     /**
      * Returns the mechanic of the specified effect index in the [SpellInfo].
      *
      * @param uint32 effIndex
      * @return uint32 mechanic
      */
-    int GetEffectMechanic(lua_State* L, SpellInfo* spell_info)
+    Mechanics GetEffectMechanic(SpellInfo* spell_info, uint32 effIndex)
     {
-        uint32 effIndex = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, spell_info->GetEffectMechanic(static_cast<SpellEffIndex>(effIndex)));
-        return 1;
+        return spell_info->GetEffectMechanic(static_cast<SpellEffIndex>(effIndex));
     }
-    
+
     /**
      * Returns the dispel mask for the [SpellInfo].
      *
@@ -880,14 +791,12 @@ namespace LuaSpellInfo
      * @param uint32 type : optional type of dispel to check. If not provided, uses the spell's own dispel type.
      * @return uint32 dispelMask
      */
-    int GetDispelMask(lua_State* L, SpellInfo* spell_info)
+    uint32 GetDispelMask(SpellInfo* spell_info, sol::optional<uint32> type)
     {
-        uint32 type = ALE::CHECKVAL<uint32>(L, 2, false);
-
-        ALE::Push(L, type != 0 ? spell_info->GetDispelMask(static_cast<DispelType>(type)) : spell_info->GetDispelMask());
-        return 1;
+        uint32 dispelType = type.value_or(0);
+        return dispelType != 0 ? spell_info->GetDispelMask(static_cast<DispelType>(dispelType)) : spell_info->GetDispelMask();
     }
-    
+
     /**
      * Returns the explicit target mask of the [SpellInfo].
      *
@@ -895,12 +804,11 @@ namespace LuaSpellInfo
      *
      * @return uint32 targetMask
      */
-    int GetExplicitTargetMask(lua_State* L, SpellInfo* spell_info)
+    uint32 GetExplicitTargetMask(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->GetExplicitTargetMask());
-        return 1;
+        return spell_info->GetExplicitTargetMask();
     }
-    
+
     /**
      * Returns the aura state requirement for the [SpellInfo].
      *
@@ -908,12 +816,11 @@ namespace LuaSpellInfo
      *
      * @return uint32 auraState
      */
-    int GetAuraState(lua_State* L, SpellInfo* spell_info)
+    AuraStateType GetAuraState(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->GetAuraState());
-        return 1;
+        return spell_info->GetAuraState();
     }
-    
+
     /**
      * Returns the spell specific type of the [SpellInfo].
      *
@@ -921,10 +828,9 @@ namespace LuaSpellInfo
      *
      * @return uint32 spellSpecific
      */
-    int GetSpellSpecific(lua_State* L, SpellInfo* spell_info)
+    SpellSpecificType GetSpellSpecific(SpellInfo* spell_info)
     {
-        ALE::Push(L, spell_info->GetSpellSpecific());
-        return 1;
+        return spell_info->GetSpellSpecific();
     }
 
     /**
@@ -939,24 +845,15 @@ namespace LuaSpellInfo
     * @param uint8 effectIndex : The index of the effect (0, 1, or 2)
     * @return int32 miscValueA : The MiscValueA value, or 0 if the effect doesn't exist
     */
-    int GetEffectMiscValueA(lua_State* L, SpellInfo* spell_info)
+    int32 GetEffectMiscValueA(SpellInfo* spell_info, uint8 effectIndex)
     {
-        uint8 effectIndex = ALE::CHECKVAL<uint8>(L, 2);
-        
         if (effectIndex >= MAX_SPELL_EFFECTS)
-        {
-            ALE::Push(L, 0);
-            return 1;
-        }
-        
+            return 0;
+
         if (spell_info->Effects[effectIndex].Effect == 0)
-        {
-            ALE::Push(L, 0);
-            return 1;
-        }
-        
-        ALE::Push(L, spell_info->Effects[effectIndex].MiscValue);
-        return 1;
+            return 0;
+
+        return spell_info->Effects[effectIndex].MiscValue;
     }
 
     /**
@@ -967,24 +864,79 @@ namespace LuaSpellInfo
     * @param uint8 effectIndex : The index of the effect (0, 1, or 2)
     * @return int32 miscValueB : The MiscValueB value, or 0 if the effect doesn't exist
     */
-    int GetEffectMiscValueB(lua_State* L, SpellInfo* spell_info)
+    int32 GetEffectMiscValueB(SpellInfo* spell_info, uint8 effectIndex)
     {
-        uint8 effectIndex = ALE::CHECKVAL<uint8>(L, 2);
-        
         if (effectIndex >= MAX_SPELL_EFFECTS)
-        {
-            ALE::Push(L, 0);
-            return 1;
-        }
-        
+            return 0;
+
         if (spell_info->Effects[effectIndex].Effect == 0)
-        {
-            ALE::Push(L, 0);
-            return 1;
-        }
-        
-        ALE::Push(L, spell_info->Effects[effectIndex].MiscValueB);
-        return 1;
+            return 0;
+
+        return spell_info->Effects[effectIndex].MiscValueB;
     }
 }
-#endif
+
+void RegisterSpellInfoMethods(sol::state& lua)
+{
+    sol::usertype<SpellInfo> type = lua.new_usertype<SpellInfo>("SpellInfo", sol::no_constructor);
+
+    type["GetName"]                                = &LuaSpellInfo::GetName;
+    type["HasAttribute"]                           = &LuaSpellInfo::HasAttribute;
+    type["GetAttributes"]                          = &LuaSpellInfo::GetAttributes;
+    type["IsAffectingArea"]                        = &LuaSpellInfo::IsAffectingArea;
+    type["GetCategory"]                            = &LuaSpellInfo::GetCategory;
+    type["HasEffect"]                              = &LuaSpellInfo::HasEffect;
+    type["HasAura"]                                = &LuaSpellInfo::HasAura;
+    type["HasAreaAuraEffect"]                      = &LuaSpellInfo::HasAreaAuraEffect;
+    type["IsExplicitDiscovery"]                    = &LuaSpellInfo::IsExplicitDiscovery;
+    type["IsLootCrafting"]                         = &LuaSpellInfo::IsLootCrafting;
+    type["IsProfessionOrRiding"]                   = &LuaSpellInfo::IsProfessionOrRiding;
+    type["IsProfession"]                           = &LuaSpellInfo::IsProfession;
+    type["IsPrimaryProfession"]                    = &LuaSpellInfo::IsPrimaryProfession;
+    type["IsPrimaryProfessionFirstRank"]           = &LuaSpellInfo::IsPrimaryProfessionFirstRank;
+    type["IsAbilityLearnedWithProfession"]         = &LuaSpellInfo::IsAbilityLearnedWithProfession;
+    type["IsAbilityOfSkillType"]                   = &LuaSpellInfo::IsAbilityOfSkillType;
+    type["IsTargetingArea"]                        = &LuaSpellInfo::IsTargetingArea;
+    type["NeedsExplicitUnitTarget"]                = &LuaSpellInfo::NeedsExplicitUnitTarget;
+    type["NeedsToBeTriggeredByCaster"]             = &LuaSpellInfo::NeedsToBeTriggeredByCaster;
+    type["IsSelfCast"]                             = &LuaSpellInfo::IsSelfCast;
+    type["IsPassive"]                              = &LuaSpellInfo::IsPassive;
+    type["IsAutocastable"]                         = &LuaSpellInfo::IsAutocastable;
+    type["IsStackableWithRanks"]                   = &LuaSpellInfo::IsStackableWithRanks;
+    type["IsPassiveStackableWithRanks"]            = &LuaSpellInfo::IsPassiveStackableWithRanks;
+    type["IsMultiSlotAura"]                        = &LuaSpellInfo::IsMultiSlotAura;
+    type["IsCooldownStartedOnEvent"]               = &LuaSpellInfo::IsCooldownStartedOnEvent;
+    type["IsDeathPersistent"]                      = &LuaSpellInfo::IsDeathPersistent;
+    type["IsRequiringDeadTarget"]                  = &LuaSpellInfo::IsRequiringDeadTarget;
+    type["IsAllowingDeadTarget"]                   = &LuaSpellInfo::IsAllowingDeadTarget;
+    type["CanBeUsedInCombat"]                      = &LuaSpellInfo::CanBeUsedInCombat;
+    type["IsPositive"]                             = &LuaSpellInfo::IsPositive;
+    type["IsPositiveEffect"]                       = &LuaSpellInfo::IsPositiveEffect;
+    type["IsChanneled"]                            = &LuaSpellInfo::IsChanneled;
+    type["NeedsComboPoints"]                       = &LuaSpellInfo::NeedsComboPoints;
+    type["IsBreakingStealth"]                      = &LuaSpellInfo::IsBreakingStealth;
+    type["IsRangedWeaponSpell"]                    = &LuaSpellInfo::IsRangedWeaponSpell;
+    type["IsAutoRepeatRangedSpell"]                = &LuaSpellInfo::IsAutoRepeatRangedSpell;
+    type["IsAffectedBySpellMods"]                  = &LuaSpellInfo::IsAffectedBySpellMods;
+    type["CanPierceImmuneAura"]                    = &LuaSpellInfo::CanPierceImmuneAura;
+    type["CanDispelAura"]                          = &LuaSpellInfo::CanDispelAura;
+    type["IsSingleTarget"]                         = &LuaSpellInfo::IsSingleTarget;
+    type["IsAuraExclusiveBySpecificWith"]          = &LuaSpellInfo::IsAuraExclusiveBySpecificWith;
+    type["IsAuraExclusiveBySpecificPerCasterWith"] = &LuaSpellInfo::IsAuraExclusiveBySpecificPerCasterWith;
+    type["CheckShapeshift"]                        = &LuaSpellInfo::CheckShapeshift;
+    type["CheckLocation"]                          = ALEBind::Function(&LuaSpellInfo::CheckLocation);
+    type["CheckTarget"]                            = ALEBind::Function(&LuaSpellInfo::CheckTarget);
+    type["CheckExplicitTarget"]                    = ALEBind::Function(&LuaSpellInfo::CheckExplicitTarget);
+    type["CheckTargetCreatureType"]                = ALEBind::Function(&LuaSpellInfo::CheckTargetCreatureType);
+    type["GetSchoolMask"]                          = &LuaSpellInfo::GetSchoolMask;
+    type["GetAllEffectsMechanicMask"]              = &LuaSpellInfo::GetAllEffectsMechanicMask;
+    type["GetEffectMechanicMask"]                  = &LuaSpellInfo::GetEffectMechanicMask;
+    type["GetSpellMechanicMaskByEffectMask"]       = &LuaSpellInfo::GetSpellMechanicMaskByEffectMask;
+    type["GetEffectMechanic"]                      = &LuaSpellInfo::GetEffectMechanic;
+    type["GetDispelMask"]                          = &LuaSpellInfo::GetDispelMask;
+    type["GetExplicitTargetMask"]                  = &LuaSpellInfo::GetExplicitTargetMask;
+    type["GetAuraState"]                           = &LuaSpellInfo::GetAuraState;
+    type["GetSpellSpecific"]                       = &LuaSpellInfo::GetSpellSpecific;
+    type["GetEffectMiscValueA"]                    = &LuaSpellInfo::GetEffectMiscValueA;
+    type["GetEffectMiscValueB"]                    = &LuaSpellInfo::GetEffectMiscValueB;
+}

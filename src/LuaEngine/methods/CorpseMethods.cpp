@@ -4,9 +4,6 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef CORPSEMETHODS_H
-#define CORPSEMETHODS_H
-
 #include "ALEBind.h"
 
 #include "Corpse.h"
@@ -84,4 +81,3 @@ void RegisterCorpseMethods(sol::state& lua)
     type["ResetGhostTime"] = ALEBind::Method(&LuaCorpse::ResetGhostTime);
     type["SaveToDB"]       = ALEBind::Method(&LuaCorpse::SaveToDB);
 }
-#endif

@@ -4,12 +4,34 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef PLAYERMETHODS_H
-#define PLAYERMETHODS_H
+#include "ALEBind.h"
 
+#include "AccountMgr.h"
+#include "AchievementMgr.h"
+#include "AuctionHouseMgr.h"
+#include "Bag.h"
+#include "CharacterCache.h"
 #include "Chat.h"
+#include "DBCStores.h"
+#include "DatabaseEnv.h"
 #include "GameTime.h"
 #include "GossipDef.h"
+#include "Group.h"
+#include "GroupMgr.h"
+#include "Guild.h"
+#include "GuildMgr.h"
+#include "InstanceSaveMgr.h"
+#include "Item.h"
+#include "ObjectMgr.h"
+#include "Opcodes.h"
+#include "Pet.h"
+#include "Player.h"
+#include "QuestDef.h"
+#include "ReputationMgr.h"
+#include "SpellInfo.h"
+#include "SpellMgr.h"
+#include "WorldPacket.h"
+#include "WorldSession.h"
 
 /***
  * Inherits all methods from: [Object], [WorldObject], [Unit]
@@ -21,10 +43,9 @@ namespace LuaPlayer
      *
      * @return bool canTitanGrip
      */
-    int CanTitanGrip(lua_State* L, Player* player)
+    bool CanTitanGrip(Player* player)
     {
-        ALE::Push(L, player->CanTitanGrip());
-        return 1;
+        return player->CanTitanGrip();
     }
 
     /**
@@ -34,15 +55,13 @@ namespace LuaPlayer
      * @param uint8 spec : specified spec. 0 for primary, 1 for secondary.
      * @return bool hasTalent
      */
-    int HasTalent(lua_State* L, Player* player)
+    sol::optional<bool> HasTalent(Player* player, uint32 spellId, uint8 spec)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
         uint8 maxSpecs = MAX_TALENT_SPECS;
-        uint8 spec = ALE::CHECKVAL<uint8>(L, 3);
         if (spec >= maxSpecs)
-            return 1;
-        ALE::Push(L, player->HasTalent(spellId, spec));
-        return 1;
+            return sol::nullopt;
+
+        return player->HasTalent(spellId, spec);
     }
 
     /**
@@ -51,11 +70,9 @@ namespace LuaPlayer
      * @param uint32 achievementId
      * @return bool hasAchieved
      */
-    int HasAchieved(lua_State* L, Player* player)
+    bool HasAchieved(Player* player, uint32 achievementId)
     {
-        uint32 achievementId = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, player->HasAchieved(achievementId));
-        return 1;
+        return player->HasAchieved(achievementId);
     }
 
     /**
@@ -64,20 +81,14 @@ namespace LuaPlayer
      * @param uint32 criteriaId
      * @return uint32 progress : progress value or nil
      */
-    int GetAchievementCriteriaProgress(lua_State* L, Player* player)
+    sol::optional<uint32> GetAchievementCriteriaProgress(Player* player, uint32 criteriaId)
     {
-        uint32 criteriaId = ALE::CHECKVAL<uint32>(L, 2);
-        const AchievementCriteriaEntry* criteria = sAchievementCriteriaStore.LookupEntry(criteriaId);
+        AchievementCriteriaEntry const* criteria = sAchievementCriteriaStore.LookupEntry(criteriaId);
         CriteriaProgress* progress = player->GetAchievementMgr()->GetCriteriaProgress(criteria);
         if (progress)
-        {
-            ALE::Push(L, progress->counter);
-        }
-        else
-        {
-            ALE::Push(L, (void*)nullptr);
-        }
-        return 1;
+            return progress->counter;
+
+        return sol::nullopt;
     }
 
     /**
@@ -86,12 +97,9 @@ namespace LuaPlayer
      * @param uint32 questId
      * @return bool hasQuest
      */
-    int HasQuest(lua_State* L, Player* player)
+    bool HasQuest(Player* player, uint32 quest)
     {
-        uint32 quest = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->IsActiveQuest(quest));
-        return 1;
+        return player->IsActiveQuest(quest);
     }
 
     /**
@@ -100,12 +108,9 @@ namespace LuaPlayer
      * @param uint32 skill
      * @return bool hasSkill
      */
-    int HasSkill(lua_State* L, Player* player)
+    bool HasSkill(Player* player, uint32 skill)
     {
-        uint32 skill = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->HasSkill(skill));
-        return 1;
+        return player->HasSkill(skill);
     }
 
     /**
@@ -114,12 +119,9 @@ namespace LuaPlayer
      * @param uint32 spellId
      * @return bool hasSpell
      */
-    int HasSpell(lua_State* L, Player* player)
+    bool HasSpell(Player* player, uint32 id)
     {
-        uint32 id = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->HasSpell(id));
-        return 1;
+        return player->HasSpell(id);
     }
 
     /**
@@ -128,12 +130,9 @@ namespace LuaPlayer
      * @param uint32 flag
      * @return bool hasLoginFlag
      */
-    int HasAtLoginFlag(lua_State* L, Player* player)
+    bool HasAtLoginFlag(Player* player, uint32 flag)
     {
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->HasAtLoginFlag((AtLoginFlags)flag));
-        return 1;
+        return player->HasAtLoginFlag((AtLoginFlags)flag);
     }
 
     /**
@@ -142,12 +141,9 @@ namespace LuaPlayer
      * @param int32 entry : entry of a [GameObject]
      * @return bool hasQuest
      */
-    int HasQuestForGO(lua_State* L, Player* player)
+    bool HasQuestForGO(Player* player, int32 entry)
     {
-        int32 entry = ALE::CHECKVAL<int32>(L, 2);
-
-        ALE::Push(L, player->HasQuestForGO(entry));
-        return 1;
+        return player->HasQuestForGO(entry);
     }
 
     /**
@@ -156,15 +152,15 @@ namespace LuaPlayer
      * @param uint32 titleId
      * @return bool hasTitle
      */
-    int HasTitle(lua_State* L, Player* player)
+    sol::optional<bool> HasTitle(Player* player, uint32 id)
     {
-        uint32 id = ALE::CHECKVAL<uint32>(L, 2);
         CharTitlesEntry const* titleInfo = sCharTitlesStore.LookupEntry(id);
         if (titleInfo)
-            ALE::Push(L, player->HasTitle(titleInfo));
-        return 1;
+            return player->HasTitle(titleInfo);
+
+        return sol::nullopt;
     }
-    
+
     /**
      * Returns `true` if the [Player] has the given amount of item entry specified, `false` otherwise.
      *
@@ -173,29 +169,24 @@ namespace LuaPlayer
      * @param bool check_bank = false : determines if the item can be in player bank
      * @return bool hasItem
      */
-    int HasItem(lua_State* L, Player* player)
+    bool HasItem(Player* player, uint32 itemId, sol::optional<uint32> countArg, sol::optional<bool> checkBankArg)
     {
-        uint32 itemId = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 count = ALE::CHECKVAL<uint32>(L, 3, 1);
-        bool check_bank = ALE::CHECKVAL<bool>(L, 4, false);
-        ALE::Push(L, player->HasItemCount(itemId, count, check_bank));
-        return 1;
+        uint32 count = countArg.value_or(1);
+        bool check_bank = checkBankArg.value_or(false);
+        return player->HasItemCount(itemId, count, check_bank);
     }
-    
+
     /**
      * Returns `true` if the [Player] has a quest for the item entry specified, `false` otherwise.
      *
      * @param uint32 entry : entry of the item
      * @return bool hasQuest
      */
-    int HasQuestForItem(lua_State* L, Player* player)
+    bool HasQuestForItem(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->HasQuestForItem(entry));
-        return 1;
+        return player->HasQuestForItem(entry);
     }
-    
+
     /**
      * Returns `true` if the [Player] can use the item or item entry specified, `false` otherwise.
      *
@@ -205,21 +196,20 @@ namespace LuaPlayer
      * @param uint32 entry : entry of the item
      * @return bool canUse
      */
-    int CanUseItem(lua_State* L, Player* player)
+    bool CanUseItem(Player* player, sol::object itemOrEntry)
     {
-        Item* item = ALE::CHECKOBJ<Item>(L, 2, false);
-        if (item)
-            ALE::Push(L, player->CanUseItem(item) == EQUIP_ERR_OK);
-        else
+        if (itemOrEntry.is<ItemRef>())
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-            const ItemTemplate* temp = eObjectMgr->GetItemTemplate(entry);
-            if (temp)
-                ALE::Push(L, player->CanUseItem(temp) == EQUIP_ERR_OK);
-            else
-                ALE::Push(L, false);
+            Item* item = itemOrEntry.as<ItemRef>().Require();
+            return player->CanUseItem(item) == EQUIP_ERR_OK;
         }
-        return 1;
+
+        uint32 entry = itemOrEntry.as<uint32>();
+        ItemTemplate const* temp = sObjectMgr->GetItemTemplate(entry);
+        if (temp)
+            return player->CanUseItem(temp) == EQUIP_ERR_OK;
+
+        return false;
     }
 
     /**
@@ -228,12 +218,9 @@ namespace LuaPlayer
      * @param uint32 spellId
      * @return bool hasSpellCooldown
      */
-    int HasSpellCooldown(lua_State* L, Player* player)
+    bool HasSpellCooldown(Player* player, uint32 spellId)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->HasSpellCooldown(spellId));
-        return 1;
+        return player->HasSpellCooldown(spellId);
     }
 
     /**
@@ -242,12 +229,9 @@ namespace LuaPlayer
      * @param uint32 entryId
      * @return bool hasSpellCooldown
      */
-    int CanShareQuest(lua_State* L, Player* player)
+    bool CanShareQuest(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->CanShareQuest(entry));
-        return 1;
+        return player->CanShareQuest(entry);
     }
 
     /**
@@ -255,10 +239,9 @@ namespace LuaPlayer
      *
      * @return bool canSpeak
      */
-    int CanSpeak(lua_State* L, Player* player)
+    bool CanSpeak(Player* player)
     {
-        ALE::Push(L, player->CanSpeak());
-        return 1;
+        return player->CanSpeak();
     }
 
     /**
@@ -266,10 +249,9 @@ namespace LuaPlayer
      *
      * @return bool canUninviteFromGroup
      */
-    int CanUninviteFromGroup(lua_State* L, Player* player)
+    bool CanUninviteFromGroup(Player* player)
     {
-        ALE::Push(L, player->CanUninviteFromGroup() == ERR_PARTY_RESULT_OK);
-        return 1;
+        return player->CanUninviteFromGroup() == ERR_PARTY_RESULT_OK;
     }
 
     /**
@@ -277,10 +259,9 @@ namespace LuaPlayer
      *
      * @return bool canFly
      */
-    int CanFly(lua_State* L, Player* player)
+    bool CanFly(Player* player)
     {
-        ALE::Push(L, player->CanFly());
-        return 1;
+        return player->CanFly();
     }
 
     /**
@@ -288,10 +269,9 @@ namespace LuaPlayer
      *
      * @return bool isInWater
      */
-    int IsInWater(lua_State* L, Player* player)
+    bool IsInWater(Player* player)
     {
-        ALE::Push(L, player->IsInWater());
-        return 1;
+        return player->IsInWater();
     }
 
     /**
@@ -299,10 +279,9 @@ namespace LuaPlayer
      *
      * @return bool isMoving
      */
-    int IsMoving(lua_State* L, Player* player) // enable for unit when mangos support it
+    bool IsMoving(Player* player) // enable for unit when mangos support it
     {
-        ALE::Push(L, player->isMoving());
-        return 1;
+        return player->isMoving();
     }
 
     /**
@@ -310,10 +289,9 @@ namespace LuaPlayer
      *
      * @return bool isFlying
      */
-    int IsFlying(lua_State* L, Player* player) // enable for unit when mangos support it
+    bool IsFlying(Player* player) // enable for unit when mangos support it
     {
-        ALE::Push(L, player->IsFlying());
-        return 1;
+        return player->IsFlying();
     }
 
     /**
@@ -321,7 +299,7 @@ namespace LuaPlayer
      *
      * @return uint32 freeSlots
      */
-    int GetInventoryFreeSlots(lua_State* L, Player* player)
+    uint32 GetInventoryFreeSlots(Player* player)
     {
         uint32 freeSlots = 0;
 
@@ -345,8 +323,7 @@ namespace LuaPlayer
             }
         }
 
-        ALE::Push(L, freeSlots);
-        return 1;
+        return freeSlots;
     }
 
     /**
@@ -354,7 +331,7 @@ namespace LuaPlayer
      *
      * @return uint32 freeSlots
      */
-    int GetBankFreeSlots(lua_State* L, Player* player)
+    uint32 GetBankFreeSlots(Player* player)
     {
         uint32 freeSlots = 0;
 
@@ -378,53 +355,47 @@ namespace LuaPlayer
             }
         }
 
-        ALE::Push(L, freeSlots);
-        return 1;
+        return freeSlots;
     }
-
 
     /**
      * Returns `true` if the [Player] has a Tank Specialization, `false` otherwise.
      *
      * @return bool HasTankSpec
      */
-    int HasTankSpec(lua_State* L, Player* player)
+    bool HasTankSpec(Player* player)
     {
-        ALE::Push(L, player->HasTankSpec());
-        return 1;
+        return player->HasTankSpec();
     }
-    
+
     /**
      * Returns `true` if the [Player] has a Melee Specialization, `false` otherwise.
      *
      * @return bool HasMeleeSpec
      */
-    int HasMeleeSpec(lua_State* L, Player* player)
+    bool HasMeleeSpec(Player* player)
     {
-        ALE::Push(L, player->HasMeleeSpec());
-        return 1;
+        return player->HasMeleeSpec();
     }
-    
+
     /**
      * Returns `true` if the [Player] has a Caster Specialization, `false` otherwise.
      *
      * @return bool HasCasterSpec
      */
-    int HasCasterSpec(lua_State* L, Player* player)
+    bool HasCasterSpec(Player* player)
     {
-        ALE::Push(L, player->HasCasterSpec());
-        return 1;
+        return player->HasCasterSpec();
     }
-    
+
     /**
      * Returns `true` if the [Player] has a Heal Specialization, `false` otherwise.
      *
      * @return bool HasHealSpec
      */
-    int HasHealSpec(lua_State* L, Player* player)
+    bool HasHealSpec(Player* player)
     {
-        ALE::Push(L, player->HasHealSpec());
-        return 1;
+        return player->HasHealSpec();
     }
 
     /**
@@ -432,10 +403,9 @@ namespace LuaPlayer
      *
      * @return bool isInGroup
      */
-    int IsInGroup(lua_State* L, Player* player)
+    bool IsInGroup(Player* player)
     {
-        ALE::Push(L, (player->GetGroup() != NULL));
-        return 1;
+        return player->GetGroup() != nullptr;
     }
 
     /**
@@ -443,10 +413,9 @@ namespace LuaPlayer
      *
      * @return bool isInGuild
      */
-    int IsInGuild(lua_State* L, Player* player)
+    bool IsInGuild(Player* player)
     {
-        ALE::Push(L, (player->GetGuildId() != 0));
-        return 1;
+        return player->GetGuildId() != 0;
     }
 
     /**
@@ -456,10 +425,9 @@ namespace LuaPlayer
      *
      * @return bool isGM
      */
-    int IsGM(lua_State* L, Player* player)
+    bool IsGM(Player* player)
     {
-        ALE::Push(L, player->IsGameMaster());
-        return 1;
+        return player->IsGameMaster();
     }
 
     /**
@@ -468,14 +436,12 @@ namespace LuaPlayer
      * @param uint32 type
      * @return bool isInArenaTeam
      */
-    int IsInArenaTeam(lua_State* L, Player* player)
+    bool IsInArenaTeam(Player* player, uint32 type)
     {
-        uint32 type = ALE::CHECKVAL<uint32>(L, 2);
         if (type < MAX_ARENA_SLOT && player->GetArenaTeamId(type))
-            ALE::Push(L, true);
-        else
-            ALE::Push(L, false);
-        return 1;
+            return true;
+
+        return false;
     }
 
     /**
@@ -483,10 +449,9 @@ namespace LuaPlayer
      *
      * @return bool isImmune
      */
-    int IsImmuneToDamage(lua_State* L, Player* player)
+    bool IsImmuneToDamage(Player* player)
     {
-        ALE::Push(L, player->isTotalImmune());
-        return 1;
+        return player->isTotalImmune();
     }
 
     /**
@@ -495,18 +460,13 @@ namespace LuaPlayer
      * @param uint32 questId
      * @return bool canCompleteRepeatableQuest
      */
-    int CanCompleteRepeatableQuest(lua_State* L, Player* player)
+    bool CanCompleteRepeatableQuest(Player* player, uint32 questId)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-        const Quest* quest = sObjectMgr->GetQuestTemplate(questId); // Retrieve the Quest object
+        Quest const* quest = sObjectMgr->GetQuestTemplate(questId); // Retrieve the Quest object
         if (!quest)
-        {
-            ALE::Push(L, false);
-            return 1;
-        }
+            return false;
 
-        ALE::Push(L, player->CanCompleteRepeatableQuest(quest));
-        return 1;
+        return player->CanCompleteRepeatableQuest(quest);
     }
 
     /**
@@ -515,18 +475,13 @@ namespace LuaPlayer
      * @param uint32 questId
      * @return bool canRewardQuest
      */
-    int CanRewardQuest(lua_State* L, Player* player)
+    bool CanRewardQuest(Player* player, uint32 questId)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-        const Quest* quest = sObjectMgr->GetQuestTemplate(questId); // Retrieve the Quest object
+        Quest const* quest = sObjectMgr->GetQuestTemplate(questId); // Retrieve the Quest object
         if (!quest)
-        {
-            ALE::Push(L, false);
-            return 1;
-        }
+            return false;
 
-        ALE::Push(L, player->CanRewardQuest(quest, true)); // Modify the second argument as needed
-        return 1;
+        return player->CanRewardQuest(quest, true); // Modify the second argument as needed
     }
 
     /**
@@ -535,12 +490,9 @@ namespace LuaPlayer
      * @param uint32 entry
      * @return bool canComplete
      */
-    int CanCompleteQuest(lua_State* L, Player* player)
+    bool CanCompleteQuest(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->CanCompleteQuest(entry));
-        return 1;
+        return player->CanCompleteQuest(entry);
     }
 
     /**
@@ -548,10 +500,9 @@ namespace LuaPlayer
      *
      * @return bool isHorde
      */
-    int IsHorde(lua_State* L, Player* player)
+    bool IsHorde(Player* player)
     {
-        ALE::Push(L, (player->GetTeamId() == TEAM_HORDE));
-        return 1;
+        return player->GetTeamId() == TEAM_HORDE;
     }
 
     /**
@@ -559,10 +510,9 @@ namespace LuaPlayer
      *
      * @return bool isAlliance
      */
-    int IsAlliance(lua_State* L, Player* player)
+    bool IsAlliance(Player* player)
     {
-        ALE::Push(L, (player->GetTeamId() == TEAM_ALLIANCE));
-        return 1;
+        return player->GetTeamId() == TEAM_ALLIANCE;
     }
 
     /**
@@ -570,10 +520,9 @@ namespace LuaPlayer
      *
      * @return bool isDND
      */
-    int IsDND(lua_State* L, Player* player)
+    bool IsDND(Player* player)
     {
-        ALE::Push(L, player->isDND());
-        return 1;
+        return player->isDND();
     }
 
     /**
@@ -581,10 +530,9 @@ namespace LuaPlayer
      *
      * @return bool isAFK
      */
-    int IsAFK(lua_State* L, Player* player)
+    bool IsAFK(Player* player)
     {
-        ALE::Push(L, player->isAFK());
-        return 1;
+        return player->isAFK();
     }
 
     /**
@@ -592,10 +540,9 @@ namespace LuaPlayer
      *
      * @return bool isFalling
      */
-    int IsFalling(lua_State* L, Player* player)
+    bool IsFalling(Player* player)
     {
-        ALE::Push(L, player->IsFalling());
-        return 1;
+        return player->IsFalling();
     }
 
     /**
@@ -605,11 +552,9 @@ namespace LuaPlayer
      * @param [Player] target : the player to check visibility from
      * @return bool isGroupVisible
      */
-    int IsGroupVisibleFor(lua_State* L, Player* player)
+    bool IsGroupVisibleFor(Player* player, Player* target)
     {
-        Player* target = ALE::CHECKOBJ<Player>(L, 2);
-        ALE::Push(L, player->IsGroupVisibleFor(target));
-        return 1;
+        return player->IsGroupVisibleFor(target);
     }
 
     /**
@@ -618,11 +563,9 @@ namespace LuaPlayer
      * @param [Player] player
      * @return bool isInSameRaidWith
      */
-    int IsInSameRaidWith(lua_State* L, Player* player)
+    bool IsInSameRaidWith(Player* player, Player* target)
     {
-        Player* target = ALE::CHECKOBJ<Player>(L, 2);
-        ALE::Push(L, player->IsInSameRaidWith(target));
-        return 1;
+        return player->IsInSameRaidWith(target);
     }
 
     /**
@@ -631,11 +574,9 @@ namespace LuaPlayer
      * @param [Player] player
      * @return bool isInSameGroupWith
      */
-    int IsInSameGroupWith(lua_State* L, Player* player)
+    bool IsInSameGroupWith(Player* player, Player* target)
     {
-        Player* target = ALE::CHECKOBJ<Player>(L, 2);
-        ALE::Push(L, player->IsInSameGroupWith(target));
-        return 1;
+        return player->IsInSameGroupWith(target);
     }
 
     /**
@@ -644,12 +585,9 @@ namespace LuaPlayer
      * @param [Unit] unit
      * @return bool isHonorOrXPTarget
      */
-    int IsHonorOrXPTarget(lua_State* L, Player* player)
+    bool IsHonorOrXPTarget(Player* player, Unit* victim)
     {
-        Unit* victim = ALE::CHECKOBJ<Unit>(L, 2);
-
-        ALE::Push(L, player->isHonorOrXPTarget(victim));
-        return 1;
+        return player->isHonorOrXPTarget(victim);
     }
 
     /**
@@ -658,12 +596,9 @@ namespace LuaPlayer
      * @param [Player] player
      * @return bool isVisibleForPlayer
      */
-    int IsVisibleForPlayer(lua_State* L, Player* player)
+    bool IsVisibleForPlayer(Player* player, Player* target)
     {
-        Player* target = ALE::CHECKOBJ<Player>(L, 2);
-
-        ALE::Push(L, player->IsVisibleGloballyFor(target));
-        return 1;
+        return player->IsVisibleGloballyFor(target);
     }
 
     /**
@@ -672,10 +607,9 @@ namespace LuaPlayer
      * @param [Player] player
      * @return bool isVisible
      */
-    int IsGMVisible(lua_State* L, Player* player)
+    bool IsGMVisible(Player* player)
     {
-        ALE::Push(L, player->isGMVisible());
-        return 1;
+        return player->isGMVisible();
     }
 
     /**
@@ -683,10 +617,9 @@ namespace LuaPlayer
      *
      * @return bool isTaxiCheater
      */
-    int IsTaxiCheater(lua_State* L, Player* player)
+    bool IsTaxiCheater(Player* player)
     {
-        ALE::Push(L, player->isTaxiCheater());
-        return 1;
+        return player->isTaxiCheater();
     }
 
     /**
@@ -695,10 +628,9 @@ namespace LuaPlayer
      * @param [Player] player
      * @return bool isGMChat
      */
-    int IsGMChat(lua_State* L, Player* player)
+    bool IsGMChat(Player* player)
     {
-        ALE::Push(L, player->isGMChat());
-        return 1;
+        return player->isGMChat();
     }
 
     /**
@@ -706,10 +638,9 @@ namespace LuaPlayer
      *
      * @return bool isAcceptingWhispers
      */
-    int IsAcceptingWhispers(lua_State* L, Player* player)
+    bool IsAcceptingWhispers(Player* player)
     {
-        ALE::Push(L, player->isAcceptWhispers());
-        return 1;
+        return player->isAcceptWhispers();
     }
 
     /**
@@ -717,10 +648,9 @@ namespace LuaPlayer
      *
      * @return bool isRested
      */
-    int IsRested(lua_State* L, Player* player)
+    bool IsRested(Player* player)
     {
-        ALE::Push(L, player->GetRestBonus() > 0.0f);
-        return 1;
+        return player->GetRestBonus() > 0.0f;
     }
 
     /**
@@ -728,10 +658,9 @@ namespace LuaPlayer
      *
      * @return bool inBattlegroundQueue
      */
-    int InBattlegroundQueue(lua_State* L, Player* player)
+    bool InBattlegroundQueue(Player* player)
     {
-        ALE::Push(L, player->InBattlegroundQueue());
-        return 1;
+        return player->InBattlegroundQueue();
     }
 
     /**
@@ -739,10 +668,9 @@ namespace LuaPlayer
      *
      * @return bool inArena
      */
-    int InArena(lua_State* L, Player* player)
+    bool InArena(Player* player)
     {
-        ALE::Push(L, player->InArena());
-        return 1;
+        return player->InArena();
     }
 
     /**
@@ -750,10 +678,9 @@ namespace LuaPlayer
      *
      * @return bool inBattleGround
      */
-    int InBattleground(lua_State* L, Player* player)
+    bool InBattleground(Player* player)
     {
-        ALE::Push(L, player->InBattleground());
-        return 1;
+        return player->InBattleground();
     }
 
     /**
@@ -761,10 +688,9 @@ namespace LuaPlayer
      *
      * @return bool canBlock
      */
-    int CanBlock(lua_State* L, Player* player)
+    bool CanBlock(Player* player)
     {
-        ALE::Push(L, player->CanBlock());
-        return 1;
+        return player->CanBlock();
     }
 
     /**
@@ -772,10 +698,9 @@ namespace LuaPlayer
      *
      * @return bool canParry
      */
-    int CanParry(lua_State* L, Player* player)
+    bool CanParry(Player* player)
     {
-        ALE::Push(L, player->CanParry());
-        return 1;
+        return player->CanParry();
     }
 
     /**
@@ -783,10 +708,9 @@ namespace LuaPlayer
      *
      * @return uint8 specCount
      */
-    int GetSpecsCount(lua_State* L, Player* player)
+    uint8 GetSpecsCount(Player* player)
     {
-        ALE::Push(L, player->GetSpecsCount());
-        return 1;
+        return player->GetSpecsCount();
     }
 
     /**
@@ -794,10 +718,9 @@ namespace LuaPlayer
      *
      * @return uint32 specId
      */
-    int GetActiveSpec(lua_State* L, Player* player)
+    uint8 GetActiveSpec(Player* player)
     {
-        ALE::Push(L, player->GetActiveSpec());
-        return 1;
+        return player->GetActiveSpec();
     }
 
     /**
@@ -805,10 +728,9 @@ namespace LuaPlayer
      *
      * @return uint32 phasemask
      */
-    int GetPhaseMaskForSpawn(lua_State* L, Player* player)
+    uint32 GetPhaseMaskForSpawn(Player* player)
     {
-        ALE::Push(L, player->GetPhaseMaskForSpawn());
-        return 1;
+        return player->GetPhaseMaskForSpawn();
     }
 
     /**
@@ -816,10 +738,10 @@ namespace LuaPlayer
      *
      * @return uint32 achievementPoints
      */
-    int GetAchievementPoints(lua_State* L, Player* player)
+    uint32 GetAchievementPoints(Player* player)
     {
         uint32 count = 0;
-        const CompletedAchievementMap& completedAchievements = player->GetAchievementMgr()->GetCompletedAchievements();
+        CompletedAchievementMap const& completedAchievements = player->GetAchievementMgr()->GetCompletedAchievements();
         for (auto& pair : completedAchievements)
         {
             AchievementEntry const* achievement = sAchievementStore.LookupEntry(pair.first);
@@ -829,8 +751,7 @@ namespace LuaPlayer
             }
         }
 
-        ALE::Push(L, count);
-        return 1;
+        return count;
     }
 
     /**
@@ -838,22 +759,21 @@ namespace LuaPlayer
      *
      * @return uint32 achievementsCount
      */
-    int GetCompletedAchievementsCount(lua_State* L, Player* player)
+    uint32 GetCompletedAchievementsCount(Player* player, sol::optional<bool> countFeatsOfStrengthArg)
     {
         uint32 count = 0;
-        bool countFeatsOfStrength = ALE::CHECKVAL<bool>(L, 2, false);
-        const CompletedAchievementMap& completedAchievements = player->GetAchievementMgr()->GetCompletedAchievements();
+        bool countFeatsOfStrength = countFeatsOfStrengthArg.value_or(false);
+        CompletedAchievementMap const& completedAchievements = player->GetAchievementMgr()->GetCompletedAchievements();
         for (auto& pair : completedAchievements)
         {
             AchievementEntry const* achievement = sAchievementStore.LookupEntry(pair.first);
             if (achievement && (achievement->categoryId != 81 || countFeatsOfStrength))
-            {               
-                    count++;             
+            {
+                count++;
             }
         }
 
-        ALE::Push(L, count);
-        return 1;
+        return count;
     }
 
     /**
@@ -861,10 +781,9 @@ namespace LuaPlayer
      *
      * @return uint32 arenaPoints
      */
-    int GetArenaPoints(lua_State* L, Player* player)
+    uint32 GetArenaPoints(Player* player)
     {
-        ALE::Push(L, player->GetArenaPoints());
-        return 1;
+        return player->GetArenaPoints();
     }
 
     /**
@@ -872,10 +791,9 @@ namespace LuaPlayer
      *
      * @return uint32 honorPoints
      */
-    int GetHonorPoints(lua_State* L, Player* player)
+    uint32 GetHonorPoints(Player* player)
     {
-        ALE::Push(L, player->GetHonorPoints());
-        return 1;
+        return player->GetHonorPoints();
     }
 
     /**
@@ -883,10 +801,9 @@ namespace LuaPlayer
      *
      * @return uint32 todayHonorPoints
      */
-    int GetTodayHonorPoints(lua_State* L, Player* player)
+    uint32 GetTodayHonorPoints(Player* player)
     {
-        ALE::Push(L, player->GetUInt32Value(PLAYER_FIELD_TODAY_CONTRIBUTION));
-        return 1;
+        return player->GetUInt32Value(PLAYER_FIELD_TODAY_CONTRIBUTION);
     }
 
     /**
@@ -894,10 +811,9 @@ namespace LuaPlayer
      *
      * @return uint32 yesterdayHonorPoints
      */
-    int GetYesterdayHonorPoints(lua_State* L, Player* player)
+    uint32 GetYesterdayHonorPoints(Player* player)
     {
-        ALE::Push(L, player->GetUInt32Value(PLAYER_FIELD_YESTERDAY_CONTRIBUTION));
-        return 1;
+        return player->GetUInt32Value(PLAYER_FIELD_YESTERDAY_CONTRIBUTION);
     }
 
     /**
@@ -905,10 +821,9 @@ namespace LuaPlayer
      *
      * @return uint32 blockValue
      */
-    int GetShieldBlockValue(lua_State* L, Player* player)
+    uint32 GetShieldBlockValue(Player* player)
     {
-        ALE::Push(L, player->GetShieldBlockValue());
-        return 1;
+        return player->GetShieldBlockValue();
     }
 
     /**
@@ -917,12 +832,9 @@ namespace LuaPlayer
      * @param uint32 spellId
      * @return uint32 spellCooldownDelay
      */
-    int GetSpellCooldownDelay(lua_State* L, Player* player)
+    uint32 GetSpellCooldownDelay(Player* player, uint32 spellId)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, uint32(player->GetSpellCooldownDelay(spellId)));
-        return 1;
+        return uint32(player->GetSpellCooldownDelay(spellId));
     }
 
     /**
@@ -930,10 +842,9 @@ namespace LuaPlayer
      *
      * @return uint32 latency
      */
-    int GetLatency(lua_State* L, Player* player)
+    uint32 GetLatency(Player* player)
     {
-        ALE::Push(L, player->GetSession()->GetLatency());
-        return 1;
+        return player->GetSession()->GetLatency();
     }
 
     /**
@@ -941,10 +852,9 @@ namespace LuaPlayer
      *
      * @return uint32 championingFaction
      */
-    int GetChampioningFaction(lua_State* L, Player* player)
+    uint32 GetChampioningFaction(Player* player)
     {
-        ALE::Push(L, player->GetChampioningFaction());
-        return 1;
+        return player->GetChampioningFaction();
     }
 
     /**
@@ -952,10 +862,9 @@ namespace LuaPlayer
      *
      * @return uint8 subGroup
      */
-    int GetOriginalSubGroup(lua_State* L, Player* player)
+    uint8 GetOriginalSubGroup(Player* player)
     {
-        ALE::Push(L, player->GetOriginalSubGroup());
-        return 1;
+        return player->GetOriginalSubGroup();
     }
 
     /**
@@ -963,10 +872,9 @@ namespace LuaPlayer
      *
      * @return [Group] group
      */
-    int GetOriginalGroup(lua_State* L, Player* player)
+    Group* GetOriginalGroup(Player* player)
     {
-        ALE::Push(L, player->GetOriginalGroup());
-        return 1;
+        return player->GetOriginalGroup();
     }
 
     /**
@@ -975,12 +883,9 @@ namespace LuaPlayer
      * @param float radius
      * @return [Player] player
      */
-    int GetNextRandomRaidMember(lua_State* L, Player* player)
+    Player* GetNextRandomRaidMember(Player* player, float radius)
     {
-        float radius = ALE::CHECKVAL<float>(L, 2);
-
-        ALE::Push(L, player->GetNextRandomRaidMember(radius));
-        return 1;
+        return player->GetNextRandomRaidMember(radius);
     }
 
     /**
@@ -988,10 +893,9 @@ namespace LuaPlayer
      *
      * @return uint8 subGroup
      */
-    int GetSubGroup(lua_State* L, Player* player)
+    uint8 GetSubGroup(Player* player)
     {
-        ALE::Push(L, player->GetSubGroup());
-        return 1;
+        return player->GetSubGroup();
     }
 
     /**
@@ -999,10 +903,9 @@ namespace LuaPlayer
      *
      * @return [Group] group
      */
-    int GetGroupInvite(lua_State* L, Player* player)
+    Group* GetGroupInvite(Player* player)
     {
-        ALE::Push(L, player->GetGroupInvite());
-        return 1;
+        return player->GetGroupInvite();
     }
 
     /**
@@ -1010,10 +913,9 @@ namespace LuaPlayer
      *
      * @return uint32 xp
      */
-    int GetXP(lua_State* L, Player* player)
+    uint32 GetXP(Player* player)
     {
-        ALE::Push(L, player->GetUInt32Value(PLAYER_XP));
-        return 1;
+        return player->GetUInt32Value(PLAYER_XP);
     }
 
     /**
@@ -1022,12 +924,9 @@ namespace LuaPlayer
      * @param uint32 xp
      * @return uint32 xpBonus
      */
-    int GetXPRestBonus(lua_State* L, Player* player)
+    uint32 GetXPRestBonus(Player* player, uint32 xp)
     {
-        uint32 xp = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetXPRestBonus(xp));
-        return 1;
+        return player->GetXPRestBonus(xp);
     }
 
     /**
@@ -1035,10 +934,9 @@ namespace LuaPlayer
      *
      * @return [BattleGroundTypeId] typeId
      */
-    int GetBattlegroundTypeId(lua_State* L, Player* player)
+    BattlegroundTypeId GetBattlegroundTypeId(Player* player)
     {
-        ALE::Push(L, player->GetBattlegroundTypeId());
-        return 1;
+        return player->GetBattlegroundTypeId();
     }
 
     /**
@@ -1046,10 +944,9 @@ namespace LuaPlayer
      *
      * @return uint32 battleGroundId
      */
-    int GetBattlegroundId(lua_State* L, Player* player)
+    uint32 GetBattlegroundId(Player* player)
     {
-        ALE::Push(L, player->GetBattlegroundId());
-        return 1;
+        return player->GetBattlegroundId();
     }
 
     /**
@@ -1058,12 +955,9 @@ namespace LuaPlayer
      * @param uint32 faction
      * @return [ReputationRank] rank
      */
-    int GetReputationRank(lua_State* L, Player* player)
+    ReputationRank GetReputationRank(Player* player, uint32 faction)
     {
-        uint32 faction = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetReputationRank(faction));
-        return 1;
+        return player->GetReputationRank(faction);
     }
 
     /**
@@ -1071,10 +965,9 @@ namespace LuaPlayer
      *
      * @return uint16 drunkValue
      */
-    int GetDrunkValue(lua_State* L, Player* player)
+    uint16 GetDrunkValue(Player* player)
     {
-        ALE::Push(L, player->GetDrunkValue());
-        return 1;
+        return player->GetDrunkValue();
     }
 
     /**
@@ -1083,12 +976,9 @@ namespace LuaPlayer
      * @param uint32 skill
      * @param int16 bonusVal
      */
-    int GetSkillTempBonusValue(lua_State* L, Player* player)
+    int16 GetSkillTempBonusValue(Player* player, uint32 skill)
     {
-        uint32 skill = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetSkillTempBonusValue(skill));
-        return 1;
+        return player->GetSkillTempBonusValue(skill);
     }
 
     /**
@@ -1097,12 +987,9 @@ namespace LuaPlayer
      * @param uint32 skill
      * @param int16 bonusVal
      */
-    int GetSkillPermBonusValue(lua_State* L, Player* player)
+    int16 GetSkillPermBonusValue(Player* player, uint32 skill)
     {
-        uint32 skill = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetSkillPermBonusValue(skill));
-        return 1;
+        return player->GetSkillPermBonusValue(skill);
     }
 
     /**
@@ -1111,12 +998,9 @@ namespace LuaPlayer
      * @param uint32 skill
      * @return uint16 pureVal
      */
-    int GetPureSkillValue(lua_State* L, Player* player)
+    uint16 GetPureSkillValue(Player* player, uint32 skill)
     {
-        uint32 skill = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetPureSkillValue(skill));
-        return 1;
+        return player->GetPureSkillValue(skill);
     }
 
     /**
@@ -1125,12 +1009,9 @@ namespace LuaPlayer
      * @param uint32 skill
      * @return uint16 baseVal
      */
-    int GetBaseSkillValue(lua_State* L, Player* player)
+    uint16 GetBaseSkillValue(Player* player, uint32 skill)
     {
-        uint32 skill = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetBaseSkillValue(skill));
-        return 1;
+        return player->GetBaseSkillValue(skill);
     }
 
     /**
@@ -1139,12 +1020,9 @@ namespace LuaPlayer
      * @param uint32 skill
      * @return uint16 val
      */
-    int GetSkillValue(lua_State* L, Player* player)
+    uint16 GetSkillValue(Player* player, uint32 skill)
     {
-        uint32 skill = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetSkillValue(skill));
-        return 1;
+        return player->GetSkillValue(skill);
     }
 
     /**
@@ -1153,12 +1031,9 @@ namespace LuaPlayer
      * @param uint32 skill
      * @return uint16 pureVal
      */
-    int GetPureMaxSkillValue(lua_State* L, Player* player)
+    uint16 GetPureMaxSkillValue(Player* player, uint32 skill)
     {
-        uint32 skill = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetPureMaxSkillValue(skill));
-        return 1;
+        return player->GetPureMaxSkillValue(skill);
     }
 
     /**
@@ -1167,12 +1042,9 @@ namespace LuaPlayer
      * @param uint32 skill
      * @return uint16 val
      */
-    int GetMaxSkillValue(lua_State* L, Player* player)
+    uint16 GetMaxSkillValue(Player* player, uint32 skill)
     {
-        uint32 skill = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetMaxSkillValue(skill));
-        return 1;
+        return player->GetMaxSkillValue(skill);
     }
 
     /**
@@ -1180,10 +1052,9 @@ namespace LuaPlayer
      *
      * @return float bonus
      */
-    int GetManaBonusFromIntellect(lua_State* L, Player* player)
+    float GetManaBonusFromIntellect(Player* player)
     {
-        ALE::Push(L, player->GetManaBonusFromIntellect());
-        return 1;
+        return player->GetManaBonusFromIntellect();
     }
 
     /**
@@ -1191,10 +1062,9 @@ namespace LuaPlayer
      *
      * @return float bonus
      */
-    int GetHealthBonusFromStamina(lua_State* L, Player* player)
+    float GetHealthBonusFromStamina(Player* player)
     {
-        ALE::Push(L, player->GetHealthBonusFromStamina());
-        return 1;
+        return player->GetHealthBonusFromStamina();
     }
 
     /**
@@ -1203,11 +1073,10 @@ namespace LuaPlayer
      * @param bool isRaid = true : argument is TrinityCore only
      * @return int32 difficulty
      */
-    int GetDifficulty(lua_State* L, Player* player)
+    Difficulty GetDifficulty(Player* player, sol::optional<bool> isRaidArg)
     {
-        bool isRaid = ALE::CHECKVAL<bool>(L, 2, true);
-        ALE::Push(L, player->GetDifficulty(isRaid));
-        return 1;
+        bool isRaid = isRaidArg.value_or(true);
+        return player->GetDifficulty(isRaid);
     }
 
     /**
@@ -1215,10 +1084,9 @@ namespace LuaPlayer
      *
      * @return uint32 guildRank
      */
-    int GetGuildRank(lua_State* L, Player* player) // TODO: Move to Guild Methods
+    uint8 GetGuildRank(Player* player) // TODO: Move to Guild Methods
     {
-        ALE::Push(L, player->GetRank());
-        return 1;
+        return player->GetRank();
     }
 
     /**
@@ -1226,10 +1094,9 @@ namespace LuaPlayer
      *
      * @return uint32 freeTalentPointAmt
      */
-    int GetFreeTalentPoints(lua_State* L, Player* player)
+    uint32 GetFreeTalentPoints(Player* player)
     {
-        ALE::Push(L, player->GetFreeTalentPoints());
-        return 1;
+        return player->GetFreeTalentPoints();
     }
 
     /**
@@ -1237,12 +1104,12 @@ namespace LuaPlayer
      *
      * @return string guildName
      */
-    int GetGuildName(lua_State* L, Player* player)
+    sol::optional<std::string> GetGuildName(Player* player)
     {
         if (!player->GetGuildId())
-            return 1;
-        ALE::Push(L, eGuildMgr->GetGuildNameById(player->GetGuildId()));
-        return 1;
+            return sol::nullopt;
+
+        return sGuildMgr->GetGuildNameById(player->GetGuildId());
     }
 
     /**
@@ -1251,12 +1118,9 @@ namespace LuaPlayer
      * @param uint32 faction
      * @return int32 reputationAmt
      */
-    int GetReputation(lua_State* L, Player* player)
+    int32 GetReputation(Player* player, uint32 faction)
     {
-        uint32 faction = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetReputationMgr().GetReputation(faction));
-        return 1;
+        return player->GetReputationMgr().GetReputation(faction);
     }
 
     /**
@@ -1264,10 +1128,9 @@ namespace LuaPlayer
      *
      * @return [Unit] target
      */
-    int GetComboTarget(lua_State* L, Player* player)
+    Unit* GetComboTarget(Player* player)
     {
-        ALE::Push(L, player->GetComboTarget());
-        return 1;
+        return player->GetComboTarget();
     }
 
     /**
@@ -1275,10 +1138,9 @@ namespace LuaPlayer
      *
      * @return uint8 comboPoints
      */
-    int GetComboPoints(lua_State* L, Player* player)
+    uint8 GetComboPoints(Player* player)
     {
-        ALE::Push(L, player->GetComboPoints());
-        return 1;
+        return player->GetComboPoints();
     }
 
     /**
@@ -1286,10 +1148,9 @@ namespace LuaPlayer
      *
      * @return uint32 inGameTime
      */
-    int GetInGameTime(lua_State* L, Player* player)
+    uint32 GetInGameTime(Player* player)
     {
-        ALE::Push(L, player->GetInGameTime());
-        return 1;
+        return player->GetInGameTime();
     }
 
     /**
@@ -1298,12 +1159,9 @@ namespace LuaPlayer
      * @param uint32 questId
      * @return [QuestStatus] questStatus
      */
-    int GetQuestStatus(lua_State* L, Player* player)
+    QuestStatus GetQuestStatus(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetQuestStatus(entry));
-        return 1;
+        return player->GetQuestStatus(entry);
     }
 
     /**
@@ -1312,12 +1170,9 @@ namespace LuaPlayer
      * @param uint32 questId
      * @return bool questRewardStatus
      */
-    int GetQuestRewardStatus(lua_State* L, Player* player)
+    bool GetQuestRewardStatus(Player* player, uint32 questId)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetQuestRewardStatus(questId));
-        return 1;
+        return player->GetQuestRewardStatus(questId);
     }
 
     /**
@@ -1327,13 +1182,9 @@ namespace LuaPlayer
      * @param int32 entry : entry of required [Creature]
      * @return uint16 count
      */
-    int GetReqKillOrCastCurrentCount(lua_State* L, Player* player)
+    uint16 GetReqKillOrCastCurrentCount(Player* player, uint32 questId, int32 entry)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-        int32 entry = ALE::CHECKVAL<int32>(L, 3);
-
-        ALE::Push(L, player->GetReqKillOrCastCurrentCount(questId, entry));
-        return 1;
+        return player->GetReqKillOrCastCurrentCount(questId, entry);
     }
 
     /**
@@ -1342,12 +1193,9 @@ namespace LuaPlayer
      * @param uint32 questId
      * @return [QuestStatus] questRewardStatus
      */
-    int GetQuestLevel(lua_State* L, Player* player)
+    int32 GetQuestLevel(Player* player, Quest* quest)
     {
-        Quest* quest = ALE::CHECKOBJ<Quest>(L, 2);
-
-        ALE::Push(L, player->GetQuestLevel(quest));
-        return 1;
+        return player->GetQuestLevel(quest);
     }
 
     /**
@@ -1356,15 +1204,13 @@ namespace LuaPlayer
      * @param uint8 slot
      * @return [Item] item
      */
-    int GetEquippedItemBySlot(lua_State* L, Player* player)
+    Item* GetEquippedItemBySlot(Player* player, uint8 slot)
     {
-        uint8 slot = ALE::CHECKVAL<uint8>(L, 2);
         if (slot >= EQUIPMENT_SLOT_END)
-            return 1;
+            return nullptr;
 
         Item* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
-        ALE::Push(L, item);
-        return 1;
+        return item;
     }
 
     /**
@@ -1372,10 +1218,9 @@ namespace LuaPlayer
      *
      * @return float restBonus
      */
-    int GetRestBonus(lua_State* L, Player* player)
+    float GetRestBonus(Player* player)
     {
-        ALE::Push(L, player->GetRestBonus());
-        return 1;
+        return player->GetRestBonus();
     }
 
     /**
@@ -1383,10 +1228,9 @@ namespace LuaPlayer
      *
      * @return uint8 tag
      */
-    int GetChatTag(lua_State* L, Player* player)
+    uint8 GetChatTag(Player* player)
     {
-        ALE::Push(L, player->GetChatTag());
-        return 1;
+        return player->GetChatTag();
     }
 
     /**
@@ -1414,13 +1258,9 @@ namespace LuaPlayer
      * @param uint8 slot : the slot the [Item] is in within the bag, you can get this with [Item:GetSlot]
      * @return [Item] item : [Item] or nil
      */
-    int GetItemByPos(lua_State* L, Player* player)
+    Item* GetItemByPos(Player* player, uint8 bag, uint8 slot)
     {
-        uint8 bag = ALE::CHECKVAL<uint8>(L, 2);
-        uint8 slot = ALE::CHECKVAL<uint8>(L, 3);
-
-        ALE::Push(L, player->GetItemByPos(bag, slot));
-        return 1;
+        return player->GetItemByPos(bag, slot);
     }
 
     /**
@@ -1431,12 +1271,9 @@ namespace LuaPlayer
      * @param ObjectGuid guid : an item guid
      * @return [Item] item
      */
-    int GetItemByGUID(lua_State* L, Player* player)
+    Item* GetItemByGUID(Player* player, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-
-        ALE::Push(L, player->GetItemByGuid(guid));
-        return 1;
+        return player->GetItemByGuid(guid);
     }
 
     /**
@@ -1444,19 +1281,13 @@ namespace LuaPlayer
      *
      * @return uint32 mailCount
      */
-    int GetMailCount(lua_State* L, Player* player)
+    uint32 GetMailCount(Player* player)
     {
-        const CharacterCacheEntry* cache = sCharacterCache->GetCharacterCacheByGuid(player->GetGUID());
+        CharacterCacheEntry const* cache = sCharacterCache->GetCharacterCacheByGuid(player->GetGUID());
         if (cache)
-        {
-            ALE::Push(L, static_cast<uint32>(cache->MailCount));
-        }
-        else
-        {
-            ALE::Push(L, player->GetMailSize());
-        }
+            return static_cast<uint32>(cache->MailCount);
 
-        return 1;
+        return player->GetMailSize();
     }
 
     /**
@@ -1465,12 +1296,9 @@ namespace LuaPlayer
      * @param ObjectGuid guid : an item guid
      * @return [Item] item
      */
-    int GetMailItem(lua_State* L, Player* player)
+    Item* GetMailItem(Player* player, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-
-        ALE::Push(L, player->GetMItem(guid.GetCounter()));
-        return 1;
+        return player->GetMItem(guid.GetCounter());
     }
 
     /**
@@ -1481,25 +1309,20 @@ namespace LuaPlayer
      * @param uint32 entryId
      * @return [Item] item
      */
-    int GetItemByEntry(lua_State* L, Player* player)
+    Item* GetItemByEntry(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        ALE::Push(L, player->GetItemByEntry(entry));
-        return 1;
+        return player->GetItemByEntry(entry);
     }
-    
+
     /**
      * Returns the database textID of the [WorldObject]'s gossip header text for the [Player]
      *
      * @param [WorldObject] object
      * @return uint32 textId : key to npc_text database table
      */
-    int GetGossipTextId(lua_State* L, Player* player)
+    uint32 GetGossipTextId(Player* player, WorldObject* obj)
     {
-        WorldObject* obj = ALE::CHECKOBJ<WorldObject>(L, 2);
-        ALE::Push(L, player->GetGossipTextId(obj));
-        return 1;
+        return player->GetGossipTextId(obj);
     }
 
     /**
@@ -1507,10 +1330,9 @@ namespace LuaPlayer
      *
      * @return [Unit] unit
      */
-    int GetSelection(lua_State* L, Player* player)
+    Unit* GetSelection(Player* player)
     {
-        ALE::Push(L, player->GetSelectedUnit());
-        return 1;
+        return player->GetSelectedUnit();
     }
 
     /**
@@ -1518,10 +1340,9 @@ namespace LuaPlayer
      *
      * @return [AccountTypes] gmRank
      */
-    int GetGMRank(lua_State* L, Player* player)
+    AccountTypes GetGMRank(Player* player)
     {
-        ALE::Push(L, player->GetSession()->GetSecurity());
-        return 1;
+        return player->GetSession()->GetSecurity();
     }
 
     /**
@@ -1529,10 +1350,9 @@ namespace LuaPlayer
      *
      * @return uint32 coinage
      */
-    int GetCoinage(lua_State* L, Player* player)
+    uint32 GetCoinage(Player* player)
     {
-        ALE::Push(L, player->GetMoney());
-        return 1;
+        return player->GetMoney();
     }
 
     /**
@@ -1540,10 +1360,9 @@ namespace LuaPlayer
      *
      * @return uint32 guildId
      */
-    int GetGuildId(lua_State* L, Player* player)
+    uint32 GetGuildId(Player* player)
     {
-        ALE::Push(L, player->GetGuildId());
-        return 1;
+        return player->GetGuildId();
     }
 
     /**
@@ -1551,12 +1370,11 @@ namespace LuaPlayer
      *
      * @return [TeamId] teamId
      */
-    int GetTeam(lua_State* L, Player* player)
+    TeamId GetTeam(Player* player)
     {
-        ALE::Push(L, player->GetTeamId());
-        return 1;
+        return player->GetTeamId();
     }
-    
+
     /**
      * Returns amount of the specified [Item] the [Player] has.
      *
@@ -1564,12 +1382,10 @@ namespace LuaPlayer
      * @param bool checkinBank = false : also counts the items in player's bank if true
      * @return uint32 itemamount
      */
-    int GetItemCount(lua_State* L, Player* player)
+    uint32 GetItemCount(Player* player, uint32 entry, sol::optional<bool> checkinBankArg)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        bool checkinBank = ALE::CHECKVAL<bool>(L, 3, false);
-        ALE::Push(L, player->GetItemCount(entry, checkinBank));
-        return 1;
+        bool checkinBank = checkinBankArg.value_or(false);
+        return player->GetItemCount(entry, checkinBank);
     }
 
     /**
@@ -1577,10 +1393,9 @@ namespace LuaPlayer
      *
      * @return uint32 lifeTimeKils
      */
-    int GetLifetimeKills(lua_State* L, Player* player)
+    uint32 GetLifetimeKills(Player* player)
     {
-        ALE::Push(L, player->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS));
-        return 1;
+        return player->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS);
     }
 
     /**
@@ -1588,10 +1403,9 @@ namespace LuaPlayer
      *
      * @return uint32 todayKills
      */
-    int GetTodayKills(lua_State* L, Player* player)
+    uint32 GetTodayKills(Player* player)
     {
-        ALE::Push(L, uint32(player->GetUInt16Value(PLAYER_FIELD_KILLS, 0)));
-        return 1;
+        return uint32(player->GetUInt16Value(PLAYER_FIELD_KILLS, 0));
     }
 
     /**
@@ -1599,10 +1413,9 @@ namespace LuaPlayer
      *
      * @return uint32 yesterdayKills
      */
-    int GetYesterdayKills(lua_State* L, Player* player)
+    uint32 GetYesterdayKills(Player* player)
     {
-        ALE::Push(L, uint32(player->GetUInt16Value(PLAYER_FIELD_KILLS, 1)));
-        return 1;
+        return uint32(player->GetUInt16Value(PLAYER_FIELD_KILLS, 1));
     }
 
     /**
@@ -1610,10 +1423,9 @@ namespace LuaPlayer
      *
      * @return string ip
      */
-    int GetPlayerIP(lua_State* L, Player* player)
+    std::string GetPlayerIP(Player* player)
     {
-        ALE::Push(L, player->GetSession()->GetRemoteAddress());
-        return 1;
+        return player->GetSession()->GetRemoteAddress();
     }
 
     /**
@@ -1621,10 +1433,9 @@ namespace LuaPlayer
      *
      * @return uint32 currLevelPlayTime
      */
-    int GetLevelPlayedTime(lua_State* L, Player* player)
+    uint32 GetLevelPlayedTime(Player* player)
     {
-        ALE::Push(L, player->GetLevelPlayedTime());
-        return 1;
+        return player->GetLevelPlayedTime();
     }
 
     /**
@@ -1632,10 +1443,9 @@ namespace LuaPlayer
      *
      * @return uint32 totalPlayTime
      */
-    int GetTotalPlayedTime(lua_State* L, Player* player)
+    uint32 GetTotalPlayedTime(Player* player)
     {
-        ALE::Push(L, player->GetTotalPlayedTime());
-        return 1;
+        return player->GetTotalPlayedTime();
     }
 
     /**
@@ -1643,10 +1453,9 @@ namespace LuaPlayer
      *
      * @return [Guild] guild
      */
-    int GetGuild(lua_State* L, Player* player)
+    Guild* GetGuild(Player* player)
     {
-        ALE::Push(L, eGuildMgr->GetGuildById(player->GetGuildId()));
-        return 1;
+        return sGuildMgr->GetGuildById(player->GetGuildId());
     }
 
     /**
@@ -1654,10 +1463,9 @@ namespace LuaPlayer
      *
      * @return [Group] group
      */
-    int GetGroup(lua_State* L, Player* player)
+    Group* GetGroup(Player* player)
     {
-        ALE::Push(L, player->GetGroup());
-        return 1;
+        return player->GetGroup();
     }
 
     /**
@@ -1665,10 +1473,9 @@ namespace LuaPlayer
      *
      * @return uint32 accountId
      */
-    int GetAccountId(lua_State* L, Player* player)
+    uint32 GetAccountId(Player* player)
     {
-        ALE::Push(L, player->GetSession()->GetAccountId());
-        return 1;
+        return player->GetSession()->GetAccountId();
     }
 
     /**
@@ -1676,12 +1483,13 @@ namespace LuaPlayer
      *
      * @return string accountName
      */
-    int GetAccountName(lua_State* L, Player* player)
+    sol::optional<std::string> GetAccountName(Player* player)
     {
         std::string accName;
         if (AccountMgr::GetName(player->GetSession()->GetAccountId(), accName))
-            ALE::Push(L, accName);
-        return 1;
+            return accName;
+
+        return sol::nullopt;
     }
 
     /**
@@ -1689,12 +1497,11 @@ namespace LuaPlayer
      *
      * @return int32 questcount
      */
-    int GetCompletedQuestsCount(lua_State* L, Player* player)
+    uint32 GetCompletedQuestsCount(Player* player)
     {
         uint32 count = player->GetRewardedQuestCount();
 
-        ALE::Push(L, count);
-        return 1;
+        return count;
     }
 
     /**
@@ -1702,10 +1509,9 @@ namespace LuaPlayer
      *
      * @return [Corpse] corpse
      */
-    int GetCorpse(lua_State* L, Player* player)
+    Corpse* GetCorpse(Player* player)
     {
-        ALE::Push(L, player->GetCorpse());
-        return 1;
+        return player->GetCorpse();
     }
 
     /**
@@ -1713,10 +1519,9 @@ namespace LuaPlayer
      *
      * @return int localeIndex
      */
-    int GetDbLocaleIndex(lua_State* L, Player* player)
+    LocaleConstant GetDbLocaleIndex(Player* player)
     {
-        ALE::Push(L, player->GetSession()->GetSessionDbLocaleIndex());
-        return 1;
+        return player->GetSession()->GetSessionDbLocaleIndex();
     }
 
     /**
@@ -1724,10 +1529,9 @@ namespace LuaPlayer
      *
      * @return [LocaleConstant] locale
      */
-    int GetDbcLocale(lua_State* L, Player* player)
+    LocaleConstant GetDbcLocale(Player* player)
     {
-        ALE::Push(L, player->GetSession()->GetSessionDbcLocale());
-        return 1;
+        return player->GetSession()->GetSessionDbcLocale();
     }
 
     /**
@@ -1735,12 +1539,9 @@ namespace LuaPlayer
      *
      * @return table nodes : A table containing the IDs of the known taxi nodes
      */
-    int GetKnownTaxiNodes(lua_State* L, Player* player)
+    sol::table GetKnownTaxiNodes(Player* player, sol::this_state s)
     {
-        if (!player)
-            return 0;
-
-        lua_newtable(L);
+        sol::table tbl = sol::state_view(s).create_table();
 
         ByteBuffer data;
         player->m_taxi.AppendTaximaskTo(data, false);
@@ -1757,47 +1558,22 @@ namespace LuaPlayer
                 if (mask & (1u << bit))
                 {
                     uint32 nodeId = (i * 32) + bit + 1;
-                    lua_pushinteger(L, nodeId);
-                    lua_rawseti(L, -2, idx++);
+                    tbl[idx++] = nodeId;
                 }
             }
         }
 
-        return 1;
+        return tbl;
     }
 
-    /*int GetRecruiterId(lua_State* L, Player* player)
-    {
-        ALE::Push(L, player->GetSession()->GetRecruiterId());
-        return 1;
-    }*/
-
-    /*int GetSelectedPlayer(lua_State* L, Player* player)
-    {
-        ALE::Push(L, player->GetSelectedPlayer());
-        return 1;
-    }*/
-
-    /*int GetSelectedUnit(lua_State* L, Player* player)
-    {
-        ALE::Push(L, player->GetSelectedUnit());
-        return 1;
-    }*/
-
-    /*int GetNearbyGameObject(lua_State* L, Player* player)
-    {
-        ALE::Push(L, ChatHandler(player->GetSession()).GetNearbyGameObject());
-        return 1;
-    }*/
-    
     /**
      * Locks the player controls and disallows all movement and casting.
      *
      * @param bool apply = true : lock if true and unlock if false
      */
-    int SetPlayerLock(lua_State* L, Player* player)
+    void SetPlayerLock(Player* player, sol::optional<bool> applyArg)
     {
-        bool apply = ALE::CHECKVAL<bool>(L, 2, true);
+        bool apply = applyArg.value_or(true);
 
         if (apply)
         {
@@ -1809,7 +1585,6 @@ namespace LuaPlayer
             player->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PACIFIED | UNIT_FLAG_SILENCED);
             player->SetClientControl(player, 1);
         }
-        return 0;
     }
 
     /**
@@ -1817,12 +1592,9 @@ namespace LuaPlayer
      *
      * @param uint32 flag
      */
-    int SetAtLoginFlag(lua_State* L, Player* player)
+    void SetAtLoginFlag(Player* player, uint32 flag)
     {
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 2);
-
         player->SetAtLoginFlag((AtLoginFlags)flag);
-        return 0;
     }
 
     /**
@@ -1830,14 +1602,12 @@ namespace LuaPlayer
      *
      * @param uint32 sheatheState
      */
-    int SetSheath(lua_State* L, Player* player)
+    void SetSheath(Player* player, uint32 sheathed)
     {
-        uint32 sheathed = ALE::CHECKVAL<uint32>(L, 2);
         if (sheathed >= MAX_SHEATH_STATE)
-            return 0;
+            return;
 
         player->SetSheath((SheathState)sheathed);
-        return 0;
     }
 
     /**
@@ -1845,12 +1615,9 @@ namespace LuaPlayer
      *
      * @param uint8 drunkValue
      */
-    int SetDrunkValue(lua_State* L, Player* player)
+    void SetDrunkValue(Player* player, uint8 newDrunkValue)
     {
-        uint8 newDrunkValue = ALE::CHECKVAL<uint8>(L, 2);
-
         player->SetDrunkValue(newDrunkValue);
-        return 0;
     }
 
     /**
@@ -1858,12 +1625,9 @@ namespace LuaPlayer
      *
      * @param uint8 raceId
      */
-    int SetFactionForRace(lua_State* L, Player* player)
+    void SetFactionForRace(Player* player, uint8 race)
     {
-        uint8 race = ALE::CHECKVAL<uint8>(L, 2);
-
         player->SetFactionForRace(race);
-        return 0;
     }
 
     /**
@@ -1874,15 +1638,9 @@ namespace LuaPlayer
      * @param uint16 currVal
      * @param uint16 maxVal
      */
-    int SetSkill(lua_State* L, Player* player)
+    void SetSkill(Player* player, uint16 id, uint16 step, uint16 currVal, uint16 maxVal)
     {
-        uint16 id = ALE::CHECKVAL<uint16>(L, 2);
-        uint16 step = ALE::CHECKVAL<uint16>(L, 3);
-        uint16 currVal = ALE::CHECKVAL<uint16>(L, 4);
-        uint16 maxVal = ALE::CHECKVAL<uint16>(L, 5);
-
         player->SetSkill(id, currVal, maxVal, step);
-        return 0;
     }
 
     /**
@@ -1890,15 +1648,12 @@ namespace LuaPlayer
      *
      * @param uint8 rank
      */
-    int SetGuildRank(lua_State* L, Player* player) // TODO: Move to Guild Methods
+    void SetGuildRank(Player* player, uint8 rank) // TODO: Move to Guild Methods
     {
-        uint8 rank = ALE::CHECKVAL<uint8>(L, 2);
-
         if (!player->GetGuildId())
-            return 0;
+            return;
 
         player->SetRank(rank);
-        return 0;
     }
 
     /**
@@ -1906,13 +1661,10 @@ namespace LuaPlayer
      *
      * @param uint32 talentPointAmt
      */
-    int SetFreeTalentPoints(lua_State* L, Player* player)
+    void SetFreeTalentPoints(Player* player, uint32 points)
     {
-        uint32 points = ALE::CHECKVAL<uint32>(L, 2);
-
         player->SetFreeTalentPoints(points);
         player->SendTalentsInfoData(false);
-        return 0;
     }
 
     /**
@@ -1921,14 +1673,10 @@ namespace LuaPlayer
      * @param uint32 factionId
      * @param int32 reputationValue
      */
-    int SetReputation(lua_State* L, Player* player)
+    void SetReputation(Player* player, uint32 faction, int32 value)
     {
-        uint32 faction = ALE::CHECKVAL<uint32>(L, 2);
-        int32 value = ALE::CHECKVAL<int32>(L, 3);
-
         FactionEntry const* factionEntry = sFactionStore.LookupEntry(faction);
         player->GetReputationMgr().SetReputation(factionEntry, value);
-        return 0;
     }
 
     /**
@@ -1937,15 +1685,12 @@ namespace LuaPlayer
      * @param uint32 entry : entry of a quest
      * @param uint32 status
      */
-    int SetQuestStatus(lua_State* L, Player* player)
+    void SetQuestStatus(Player* player, uint32 entry, uint32 status)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 status = ALE::CHECKVAL<uint32>(L, 3);
         if (status >= MAX_QUEST_STATUS)
-            return 0;
+            return;
 
         player->SetQuestStatus(entry, (QuestStatus)status);
-        return 0;
     }
 
     /**
@@ -1953,12 +1698,9 @@ namespace LuaPlayer
      *
      * @param float restBonus
      */
-    int SetRestBonus(lua_State* L, Player* player)
+    void SetRestBonus(Player* player, float bonus)
     {
-        float bonus = ALE::CHECKVAL<float>(L, 2);
-
         player->SetRestBonus(bonus);
-        return 0;
     }
 
     /**
@@ -1966,12 +1708,11 @@ namespace LuaPlayer
      *
      * @param bool acceptWhispers = true
      */
-    int SetAcceptWhispers(lua_State* L, Player* player)
+    void SetAcceptWhispers(Player* player, sol::optional<bool> onArg)
     {
-        bool on = ALE::CHECKVAL<bool>(L, 2, true);
+        bool on = onArg.value_or(true);
 
         player->SetAcceptWhispers(on);
-        return 0;
     }
 
     /**
@@ -1979,12 +1720,11 @@ namespace LuaPlayer
      *
      * @param bool on = true
      */
-    int SetPvPDeath(lua_State* L, Player* player)
+    void SetPvPDeath(Player* player, sol::optional<bool> onArg)
     {
-        bool on = ALE::CHECKVAL<bool>(L, 2, true);
+        bool on = onArg.value_or(true);
 
         player->SetPvPDeath(on);
-        return 0;
     }
 
     /**
@@ -1992,12 +1732,11 @@ namespace LuaPlayer
      *
      * @param bool gmVisible = true
      */
-    int SetGMVisible(lua_State* L, Player* player)
+    void SetGMVisible(Player* player, sol::optional<bool> onArg)
     {
-        bool on = ALE::CHECKVAL<bool>(L, 2, true);
+        bool on = onArg.value_or(true);
 
         player->SetGMVisible(on);
-        return 0;
     }
 
     /**
@@ -2005,27 +1744,15 @@ namespace LuaPlayer
      *
      * @param table nodes : A table containing the taxi node IDs to set as known
      */
-    int SetKnownTaxiNodes(lua_State* L, Player* player)
+    void SetKnownTaxiNodes(Player* player, sol::table nodes)
     {
-        if (!player)
-            return 0;
-    
-        if (!lua_istable(L, 2))
-            return 0;
-    
-        lua_pushnil(L);
-    
-        while (lua_next(L, 2) != 0)
+        for (auto const& kv : nodes)
         {
-            uint32 nodeId = luaL_checkinteger(L, -1);
-    
-            if (nodeId > 0) 
+            uint32 nodeId = kv.second.as<uint32>();
+
+            if (nodeId > 0)
                 player->m_taxi.SetTaximaskNode(nodeId);
-    
-            lua_pop(L, 1);
         }
-    
-        return 0;
     }
 
     /**
@@ -2033,12 +1760,11 @@ namespace LuaPlayer
      *
      * @param bool taxiCheat = true
      */
-    int SetTaxiCheat(lua_State* L, Player* player)
+    void SetTaxiCheat(Player* player, sol::optional<bool> onArg)
     {
-        bool on = ALE::CHECKVAL<bool>(L, 2, true);
+        bool on = onArg.value_or(true);
 
         player->SetTaxiCheater(on);
-        return 0;
     }
 
     /**
@@ -2046,12 +1772,11 @@ namespace LuaPlayer
      *
      * @param bool on = true
      */
-    int SetGMChat(lua_State* L, Player* player)
+    void SetGMChat(Player* player, sol::optional<bool> onArg)
     {
-        bool on = ALE::CHECKVAL<bool>(L, 2, true);
+        bool on = onArg.value_or(true);
 
         player->SetGMChat(on);
-        return 0;
     }
 
     /**
@@ -2059,12 +1784,11 @@ namespace LuaPlayer
      *
      * @param bool setGmMode = true
      */
-    int SetGameMaster(lua_State* L, Player* player)
+    void SetGameMaster(Player* player, sol::optional<bool> onArg)
     {
-        bool on = ALE::CHECKVAL<bool>(L, 2, true);
+        bool on = onArg.value_or(true);
 
         player->SetGameMaster(on);
-        return 0;
     }
 
     /**
@@ -2075,10 +1799,8 @@ namespace LuaPlayer
      *
      * @param [Gender] gender
      */
-    int SetGender(lua_State* L, Player* player)
+    void SetGender(Player* player, uint32 _gender)
     {
-        uint32 _gender = ALE::CHECKVAL<uint32>(L, 2);
-
         Gender gender;
         switch (_gender)
         {
@@ -2089,13 +1811,12 @@ namespace LuaPlayer
                 gender = GENDER_FEMALE;
                 break;
             default:
-                return luaL_argerror(L, 2, "valid Gender expected");
+                throw std::invalid_argument("valid Gender expected");
         }
 
         player->SetByteValue(UNIT_FIELD_BYTES_0, 2, gender);
         player->SetByteValue(PLAYER_BYTES_3, 0, gender);
         player->InitDisplayIds();
-        return 0;
     }
 
     /**
@@ -2103,11 +1824,9 @@ namespace LuaPlayer
      *
      * @param uint32 arenaPoints
      */
-    int SetArenaPoints(lua_State* L, Player* player)
+    void SetArenaPoints(Player* player, uint32 arenaP)
     {
-        uint32 arenaP = ALE::CHECKVAL<uint32>(L, 2);
         player->SetArenaPoints(arenaP);
-        return 0;
     }
 
     /**
@@ -2115,11 +1834,9 @@ namespace LuaPlayer
      *
      * @param uint32 honorPoints
      */
-    int SetHonorPoints(lua_State* L, Player* player)
+    void SetHonorPoints(Player* player, uint32 honorP)
     {
-        uint32 honorP = ALE::CHECKVAL<uint32>(L, 2);
         player->SetHonorPoints(honorP);
-        return 0;
     }
 
     /**
@@ -2127,11 +1844,9 @@ namespace LuaPlayer
      *
      * @param uint32 honorableKills
      */
-    int SetLifetimeKills(lua_State* L, Player* player)
+    void SetLifetimeKills(Player* player, uint32 val)
     {
-        uint32 val = ALE::CHECKVAL<uint32>(L, 2);
         player->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, val);
-        return 0;
     }
 
     /**
@@ -2139,11 +1854,9 @@ namespace LuaPlayer
      *
      * @param uint32 copperAmt
      */
-    int SetCoinage(lua_State* L, Player* player)
+    void SetCoinage(Player* player, uint32 amt)
     {
-        uint32 amt = ALE::CHECKVAL<uint32>(L, 2);
         player->SetMoney(amt);
-        return 0;
     }
 
     /**
@@ -2155,17 +1868,10 @@ namespace LuaPlayer
      * @param uint32 mapId : Map ID
      * @param uint32 areaId : Area ID
      */
-    int SetBindPoint(lua_State* L, Player* player)
+    void SetBindPoint(Player* player, float x, float y, float z, uint32 mapId, uint32 areaId)
     {
-        float x = ALE::CHECKVAL<float>(L, 2);
-        float y = ALE::CHECKVAL<float>(L, 3);
-        float z = ALE::CHECKVAL<float>(L, 4);
-        uint32 mapId = ALE::CHECKVAL<uint32>(L, 5);
-        uint32 areaId = ALE::CHECKVAL<uint32>(L, 6);
-
         WorldLocation loc(mapId, x, y, z);
         player->SetHomebind(loc, areaId);
-        return 0;
     }
 
     /**
@@ -2173,13 +1879,11 @@ namespace LuaPlayer
      *
      * @param uint32 titleId
      */
-    int SetKnownTitle(lua_State* L, Player* player)
+    void SetKnownTitle(Player* player, uint32 id)
     {
-        uint32 id = ALE::CHECKVAL<uint32>(L, 2);
         CharTitlesEntry const* t = sCharTitlesStore.LookupEntry(id);
         if (t)
             player->SetTitle(t, false);
-        return 0;
     }
 
     /**
@@ -2187,43 +1891,31 @@ namespace LuaPlayer
      *
      * @param uint32 achievementid
      */
-    int SetAchievement(lua_State* L, Player* player)
+    void SetAchievement(Player* player, uint32 id)
     {
-        uint32 id = ALE::CHECKVAL<uint32>(L, 2);
         AchievementEntry const* t = sAchievementStore.LookupEntry(id);
         if (t)
             player->CompletedAchievement(t);
-        return 0;
     }
-
-    /*int SetMovement(lua_State* L, Player* player)
-    {
-        int32 pType = ALE::CHECKVAL<int32>(L, 2);
-
-        player->SetMovement((PlayerMovementType)pType);
-        return 0;
-    }*/
 
     /**
      * Reset the [Player]s completed achievements
      */
-    int ResetAchievements(lua_State* /*L*/, Player* player)
+    void ResetAchievements(Player* player)
     {
         player->ResetAchievements();
-        return 0;
     }
-    
+
     /**
      * Shows the mailbox window to the player from specified guid.
      *
      * @param ObjectGuid guid = playerguid : guid of the mailbox window sender
      */
-    int SendShowMailBox(lua_State* L, Player* player)
+    void SendShowMailBox(Player* player, sol::optional<ObjectGuid> guidArg)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2, player->GET_GUID());
+        ObjectGuid guid = guidArg.value_or(player->GetGUID());
 
         player->GetSession()->SendShowMailBox(guid);
-        return 0;
     }
 
     /**
@@ -2231,12 +1923,9 @@ namespace LuaPlayer
      *
      * @param int32 amount
      */
-    int ModifyArenaPoints(lua_State* L, Player* player)
+    void ModifyArenaPoints(Player* player, int32 amount)
     {
-        int32 amount = ALE::CHECKVAL<int32>(L, 2);
-
         player->ModifyArenaPoints(amount);
-        return 0;
     }
 
     /**
@@ -2244,21 +1933,17 @@ namespace LuaPlayer
      *
      * @param int32 amount
      */
-    int ModifyHonorPoints(lua_State* L, Player* player)
+    void ModifyHonorPoints(Player* player, int32 amount)
     {
-        int32 amount = ALE::CHECKVAL<int32>(L, 2);
-
         player->ModifyHonorPoints(amount);
-        return 0;
     }
 
     /**
      * Saves the [Player] to the database
      */
-    int SaveToDB(lua_State* /*L*/, Player* player)
+    void SaveToDB(Player* player)
     {
         player->SaveToDB(false, false);
-        return 0;
     }
 
     /**
@@ -2266,20 +1951,17 @@ namespace LuaPlayer
      *
      * @param [Unit] summoner
      */
-    int SummonPlayer(lua_State* L, Player* player)
+    void SummonPlayer(Player* player, Unit* summoner)
     {
-        Unit* summoner = ALE::CHECKOBJ<Unit>(L, 2);
-
         float x, y, z;
         summoner->GetPosition(x,y,z);
         player->SetSummonPoint(summoner->GetMapId(), x, y, z);
 
         WorldPacket data(SMSG_SUMMON_REQUEST, 8 + 4 + 4);
-        data << summoner->GET_GUID();
+        data << summoner->GetGUID();
         data << uint32(summoner->GetZoneId());
         data << uint32(MAX_PLAYER_SUMMON_DELAY * IN_MILLISECONDS);
         player->GetSession()->SendPacket(&data);
-        return 0;
     }
 
     /**
@@ -2287,15 +1969,13 @@ namespace LuaPlayer
      *
      * @param uint32 muteTime
      */
-    int Mute(lua_State* L, Player* player)
+    void Mute(Player* player, uint32 muteseconds)
     {
-        uint32 muteseconds = ALE::CHECKVAL<uint32>(L, 2);
         /*const char* reason = luaL_checkstring(E, 2);*/ // Mangos does not have a reason field in database.
 
         time_t muteTime = GameTime::GetGameTime().count() + muteseconds;
         player->GetSession()->m_muteTime = muteTime;
         LoginDatabase.Execute("UPDATE account SET mutetime = {} WHERE id = {}", muteTime, player->GetSession()->GetAccountId());
-        return 0;
     }
 
     /**
@@ -2303,18 +1983,15 @@ namespace LuaPlayer
      *
      * @param uint32 entry : quest entry
      */
-    int RewardQuest(lua_State* L, Player* player)
+    void RewardQuest(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        Quest const* quest = eObjectMgr->GetQuestTemplate(entry);
+        Quest const* quest = sObjectMgr->GetQuestTemplate(entry);
 
         // If player doesn't have the quest
         if (!quest || player->GetQuestStatus(entry) != QUEST_STATUS_COMPLETE)
-            return 0;
+            return;
 
         player->RewardQuest(quest, 0, player);
-        return 0;
     }
 
     /**
@@ -2322,20 +1999,17 @@ namespace LuaPlayer
      *
      * @param [Unit] sender
      */
-    int SendAuctionMenu(lua_State* L, Player* player)
+    void SendAuctionMenu(Player* player, Unit* unit)
     {
-        Unit* unit = ALE::CHECKOBJ<Unit>(L, 2);
-
         AuctionHouseEntry const* ahEntry = AuctionHouseMgr::GetAuctionHouseEntryFromFactionTemplate(unit->GetFaction());
         if (!ahEntry)
-            return 0;
+            return;
 
         WorldPacket data(MSG_AUCTION_HELLO, 12);
-        data << unit->GET_GUID();
+        data << unit->GetGUID();
         data << uint32(ahEntry->houseId);
         data << uint8(1);
         player->GetSession()->SendPacket(&data);
-        return 0;
     }
 
     /**
@@ -2343,21 +2017,17 @@ namespace LuaPlayer
      *
      * @param [Creature] sender
      */
-    int SendTaxiMenu(lua_State* L, Player* player)
+    void SendTaxiMenu(Player* player, Creature* creature)
     {
-        Creature* creature = ALE::CHECKOBJ<Creature>(L, 2);
-
         player->GetSession()->SendTaxiMenu(creature);
-        return 0;
     }
 
     /**
      * Sends a spirit resurrection request to the [Player]
      */
-    int SendSpiritResurrect(lua_State* /*L*/, Player* player)
+    void SendSpiritResurrect(Player* player)
     {
         player->GetSession()->SendSpiritResurrect();
-        return 0;
     }
 
     /**
@@ -2365,12 +2035,9 @@ namespace LuaPlayer
      *
      * @param [WorldObject] sender
      */
-    int SendTabardVendorActivate(lua_State* L, Player* player)
+    void SendTabardVendorActivate(Player* player, WorldObject* obj)
     {
-        WorldObject* obj = ALE::CHECKOBJ<WorldObject>(L, 2);
-
-        player->GetSession()->SendTabardVendorActivate(obj->GET_GUID());
-        return 0;
+        player->GetSession()->SendTabardVendorActivate(obj->GetGUID());
     }
 
     /**
@@ -2378,24 +2045,20 @@ namespace LuaPlayer
      *
      * @param [WorldObject] sender
      */
-    int SendShowBank(lua_State* L, Player* player)
+    void SendShowBank(Player* player, WorldObject* obj)
     {
-        WorldObject* obj = ALE::CHECKOBJ<WorldObject>(L, 2);
-
-        player->GetSession()->SendShowBank(obj->GET_GUID());
-        return 0;
+        player->GetSession()->SendShowBank(obj->GetGUID());
     }
-    
+
     /**
      * Sends a vendor window to the [Player] from the [WorldObject] specified.
      *
      * @param [WorldObject] sender
      * @param uint32 vendorId = 0 : optional entry ID to use for the vendor item list, overriding the sender's default inventory
      */
-    int SendListInventory(lua_State* L, Player* player)
+    void SendListInventory(Player* player, WorldObject* obj, sol::optional<uint32> vendorIdArg)
     {
-        WorldObject* obj = ALE::CHECKOBJ<WorldObject>(L, 2);
-        uint32 vendorId = ALE::CHECKVAL<uint32>(L, 3, 0);
+        uint32 vendorId = vendorIdArg.value_or(0);
 
         Creature* creature = obj->ToCreature();
         bool addedVendorFlag = false;
@@ -2405,12 +2068,10 @@ namespace LuaPlayer
             addedVendorFlag = true;
         }
 
-        player->GetSession()->SendListInventory(obj->GET_GUID(), vendorId);
+        player->GetSession()->SendListInventory(obj->GetGUID(), vendorId);
 
         if (addedVendorFlag)
             creature->RemoveNpcFlag(UNIT_NPC_FLAG_VENDOR);
-
-        return 0;
     }
 
     /**
@@ -2418,12 +2079,9 @@ namespace LuaPlayer
      *
      * @param [Creature] sender
      */
-    int SendTrainerList(lua_State* L, Player* player)
+    void SendTrainerList(Player* player, Creature* obj)
     {
-        Creature* obj = ALE::CHECKOBJ<Creature>(L, 2);
-
         player->GetSession()->SendTrainerList(obj);
-        return 0;
     }
 
     /**
@@ -2431,13 +2089,10 @@ namespace LuaPlayer
      *
      * @param [Player] invitee
      */
-    int SendGuildInvite(lua_State* L, Player* player)
+    void SendGuildInvite(Player* player, Player* plr)
     {
-        Player* plr = ALE::CHECKOBJ<Player>(L, 2);
-
         if (Guild* guild = player->GetGuild())
             guild->HandleInviteMember(player->GetSession(), plr->GetName());
-        return 0;
     }
 
     /**
@@ -2446,13 +2101,9 @@ namespace LuaPlayer
      * @param uint32 field
      * @param uint32 value
      */
-    int SendUpdateWorldState(lua_State* L, Player* player)
+    void SendUpdateWorldState(Player* player, uint32 field, uint32 value)
     {
-        uint32 field = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 value = ALE::CHECKVAL<uint32>(L, 3);
-
         player->SendUpdateWorldState(field, value);
-        return 0;
     }
 
     /**
@@ -2460,21 +2111,19 @@ namespace LuaPlayer
      *
      * @param bool saveToDb = true
      */
-    int LogoutPlayer(lua_State* L, Player* player)
+    void LogoutPlayer(Player* player, sol::optional<bool> saveArg)
     {
-        bool save = ALE::CHECKVAL<bool>(L, 2, true);
+        bool save = saveArg.value_or(true);
 
         player->GetSession()->LogoutPlayer(save);
-        return 0;
     }
 
     /**
      * Forcefully removes the [Player] from a [BattleGround] raid group
      */
-    int RemoveFromBattlegroundRaid(lua_State* /*L*/, Player* player)
+    void RemoveFromBattlegroundRaid(Player* player)
     {
         player->RemoveFromBattlegroundOrBattlefieldRaid();
-        return 0;
     }
 
     /**
@@ -2485,24 +2134,22 @@ namespace LuaPlayer
      * @param uint32 map = true
      * @param uint32 difficulty = 0
      */
-    int UnbindInstance(lua_State* L, Player* player)
+    void UnbindInstance(Player* player, uint32 map, sol::optional<uint32> difficultyArg)
     {
-        uint32 map = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 difficulty = ALE::CHECKVAL<uint32>(L, 3, 0);
+        uint32 difficulty = difficultyArg.value_or(0);
 
         if (difficulty < MAX_DIFFICULTY)
             sInstanceSaveMgr->PlayerUnbindInstance(player->GetGUID(), map, Difficulty(difficulty), true, player);
-        return 0;
     }
 
     /**
      * Unbinds the [Player] from his instances except the one he currently is in.
      */
-    int UnbindAllInstances(lua_State* /*L*/, Player* player)
+    void UnbindAllInstances(Player* player)
     {
         for (uint8 i = 0; i < MAX_DIFFICULTY; ++i)
         {
-            const BoundInstancesMap& binds = sInstanceSaveMgr->PlayerGetBoundInstances(player->GetGUID(), Difficulty(i));
+            BoundInstancesMap const& binds = sInstanceSaveMgr->PlayerGetBoundInstances(player->GetGUID(), Difficulty(i));
             for (BoundInstancesMap::const_iterator itr = binds.begin(); itr != binds.end();)
             {
                 if (itr->first != player->GetMapId())
@@ -2516,8 +2163,6 @@ namespace LuaPlayer
                 }
             }
         }
-
-        return 0;
     }
 
     /**
@@ -2525,11 +2170,9 @@ namespace LuaPlayer
      *
      * @param bool teleToEntry = true
      */
-    int LeaveBattleground(lua_State* L, Player* player)
+    void LeaveBattleground(Player* player)
     {
-        (void)L; // ensure that the variable is referenced in order to pass compiler checks
         player->LeaveBattleground();
-        return 0;
     }
 
     /**
@@ -2539,14 +2182,12 @@ namespace LuaPlayer
      * @param bool cost = true
      * @param float discountMod = 1.0
      */
-    int DurabilityRepair(lua_State* L, Player* player)
+    void DurabilityRepair(Player* player, uint16 position, sol::optional<bool> takeCostArg, sol::optional<float> discountModArg)
     {
-        uint16 position = ALE::CHECKVAL<uint16>(L, 2);
-        bool takeCost = ALE::CHECKVAL<bool>(L, 3, true);
-        float discountMod = ALE::CHECKVAL<float>(L, 4, 1.0f);
+        bool takeCost = takeCostArg.value_or(true);
+        float discountMod = discountModArg.value_or(1.0f);
 
         player->DurabilityRepair(position, takeCost, discountMod, false);
-        return 0;
     }
 
     /**
@@ -2556,14 +2197,13 @@ namespace LuaPlayer
      * @param float discountMod = 1.0
      * @param bool guidBank = false
      */
-    int DurabilityRepairAll(lua_State* L, Player* player)
+    void DurabilityRepairAll(Player* player, sol::optional<bool> takeCostArg, sol::optional<float> discountModArg, sol::optional<bool> guildBankArg)
     {
-        bool takeCost = ALE::CHECKVAL<bool>(L, 2, true);
-        float discountMod = ALE::CHECKVAL<float>(L, 3, 1.0f);
-        bool guildBank = ALE::CHECKVAL<bool>(L, 4, false);
+        bool takeCost = takeCostArg.value_or(true);
+        float discountMod = discountModArg.value_or(1.0f);
+        bool guildBank = guildBankArg.value_or(false);
 
         player->DurabilityRepairAll(takeCost, discountMod, guildBank);
-        return 0;
     }
 
     /**
@@ -2571,13 +2211,10 @@ namespace LuaPlayer
      *
      * @param int32 slot
      */
-    int DurabilityPointLossForEquipSlot(lua_State* L, Player* player)
+    void DurabilityPointLossForEquipSlot(Player* player, int32 slot)
     {
-        int32 slot = ALE::CHECKVAL<int32>(L, 2);
-
         if (slot >= EQUIPMENT_SLOT_START && slot < EQUIPMENT_SLOT_END)
             player->DurabilityPointLossForEquipSlot((EquipmentSlots)slot);
-        return 0;
     }
 
     /**
@@ -2588,13 +2225,11 @@ namespace LuaPlayer
      * @param int32 points
      * @param bool inventory = true
      */
-    int DurabilityPointsLossAll(lua_State* L, Player* player)
+    void DurabilityPointsLossAll(Player* player, int32 points, sol::optional<bool> inventoryArg)
     {
-        int32 points = ALE::CHECKVAL<int32>(L, 2);
-        bool inventory = ALE::CHECKVAL<bool>(L, 3, true);
+        bool inventory = inventoryArg.value_or(true);
 
         player->DurabilityPointsLossAll(points, inventory);
-        return 0;
     }
 
     /**
@@ -2603,13 +2238,9 @@ namespace LuaPlayer
      * @param [Item] item
      * @param int32 points
      */
-    int DurabilityPointsLoss(lua_State* L, Player* player)
+    void DurabilityPointsLoss(Player* player, Item* item, int32 points)
     {
-        Item* item = ALE::CHECKOBJ<Item>(L, 2);
-        int32 points = ALE::CHECKVAL<int32>(L, 3);
-
         player->DurabilityPointsLoss(item, points);
-        return 0;
     }
 
     /**
@@ -2618,13 +2249,9 @@ namespace LuaPlayer
      * @param [Item] item
      * @param double percent
      */
-    int DurabilityLoss(lua_State* L, Player* player)
+    void DurabilityLoss(Player* player, Item* item, double percent)
     {
-        Item* item = ALE::CHECKOBJ<Item>(L, 2);
-        double percent = ALE::CHECKVAL<double>(L, 3);
-
         player->DurabilityLoss(item, percent);
-        return 0;
     }
 
     /**
@@ -2633,34 +2260,30 @@ namespace LuaPlayer
      * @param double percent
      * @param bool inventory = true
      */
-    int DurabilityLossAll(lua_State* L, Player* player)
+    void DurabilityLossAll(Player* player, double percent, sol::optional<bool> inventoryArg)
     {
-        double percent = ALE::CHECKVAL<double>(L, 2);
-        bool inventory = ALE::CHECKVAL<bool>(L, 3, true);
+        bool inventory = inventoryArg.value_or(true);
 
         player->DurabilityLossAll(percent, inventory);
-        return 0;
     }
 
     /**
      * Kills the [Player]
      */
-    int KillPlayer(lua_State* /*L*/, Player* player)
+    void KillPlayer(Player* player)
     {
         player->KillPlayer();
-        return 0;
     }
 
     /**
      * Forces the [Player] to leave a [Group]
      */
-    int RemoveFromGroup(lua_State* /*L*/, Player* player)
+    void RemoveFromGroup(Player* player)
     {
         if (!player->GetGroup())
-            return 0;
+            return;
 
         player->RemoveFromGroup();
-        return 0;
     }
 
     /**
@@ -2668,10 +2291,9 @@ namespace LuaPlayer
      *
      * @return uint32 resetCost
      */
-    int ResetTalentsCost(lua_State* L, Player* player)
+    uint32 ResetTalentsCost(Player* player)
     {
-        ALE::Push(L, player->resetTalentsCost());
-        return 1;
+        return player->resetTalentsCost();
     }
 
     /**
@@ -2679,13 +2301,12 @@ namespace LuaPlayer
      *
      * @param bool noCost = true
      */
-    int ResetTalents(lua_State* L, Player* player)
+    void ResetTalents(Player* player, sol::optional<bool> noCostArg)
     {
-        bool no_cost = ALE::CHECKVAL<bool>(L, 2, true);
+        bool no_cost = noCostArg.value_or(true);
 
         player->resetTalents(no_cost);
         player->SendTalentsInfoData(false);
-        return 0;
     }
 
     /**
@@ -2693,21 +2314,17 @@ namespace LuaPlayer
      *
      * @param uint32 entry : entry of a [Spell]
      */
-    int RemoveSpell(lua_State* L, Player* player)
+    void RemoveSpell(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
         player->removeSpell(entry, SPEC_MASK_ALL, false);
-        return 0;
     }
 
     /**
      * Clears the [Player]s combo points
      */
-    int ClearComboPoints(lua_State* /*L*/, Player* player)
+    void ClearComboPoints(Player* player)
     {
         player->ClearComboPoints();
-        return 0;
     }
 
     /**
@@ -2716,13 +2333,9 @@ namespace LuaPlayer
      * @param [Unit] target
      * @param int8 count
      */
-    int AddComboPoints(lua_State* L, Player* player)
+    void AddComboPoints(Player* player, Unit* target, int8 count)
     {
-        Unit* target = ALE::CHECKOBJ<Unit>(L, 2);
-        int8 count = ALE::CHECKVAL<int8>(L, 3);
-
         player->AddComboPoints(target, count);
-        return 0;
     }
 
     /**
@@ -2731,13 +2344,9 @@ namespace LuaPlayer
      * @param uint32 entry : entry of a [Creature]
      * @param [Creature] creature
      */
-    int TalkedToCreature(lua_State* L, Player* player)
+    void TalkedToCreature(Player* player, uint32 entry, Creature* creature)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        Creature* creature = ALE::CHECKOBJ<Creature>(L, 3);
-
-        player->TalkedToCreature(entry, creature->GET_GUID());
-        return 0;
+        player->TalkedToCreature(entry, creature->GetGUID());
     }
 
     /**
@@ -2745,12 +2354,9 @@ namespace LuaPlayer
      *
      * @param uint32 entry : entry of a [Creature]
      */
-    int KilledMonsterCredit(lua_State* L, Player* player)
+    void KilledMonsterCredit(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        player->KilledMonsterCredit(entry, player->GET_GUID());
-        return 0;
+        player->KilledMonsterCredit(entry, player->GetGUID());
     }
 
     /**
@@ -2759,13 +2365,9 @@ namespace LuaPlayer
      * @param uint32 quest : entry of a quest
      * @param [WorldObject] obj
      */
-    int GroupEventHappens(lua_State* L, Player* player)
+    void GroupEventHappens(Player* player, uint32 questId, WorldObject* obj)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-        WorldObject* obj = ALE::CHECKOBJ<WorldObject>(L, 3);
-
         player->GroupEventHappens(questId, obj);
-        return 0;
     }
 
     /**
@@ -2773,12 +2375,9 @@ namespace LuaPlayer
      *
      * @param uint32 quest : entry of a [Quest]
      */
-    int AreaExploredOrEventHappens(lua_State* L, Player* player)
+    void AreaExploredOrEventHappens(Player* player, uint32 questId)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-
         player->AreaExploredOrEventHappens(questId);
-        return 0;
     }
 
     /**
@@ -2786,12 +2385,9 @@ namespace LuaPlayer
      *
      * @param uint32 entry : entry of a [Quest]
      */
-    int FailQuest(lua_State* L, Player* player)
+    void FailQuest(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
         player->FailQuest(entry);
-        return 0;
     }
 
     /**
@@ -2799,12 +2395,9 @@ namespace LuaPlayer
      *
      * @param uint32 entry : quest entry
      */
-    int IncompleteQuest(lua_State* L, Player* player)
+    void IncompleteQuest(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
         player->IncompleteQuest(entry);
-        return 0;
     }
 
     /**
@@ -2814,15 +2407,13 @@ namespace LuaPlayer
      *
      * @param uint32 entry : quest entry
      */
-    int CompleteQuest(lua_State* L, Player* player)
+    void CompleteQuest(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        Quest const* quest = eObjectMgr->GetQuestTemplate(entry);
+        Quest const* quest = sObjectMgr->GetQuestTemplate(entry);
 
         // If player doesn't have the quest
         if (!quest || player->GetQuestStatus(entry) == QUEST_STATUS_NONE)
-            return 0;
+            return;
 
         // Add quest items for quests that require items
         for (uint8 x = 0; x < QUEST_ITEM_OBJECTIVES_COUNT; ++x)
@@ -2888,7 +2479,6 @@ namespace LuaPlayer
             player->ModifyMoney(-ReqOrRewMoney);
 
         player->CompleteQuest(entry);
-        return 0;
     }
 
     /**
@@ -2896,26 +2486,23 @@ namespace LuaPlayer
      *
      * @param uint32 entry : quest entry
      */
-    int AddQuest(lua_State* L, Player* player)
+    void AddQuest(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        Quest const* quest = eObjectMgr->GetQuestTemplate(entry);
+        Quest const* quest = sObjectMgr->GetQuestTemplate(entry);
         if (!quest)
-            return 0;
+            return;
 
         // check item starting quest (it can work incorrectly if added without item in inventory)
         ItemTemplateContainer const* itc = sObjectMgr->GetItemTemplateStore();
-        ItemTemplateContainer::const_iterator result = find_if(itc->begin(), itc->end(), Finder<uint32, ItemTemplate>(entry, &ItemTemplate::StartQuest));
-
-        if (result != itc->end())
-            return 0;
+        for (auto const& pair : *itc)
+        {
+            if (pair.second.StartQuest == entry)
+                return;
+        }
 
         // ok, normal (creature/GO starting) quest
         if (player->CanAddQuest(quest, true))
-            player->AddQuestAndCheckCompletion(quest, NULL);
-
-        return 0;
+            player->AddQuestAndCheckCompletion(quest, nullptr);
     }
 
     /**
@@ -2923,14 +2510,12 @@ namespace LuaPlayer
      *
      * @param uint32 entry : quest entry
      */
-    int RemoveQuest(lua_State* L, Player* player)
+    void RemoveQuest(Player* player, uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-        Quest const* quest = eObjectMgr->GetQuestTemplate(entry);
+        Quest const* quest = sObjectMgr->GetQuestTemplate(entry);
 
         if (!quest)
-            return 0;
+            return;
 
         // remove all quest entries for 'entry' from quest log
         for (uint8 slot = 0; slot < MAX_QUEST_LOG_SIZE; ++slot)
@@ -2953,7 +2538,6 @@ namespace LuaPlayer
 
         player->RemoveActiveQuest(entry, false);
         player->RemoveRewardedQuest(entry);
-        return 0;
     }
 
     /**
@@ -2964,13 +2548,9 @@ namespace LuaPlayer
      * @param [Player] receiver : is the [Player] that will receive the whisper, if TrinityCore
      * @param ObjectGuid guid : is the GUID of a [Player] that will receive the whisper, not TrinityCore
      */
-    int Whisper(lua_State* L, Player* player)
+    void Whisper(Player* player, std::string const& text, uint32 lang, Player* receiver)
     {
-        std::string text = ALE::CHECKVAL<std::string>(L, 2);
-        uint32 lang = ALE::CHECKVAL<uint32>(L, 3);
-        Player* receiver = ALE::CHECKOBJ<Player>(L, 4);
         player->Whisper(text, (Language)lang, receiver);
-        return 0;
     }
 
     /**
@@ -2978,12 +2558,9 @@ namespace LuaPlayer
      *
      * @param string emoteText
      */
-    int TextEmote(lua_State* L, Player* player)
+    void TextEmote(Player* player, std::string const& text)
     {
-        std::string text = ALE::CHECKVAL<std::string>(L, 2);
-
         player->TextEmote(text);
-        return 0;
     }
 
     /**
@@ -2992,12 +2569,9 @@ namespace LuaPlayer
      * @param string text : text for the [Player] to yells
      * @param uint32 lang : language the [Player] will speak
      */
-    int Yell(lua_State* L, Player* player)
+    void Yell(Player* player, std::string const& text, uint32 lang)
     {
-        std::string text = ALE::CHECKVAL<std::string>(L, 2);
-        uint32 lang = ALE::CHECKVAL<uint32>(L, 3);
         player->Yell(text, (Language)lang);
-        return 0;
     }
 
     /**
@@ -3006,12 +2580,9 @@ namespace LuaPlayer
      * @param string text : text for the [Player] to say
      * @param uint32 lang : language the [Player] will speak
      */
-    int Say(lua_State* L, Player* player)
+    void Say(Player* player, std::string const& text, uint32 lang)
     {
-        std::string text = ALE::CHECKVAL<std::string>(L, 2);
-        uint32 lang = ALE::CHECKVAL<uint32>(L, 3);
         player->Say(text, (Language)lang);
-        return 0;
     }
 
     /**
@@ -3020,31 +2591,27 @@ namespace LuaPlayer
      * @param uint32 xp : experience to give
      * @param [Unit] victim = nil
      */
-    int GiveXP(lua_State* L, Player* player)
+    void GiveXP(Player* player, uint32 xp, sol::optional<UnitRef> victimArg)
     {
-        uint32 xp = ALE::CHECKVAL<uint32>(L, 2);
-        Unit* victim = ALE::CHECKOBJ<Unit>(L, 3, false);
+        Unit* victim = victimArg ? victimArg->Resolve() : nullptr;
 
         player->GiveXP(xp, victim);
-        return 0;
     }
 
     /**
      * Toggle the [Player]s 'Do Not Disturb' flag
      */
-    int ToggleDND(lua_State* /*L*/, Player* player)
+    void ToggleDND(Player* player)
     {
         player->ToggleDND();
-        return 0;
     }
 
     /**
      * Toggle the [Player]s 'Away From Keyboard' flag
      */
-    int ToggleAFK(lua_State* /*L*/, Player* player)
+    void ToggleAFK(Player* player)
     {
         player->ToggleAFK();
-        return 0;
     }
 
     /**
@@ -3088,27 +2655,26 @@ namespace LuaPlayer
      * @param uint32 slot : equipment slot to equip the item to The slot can be [EquipmentSlots] or [InventorySlots]
      * @return [Item] equippedItem : item or nil if equipping failed
      */
-    int EquipItem(lua_State* L, Player* player)
+    Item* EquipItem(Player* player, sol::object itemOrEntry, uint32 slot)
     {
         uint16 dest = 0;
-        Item* item = ALE::CHECKOBJ<Item>(L, 2, false);
-        uint32 slot = ALE::CHECKVAL<uint32>(L, 3);
+        Item* item = itemOrEntry.is<ItemRef>() ? itemOrEntry.as<ItemRef>().Require() : nullptr;
 
         if (slot >= INVENTORY_SLOT_BAG_END)
-            return 1;
+            return nullptr;
 
         if (!item)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
+            uint32 entry = itemOrEntry.as<uint32>();
             item = Item::CreateItem(entry, 1, player);
             if (!item)
-                return 1;
+                return nullptr;
 
             InventoryResult result = player->CanEquipItem(slot, dest, item, false);
             if (result != EQUIP_ERR_OK)
             {
                 delete item;
-                return 1;
+                return nullptr;
             }
             player->ItemAddedQuestCheck(entry, 1);
             player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_RECEIVE_EPIC_ITEM, entry, 1);
@@ -3117,15 +2683,15 @@ namespace LuaPlayer
         {
             InventoryResult result = player->CanEquipItem(slot, dest, item, false);
             if (result != EQUIP_ERR_OK)
-                return 1;
+                return nullptr;
             player->RemoveItem(item->GetBagSlot(), item->GetSlot(), true);
         }
 
-        ALE::Push(L, player->EquipItem(dest, item, true));
+        Item* equippedItem = player->EquipItem(dest, item, true);
         player->AutoUnequipOffhandIfNeed();
-        return 1;
+        return equippedItem;
     }
-    
+
     /**
      * Returns true if the player can equip the given [Item] or item entry to the given slot, false otherwise.
      *
@@ -3136,39 +2702,28 @@ namespace LuaPlayer
      * @param uint32 slot : equipment slot to test
      * @return bool canEquip
      */
-    int CanEquipItem(lua_State* L, Player* player)
+    bool CanEquipItem(Player* player, sol::object itemOrEntry, uint32 slot)
     {
-        Item* item = ALE::CHECKOBJ<Item>(L, 2, false);
-        uint32 slot = ALE::CHECKVAL<uint32>(L, 3);
+        Item* item = itemOrEntry.is<ItemRef>() ? itemOrEntry.as<ItemRef>().Require() : nullptr;
         if (slot >= EQUIPMENT_SLOT_END)
-        {
-            ALE::Push(L, false);
-            return 1;
-        }
+            return false;
 
         if (!item)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
+            uint32 entry = itemOrEntry.as<uint32>();
             uint16 dest;
             InventoryResult msg = player->CanEquipNewItem(slot, dest, entry, false);
             if (msg != EQUIP_ERR_OK)
-            {
-                ALE::Push(L, false);
-                return 1;
-            }
+                return false;
         }
         else
         {
             uint16 dest;
             InventoryResult msg = player->CanEquipItem(slot, dest, item, false);
             if (msg != EQUIP_ERR_OK)
-            {
-                ALE::Push(L, false);
-                return 1;
-            }
+                return false;
         }
-        ALE::Push(L, true);
-        return 1;
+        return true;
     }
 
     /**
@@ -3176,22 +2731,19 @@ namespace LuaPlayer
      *
      * @param uint32 titleId
      */
-    int UnsetKnownTitle(lua_State* L, Player* player)
+    void UnsetKnownTitle(Player* player, uint32 id)
     {
-        uint32 id = ALE::CHECKVAL<uint32>(L, 2);
         CharTitlesEntry const* t = sCharTitlesStore.LookupEntry(id);
         if (t)
             player->SetTitle(t, true);
-        return 0;
     }
 
     /**
      * Advances all of the [Player]s weapon skills to the maximum amount available
      */
-    int AdvanceSkillsToMax(lua_State* /*L*/, Player* player)
+    void AdvanceSkillsToMax(Player* player)
     {
         player->UpdateSkillsToMaxSkillsForLevel();
-        return 0;
     }
 
     /**
@@ -3199,12 +2751,10 @@ namespace LuaPlayer
      *
      * @param uint32 skillStep
      */
-    int AdvanceAllSkills(lua_State* L, Player* player)
+    void AdvanceAllSkills(Player* player, uint32 step)
     {
-        uint32 step = ALE::CHECKVAL<uint32>(L, 2);
-
         if (!step)
-            return 0;
+            return;
 
         for (uint32 i = 0; i < sSkillLineStore.GetNumRows(); ++i)
         {
@@ -3217,8 +2767,6 @@ namespace LuaPlayer
                     player->UpdateSkill(entry->id, step);
             }
         }
-
-        return 0;
     }
 
     /**
@@ -3228,17 +2776,14 @@ namespace LuaPlayer
      * @param uint32 step : the step to advance the skill by
      * @return bool success : true if the skill was updated successfully
      */
-    int AdvanceSkill(lua_State* L, Player* player)
+    bool AdvanceSkill(Player* player, uint32 _skillId, uint32 _step)
     {
-        uint32 _skillId = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 _step = ALE::CHECKVAL<uint32>(L, 3);
         bool success = false;
         if (_skillId && _step && player->HasSkill(_skillId))
         {
             success = player->UpdateSkill(_skillId, _step);
         }
-        ALE::Push(L, success);
-        return 1;
+        return success;
     }
 
     /**
@@ -3250,22 +2795,15 @@ namespace LuaPlayer
      * @param float zCoord
      * @param float orientation
      */
-    int Teleport(lua_State* L, Player* player)
+    bool Teleport(Player* player, uint32 mapId, float x, float y, float z, float o)
     {
-        uint32 mapId = ALE::CHECKVAL<uint32>(L, 2);
-        float x = ALE::CHECKVAL<float>(L, 3);
-        float y = ALE::CHECKVAL<float>(L, 4);
-        float z = ALE::CHECKVAL<float>(L, 5);
-        float o = ALE::CHECKVAL<float>(L, 6);
-
         if (player->IsInFlight())
         {
             player->GetMotionMaster()->MovementExpired();
             player->m_taxi.ClearTaxiDestinations();
         }
 
-        ALE::Push(L, player->TeleportTo(mapId, x, y, z, o));
-        return 1;
+        return player->TeleportTo(mapId, x, y, z, o);
     }
 
     /**
@@ -3274,14 +2812,12 @@ namespace LuaPlayer
      * @param [Player] player
      * @param uint32 kills
      */
-    int AddLifetimeKills(lua_State* L, Player* player)
+    void AddLifetimeKills(Player* player, uint32 val)
     {
-        uint32 val = ALE::CHECKVAL<uint32>(L, 2);
         uint32 currentKills = player->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS);
         player->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, currentKills + val);
-        return 0;
     }
-    
+
     /**
      * Adds the given amount of the specified item entry to the player.
      *
@@ -3289,10 +2825,9 @@ namespace LuaPlayer
      * @param uint32 itemCount = 1 : amount of the item to add
      * @return [Item] item : the item that was added or nil
      */
-    int AddItem(lua_State* L, Player* player)
+    Item* AddItem(Player* player, uint32 itemId, sol::optional<uint32> itemCountArg)
     {
-        uint32 itemId = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 itemCount = ALE::CHECKVAL<uint32>(L, 3, 1);
+        uint32 itemCount = itemCountArg.value_or(1);
 
         uint32 noSpaceForCount = 0;
         ItemPosCountVec dest;
@@ -3301,16 +2836,15 @@ namespace LuaPlayer
             itemCount -= noSpaceForCount;
 
         if (itemCount == 0 || dest.empty())
-            return 1;
+            return nullptr;
 
         Item* item = player->StoreNewItem(dest, itemId, true, Item::GenerateItemRandomPropertyId(itemId));
         if (item)
             player->SendNewItem(item, itemCount, true, false);
-        ALE::Push(L, item);
 
-        return 1;
+        return item;
     }
-    
+
     /**
      * Removes the given amount of the specified [Item] from the player.
      *
@@ -3320,23 +2854,18 @@ namespace LuaPlayer
      * @param uint32 entry : entry of the item to remove
      * @param uint32 itemCount = 1 : amount of the item to remove
      */
-    int RemoveItem(lua_State* L, Player* player)
+    void RemoveItem(Player* player, sol::object itemOrEntry, uint32 itemCount)
     {
-        Item* item = ALE::CHECKOBJ<Item>(L, 2, false);
-        uint32 itemCount = ALE::CHECKVAL<uint32>(L, 3);
+        Item* item = itemOrEntry.is<ItemRef>() ? itemOrEntry.as<ItemRef>().Require() : nullptr;
         if (!item)
         {
-            uint32 itemId = ALE::CHECKVAL<uint32>(L, 2);
+            uint32 itemId = itemOrEntry.as<uint32>();
             player->DestroyItemCount(itemId, itemCount, true);
         }
         else
         {
-            bool all = itemCount >= item->GetCount();
             player->DestroyItemCount(item, itemCount, true);
-            if (all)
-                ALE::CHECKOBJ<ALEObject>(L, 2)->Invalidate();
         }
-        return 0;
     }
 
     /**
@@ -3344,14 +2873,12 @@ namespace LuaPlayer
      *
      * @param uint32 val : kills to remove
      */
-    int RemoveLifetimeKills(lua_State* L, Player* player)
+    void RemoveLifetimeKills(Player* player, uint32 val)
     {
-        uint32 val = ALE::CHECKVAL<uint32>(L, 2);
         uint32 currentKills = player->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS);
         if (val > currentKills)
             val = currentKills;
         player->SetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS, currentKills - val);
-        return 0;
     }
 
     /**
@@ -3360,12 +2887,10 @@ namespace LuaPlayer
      * @param uint32 spellId
      * @param bool update = true
      */
-    int ResetSpellCooldown(lua_State* L, Player* player)
+    void ResetSpellCooldown(Player* player, uint32 spellId, sol::optional<bool> updateArg)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-        bool update = ALE::CHECKVAL<bool>(L, 3, true);
+        bool update = updateArg.value_or(true);
         player->RemoveSpellCooldown(spellId, update);
-        return 0;
     }
 
     /**
@@ -3374,23 +2899,20 @@ namespace LuaPlayer
      * @param uint32 category
      * @param bool update = true
      */
-    int ResetTypeCooldowns(lua_State* L, Player* player)
+    void ResetTypeCooldowns(Player* player, uint32 category, sol::optional<bool> updateArg)
     {
-        uint32 category = ALE::CHECKVAL<uint32>(L, 2);
-        bool update = ALE::CHECKVAL<bool>(L, 3, true);
+        bool update = updateArg.value_or(true);
         (void)update; // ensure that the variable is referenced in order to pass compiler checks
 
         player->RemoveCategoryCooldown(category);
-        return 0;
     }
 
     /**
      * Resets all of the [Player]'s cooldowns
      */
-    int ResetAllCooldowns(lua_State* /*L*/, Player* player)
+    void ResetAllCooldowns(Player* player)
     {
         player->RemoveAllSpellCooldown();
-        return 0;
     }
 
     /**
@@ -3398,12 +2920,10 @@ namespace LuaPlayer
      *
      * @param string message
      */
-    int SendBroadcastMessage(lua_State* L, Player* player)
+    void SendBroadcastMessage(Player* player, std::string const& message)
     {
-        const char* message = ALE::CHECKVAL<const char*>(L, 2);
-        if (std::string(message).length() > 0)
+        if (message.length() > 0)
             ChatHandler(player->GetSession()).SendSysMessage(message);
-        return 0;
     }
 
     /**
@@ -3411,12 +2931,10 @@ namespace LuaPlayer
      *
      * @param string message
      */
-    int SendAreaTriggerMessage(lua_State* L, Player* player)
+    void SendAreaTriggerMessage(Player* player, std::string const& msg)
     {
-        std::string msg = ALE::CHECKVAL<std::string>(L, 2);
         if (msg.length() > 0)
             player->GetSession()->SendAreaTriggerMessage("{}", msg.c_str());
-        return 0;
     }
 
     /**
@@ -3424,12 +2942,10 @@ namespace LuaPlayer
      *
      * @param string message
      */
-    int SendNotification(lua_State* L, Player* player)
+    void SendNotification(Player* player, std::string const& msg)
     {
-        std::string msg = ALE::CHECKVAL<std::string>(L, 2);
         if (msg.length() > 0)
             ChatHandler(player->GetSession()).SendNotification("{}", msg);
-        return 0;
     }
 
     /**
@@ -3438,15 +2954,13 @@ namespace LuaPlayer
      * @param [WorldPacket] packet
      * @param bool selfOnly = true
      */
-    int SendPacket(lua_State* L, Player* player)
+    void SendPacket(Player* player, WorldPacket* data, sol::optional<bool> selfOnlyArg)
     {
-        WorldPacket* data = ALE::CHECKOBJ<WorldPacket>(L, 2);
-        bool selfOnly = ALE::CHECKVAL<bool>(L, 3, true);
+        bool selfOnly = selfOnlyArg.value_or(true);
         if (selfOnly)
             player->GetSession()->SendPacket(data);
         else
             player->SendMessageToSet(data, true);
-        return 0;
     }
 
     /**
@@ -3458,35 +2972,28 @@ namespace LuaPlayer
      * @param [Player] receiver
      *
      */
-    int SendAddonMessage(lua_State* L, Player* player)
+    void SendAddonMessage(Player* player, std::string const& prefix, std::string const& message, uint8 channel, Player* receiver)
     {
-        std::string prefix = ALE::CHECKVAL<std::string>(L, 2);
-        std::string message = ALE::CHECKVAL<std::string>(L, 3);
-        uint8 channel = ALE::CHECKVAL<uint8>(L, 4);
-        Player* receiver = ALE::CHECKOBJ<Player>(L, 5);
-
         std::string fullmsg = prefix + "\t" + message;
 
         WorldPacket data(SMSG_MESSAGECHAT, 100);
         data << uint8(channel);
         data << int32(LANG_ADDON);
-        data << player->GET_GUID();
+        data << player->GetGUID();
         data << uint32(0);
-        data << receiver->GET_GUID();
+        data << receiver->GetGUID();
         data << uint32(fullmsg.length() + 1);
         data << fullmsg;
         data << uint8(0);
         receiver->GetSession()->SendPacket(&data);
-        return 0;
     }
 
     /**
      * Kicks the [Player] from the server
      */
-    int KickPlayer(lua_State* /*L*/, Player* player)
+    void KickPlayer(Player* player)
     {
         player->GetSession()->KickPlayer();
-        return 0;
     }
 
     /**
@@ -3494,12 +3001,9 @@ namespace LuaPlayer
      *
      * @param int32 copperAmt : negative to remove, positive to add
      */
-    int ModifyMoney(lua_State* L, Player* player)
+    void ModifyMoney(Player* player, int32 amt)
     {
-        int32 amt = ALE::CHECKVAL<int32>(L, 2);
-
         player->ModifyMoney(amt);
-        return 1;
     }
 
     /**
@@ -3507,11 +3011,9 @@ namespace LuaPlayer
      *
      * @param uint32 spellId
      */
-    int LearnSpell(lua_State* L, Player* player)
+    void LearnSpell(Player* player, uint32 id)
     {
-        uint32 id = ALE::CHECKVAL<uint32>(L, 2);
         player->learnSpell(id);
-        return 0;
     }
 
     /**
@@ -3520,25 +3022,19 @@ namespace LuaPlayer
      * @param uint32 talent_id
      * @param uint32 talentRank
      */
-    int LearnTalent(lua_State* L, Player* player)
+    void LearnTalent(Player* player, uint32 id, uint32 rank)
     {
-        uint32 id = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 rank = ALE::CHECKVAL<uint32>(L, 3);
-
         player->LearnTalent(id, rank);
         player->SendTalentsInfoData(false);
-
-        return 0;
     }
+
     /**
     * Run a chat command as if the player typed it into the chat
     *
     * @param string command: text to display in chat or console
     */
-    int RunCommand(lua_State* L, Player* player)
+    void RunCommand(Player* player, std::string command)
     {
-        auto command = ALE::CHECKVAL<std::string>(L, 2);
-
         // In _ParseCommands which is used below no leading . or ! is allowed for the command string.
         if (command[0] == '.' || command[0] == '!') {
             command = command.substr(1);
@@ -3546,8 +3042,6 @@ namespace LuaPlayer
 
         auto handler = ChatHandler(player->GetSession());
         handler._ParseCommands(command);
-
-        return 0;
     }
 
     /**
@@ -3556,15 +3050,10 @@ namespace LuaPlayer
     * @param uint32 glyphId
     * @param uint32 slotIndex
     */
-    int SetGlyph(lua_State* L, Player* player)
+    void SetGlyph(Player* player, uint32 glyphId, uint32 slotIndex)
     {
-        uint32 glyphId = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 slotIndex = ALE::CHECKVAL<uint32>(L, 3);
-
         player->SetGlyph(slotIndex, glyphId, true);
         player->SendTalentsInfoData(false); // Also handles GlyphData
-
-        return 0;
     }
 
     /**
@@ -3573,20 +3062,17 @@ namespace LuaPlayer
     * @param [uint32] slotIndex
     * @return [uint32] glyphId
     */
-    int GetGlyph(lua_State* L, Player* player)
+    uint32 GetGlyph(Player* player, uint32 slotIndex)
     {
-        auto slotIndex = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L,player->GetGlyph(slotIndex));
-        return 1;
+        return player->GetGlyph(slotIndex);
     }
 
     /**
      * Remove cooldowns on spells that have less than 10 minutes of cooldown from the [Player], similarly to when you enter an arena.
      */
-    int RemoveArenaSpellCooldowns(lua_State* /*L*/, Player* player)
+    void RemoveArenaSpellCooldowns(Player* player)
     {
         player->RemoveArenaSpellCooldowns();
-        return 0;
     }
 
     /**
@@ -3595,21 +3081,20 @@ namespace LuaPlayer
      * @param float healthPercent = 100.0f
      * @param bool ressSickness = false
      */
-    int ResurrectPlayer(lua_State* L, Player* player)
+    void ResurrectPlayer(Player* player, sol::optional<float> percentArg, sol::optional<bool> sicknessArg)
     {
-        float percent = ALE::CHECKVAL<float>(L, 2, 100.0f);
-        bool sickness = ALE::CHECKVAL<bool>(L, 3, false);
+        float percent = percentArg.value_or(100.0f);
+        bool sickness = sicknessArg.value_or(false);
         player->ResurrectPlayer(percent, sickness);
         player->SpawnCorpseBones();
-        return 0;
     }
 
     /**
      * Adds a new item to the gossip menu shown to the [Player] on next call to [Player:GossipSendMenu].
      *
-     * sender and intid are numbers which are passed directly to the gossip selection handler. Internally they are partly used for the database gossip handling.  
-     * code specifies whether to show a box to insert text to. The player inserted text is passed to the gossip selection handler.  
-     * money specifies an amount of money the player needs to have to click the option. An error message is shown if the player doesn't have enough money.  
+     * sender and intid are numbers which are passed directly to the gossip selection handler. Internally they are partly used for the database gossip handling.
+     * code specifies whether to show a box to insert text to. The player inserted text is passed to the gossip selection handler.
+     * money specifies an amount of money the player needs to have to click the option. An error message is shown if the player doesn't have enough money.
      * Note that the money amount is only checked client side and is not removed from the player either. You will need to check again in your code before taking action.
      *
      * See also: [Player:GossipSendMenu], [Player:GossipAddQuests], [Player:GossipComplete], [Player:GossipClearMenu]
@@ -3622,15 +3107,11 @@ namespace LuaPlayer
      * @param string popup = nil : if non empty string, a popup with given text shown on click
      * @param uint32 money = 0 : required money in copper
      */
-    int GossipMenuAddItem(lua_State* L, Player* player)
+    void GossipMenuAddItem(Player* player, uint32 _icon, std::string const& msg, uint32 _sender, uint32 _intid, sol::optional<bool> codeArg, sol::optional<std::string> promptMsgArg, sol::optional<uint32> moneyArg)
     {
-        uint32 _icon = ALE::CHECKVAL<uint32>(L, 2);
-        const char* msg = ALE::CHECKVAL<const char*>(L, 3);
-        uint32 _sender = ALE::CHECKVAL<uint32>(L, 4);
-        uint32 _intid = ALE::CHECKVAL<uint32>(L, 5);
-        bool _code = ALE::CHECKVAL<bool>(L, 6, false);
-        const char* _promptMsg = ALE::CHECKVAL<const char*>(L, 7, "");
-        uint32 _money = ALE::CHECKVAL<uint32>(L, 8, 0);
+        bool _code = codeArg.value_or(false);
+        std::string _promptMsg = promptMsgArg.value_or("");
+        uint32 _money = moneyArg.value_or(0);
         if (player->PlayerTalkClass->GetGossipMenu().GetMenuItemCount() < GOSSIP_MAX_MENU_ITEMS)
         {
             player->PlayerTalkClass->GetGossipMenu().AddMenuItem(-1, _icon, msg, _sender, _intid, _promptMsg, _money,
@@ -3638,9 +3119,8 @@ namespace LuaPlayer
         }
         else
         {
-            return luaL_error(L, "GossipMenuItem not added. Reached Max amount of possible GossipMenuItems in this GossipMenu");
+            throw std::runtime_error("GossipMenuItem not added. Reached Max amount of possible GossipMenuItems in this GossipMenu");
         }
-        return 0;
     }
 
     /**
@@ -3648,10 +3128,9 @@ namespace LuaPlayer
      *
      * See also: [Player:GossipMenuAddItem], [Player:GossipAddQuests], [Player:GossipSendMenu], [Player:GossipClearMenu]
      */
-    int GossipComplete(lua_State* /*L*/, Player* player)
+    void GossipComplete(Player* player)
     {
         player->PlayerTalkClass->SendCloseGossip();
-        return 0;
     }
 
     /**
@@ -3668,31 +3147,30 @@ namespace LuaPlayer
      * @param [Object] sender : object acting as the source of the sent gossip menu
      * @param uint32 menu_id : if sender is a [Player] then menu_id is mandatory
      */
-    int GossipSendMenu(lua_State* L, Player* player)
+    void GossipSendMenu(Player* player, uint32 npc_text, Object* sender, sol::optional<uint32> menuIdArg)
     {
-        uint32 npc_text = ALE::CHECKVAL<uint32>(L, 2);
-        Object* sender = ALE::CHECKOBJ<Object>(L, 3);
         if (sender->GetTypeId() == TYPEID_PLAYER)
         {
-            uint32 menu_id = ALE::CHECKVAL<uint32>(L, 4);
+            if (!menuIdArg)
+                throw std::invalid_argument("menu_id is mandatory when the sender is a Player");
+
+            uint32 menu_id = *menuIdArg;
             player->PlayerTalkClass->GetGossipMenu().SetMenuId(menu_id);
         }
-        player->PlayerTalkClass->SendGossipMenu(npc_text, sender->GET_GUID());
-        return 0;
+        player->PlayerTalkClass->SendGossipMenu(npc_text, sender->GetGUID());
     }
 
     /**
      * Clears the [Player]s current gossip item list.
      *
      * See also: [Player:GossipMenuAddItem], [Player:GossipSendMenu], [Player:GossipAddQuests], [Player:GossipComplete]
-     * 
+     *
      *     Note: This is needed when you show a gossip menu without using gossip hello or select hooks which do this automatically.
      *     Usually this is needed when using [Player] is the sender of a Gossip Menu.
      */
-    int GossipClearMenu(lua_State* /*L*/, Player* player)
+    void GossipClearMenu(Player* player)
     {
         player->PlayerTalkClass->ClearMenus();
-        return 0;
     }
 
     /**
@@ -3700,12 +3178,9 @@ namespace LuaPlayer
      *
      * @param uint32 pathId : pathId from DBC or [Global:AddTaxiPath]
      */
-    int StartTaxi(lua_State* L, Player* player)
+    void StartTaxi(Player* player, uint32 pathId)
     {
-        uint32 pathId = ALE::CHECKVAL<uint32>(L, 2);
-
         player->ActivateTaxiPathTo(pathId);
-        return 0;
     }
 
     /**
@@ -3718,15 +3193,8 @@ namespace LuaPlayer
      * @param uint32 data
      * @param string iconText
      */
-    int GossipSendPOI(lua_State* L, Player* player)
+    void GossipSendPOI(Player* player, float x, float y, uint32 icon, uint32 flags, uint32 data, std::string const& iconText)
     {
-        float x = ALE::CHECKVAL<float>(L, 2);
-        float y = ALE::CHECKVAL<float>(L, 3);
-        uint32 icon = ALE::CHECKVAL<uint32>(L, 4);
-        uint32 flags = ALE::CHECKVAL<uint32>(L, 5);
-        uint32 data = ALE::CHECKVAL<uint32>(L, 6);
-        std::string iconText = ALE::CHECKVAL<std::string>(L, 7);
-
         WorldPacket packet(SMSG_GOSSIP_POI, 4 + 4 + 4 + 4 + 4 + 10);
         packet << flags;
         packet << x;
@@ -3735,7 +3203,6 @@ namespace LuaPlayer
         packet << data;
         packet << iconText;
         player->GetSession()->SendPacket(&packet);
-        return 0;
     }
 
     /**
@@ -3743,21 +3210,18 @@ namespace LuaPlayer
      *
      * @param [WorldObject] source : a questgiver with quests
      */
-    int GossipAddQuests(lua_State* L, Player* player)
+    void GossipAddQuests(Player* player, WorldObject* source)
     {
-        WorldObject* source = ALE::CHECKOBJ<WorldObject>(L, 2);
-
         if (source->GetTypeId() == TYPEID_UNIT)
         {
             if (source->GetUInt32Value(UNIT_NPC_FLAGS) & UNIT_NPC_FLAG_QUESTGIVER)
-                player->PrepareQuestMenu(source->GET_GUID());
+                player->PrepareQuestMenu(source->GetGUID());
         }
         else if (source->GetTypeId() == TYPEID_GAMEOBJECT)
         {
             if (source->ToGameObject()->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER)
-                player->PrepareQuestMenu(source->GET_GUID());
+                player->PrepareQuestMenu(source->GetGUID());
         }
-        return 0;
     }
 
     /**
@@ -3766,26 +3230,23 @@ namespace LuaPlayer
      * @param uint32 questId : entry of a quest
      * @param bool activateAccept = true : auto finish the quest
      */
-    int SendQuestTemplate(lua_State* L, Player* player)
+    void SendQuestTemplate(Player* player, uint32 questId, sol::optional<bool> activateAcceptArg)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-        bool activateAccept = ALE::CHECKVAL<bool>(L, 3, true);
+        bool activateAccept = activateAcceptArg.value_or(true);
 
-        Quest const* quest = eObjectMgr->GetQuestTemplate(questId);
+        Quest const* quest = sObjectMgr->GetQuestTemplate(questId);
         if (!quest)
-            return 0;
+            return;
 
-        player->PlayerTalkClass->SendQuestGiverQuestDetails(quest, player->GET_GUID(), activateAccept);
-        return 0;
+        player->PlayerTalkClass->SendQuestGiverQuestDetails(quest, player->GetGUID(), activateAccept);
     }
 
     /**
      * Converts [Player]'s corpse to bones
      */
-    int SpawnBones(lua_State* /*L*/, Player* player)
+    void SpawnBones(Player* player)
     {
         player->SpawnCorpseBones();
-        return 0;
     }
 
     /**
@@ -3793,11 +3254,9 @@ namespace LuaPlayer
      *
      * @param [Player] looter
      */
-    int RemovedInsignia(lua_State* L, Player* player)
+    void RemovedInsignia(Player* player, Player* looter)
     {
-        Player* looter = ALE::CHECKOBJ<Player>(L, 2);
         player->RemovedInsignia(looter);
-        return 0;
     }
 
     /**
@@ -3806,15 +3265,10 @@ namespace LuaPlayer
      * @param [Player] invited : player to invite to group
      * @return bool success : true if the player was invited to a group
      */
-    int GroupInvite(lua_State* L, Player* player)
+    bool GroupInvite(Player* player, Player* invited)
     {
-        Player* invited = ALE::CHECKOBJ<Player>(L, 2);
-
         if (invited->GetGroup() || invited->GetGroupInvite())
-        {
-            ALE::Push(L, false);
-            return 1;
-        }
+            return false;
 
         // Get correct existing group if any
         Group* group = player->GetGroup();
@@ -3846,8 +3300,7 @@ namespace LuaPlayer
             invited->GetSession()->SendPacket(&data);
         }
 
-        ALE::Push(L, success);
-        return 1;
+        return success;
     }
 
     /**
@@ -3856,12 +3309,10 @@ namespace LuaPlayer
      * @param [Player] invited : player to add to group
      * @return [Group] createdGroup : the created group or nil
      */
-    int GroupCreate(lua_State* L, Player* player)
+    Group* GroupCreate(Player* player, Player* invited)
     {
-        Player* invited = ALE::CHECKOBJ<Player>(L, 2);
-
         if (player->GetGroup() || invited->GetGroup())
-            return 0;
+            return nullptr;
 
         if (player->GetGroupInvite())
             player->UninviteFromGroup();
@@ -3873,7 +3324,7 @@ namespace LuaPlayer
         if (!group->AddLeaderInvite(player))
         {
             delete group;
-            return 0;
+            return nullptr;
         }
 
         // Forming a new group, create it
@@ -3885,10 +3336,9 @@ namespace LuaPlayer
         }
 
         if (!group->AddMember(invited))
-            return 0;
+            return nullptr;
         group->BroadcastGroupUpdate();
-        ALE::Push(L, group);
-        return 1;
+        return group;
     }
 
     /**
@@ -3896,12 +3346,9 @@ namespace LuaPlayer
      *
      * @param uint32 CinematicSequenceId : entry of a cinematic
      */
-    int SendCinematicStart(lua_State* L, Player* player)
+    void SendCinematicStart(Player* player, uint32 CinematicSequenceId)
     {
-        uint32 CinematicSequenceId = ALE::CHECKVAL<uint32>(L, 2);
-
         player->SendCinematicStart(CinematicSequenceId);
-        return 0;
     }
 
     /**
@@ -3909,12 +3356,9 @@ namespace LuaPlayer
      *
      * @param uint32 MovieId : entry of a movie
      */
-    int SendMovieStart(lua_State* L, Player* player)
+    void SendMovieStart(Player* player, uint32 MovieId)
     {
-        uint32 MovieId = ALE::CHECKVAL<uint32>(L, 2);
-
         player->SendMovieStart(MovieId);
-        return 0;
     }
 
     /**
@@ -3924,13 +3368,9 @@ namespace LuaPlayer
      * @param uint32 index
      * @param uint32 value
      */
-    int UpdatePlayerSetting(lua_State* L, Player* player)
+    void UpdatePlayerSetting(Player* player, std::string const& source, uint32 index, uint32 value)
     {
-        std::string source = ALE::CHECKVAL<std::string>(L, 2);
-        uint32 index = ALE::CHECKVAL<uint32>(L, 3);
-        uint32 value = ALE::CHECKVAL<uint32>(L, 4);
         player->UpdatePlayerSetting(source, index, value);
-        return 0;
     }
 
     /**
@@ -3939,13 +3379,10 @@ namespace LuaPlayer
      * @param string source
      * @param uint32 index
      */
-    int GetPlayerSettingValue(lua_State* L, Player* player)
+    uint32 GetPlayerSettingValue(Player* player, std::string const& source, uint32 index)
     {
-        std::string source = ALE::CHECKVAL<std::string>(L, 2);
-        uint32 index = ALE::CHECKVAL<uint32>(L, 3);
         uint32 value = player->GetPlayerSetting(source, index).value;
-        ALE::Push(L, value);
-        return 1;
+        return value;
     }
 
     /**
@@ -3953,10 +3390,9 @@ namespace LuaPlayer
      *
      * @return [Player] trader : the player trading, or nil
      */
-    int GetTrader(lua_State* L, Player* player)
+    Player* GetTrader(Player* player)
     {
-        ALE::Push(L, player->GetTrader());
-        return 1;
+        return player->GetTrader();
     }
 
     /**
@@ -3965,111 +3401,21 @@ namespace LuaPlayer
      * @param int value : The spell power value to set
      * @param bool apply = false : Whether the spell power should be applied or removed
      */
-    int SetSpellPower(lua_State* L, Player* player)
+    void SetSpellPower(Player* player, int value, sol::optional<bool> applyArg)
     {
-        int value  = ALE::CHECKVAL<int>(L, 2);
-        bool apply = ALE::CHECKVAL<bool>(L, 3, false);
+        bool apply = applyArg.value_or(false);
 
         player->ApplySpellPowerBonus(value, apply);
-        return 0;
     }
-
-    /*int BindToInstance(lua_State* L, Player* player)
-    {
-    player->BindToInstance();
-    return 0;
-    }*/
-
-    /*int AddTalent(lua_State* L, Player* player)
-    {
-    uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-    uint8 spec = ALE::CHECKVAL<uint8>(L, 3);
-    bool learning = ALE::CHECKVAL<bool>(L, 4, true);
-    if (spec >= MAX_TALENT_SPECS)
-    ALE::Push(L, false);
-    else
-    ALE::Push(L, player->AddTalent(spellId, spec, learning));
-    return 1;
-    }*/
-
-    /*int GainSpellComboPoints(lua_State* L, Player* player)
-    {
-    int8 count = ALE::CHECKVAL<int8>(L, 2);
-
-    player->GainSpellComboPoints(count);
-    return 0;
-    }*/
-
-    /*int KillGOCredit(lua_State* L, Player* player)
-    {
-    uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-    ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 3);
-    player->KillCreditGO(entry, guid);
-    return 0;
-    }*/
-
-    /*int KilledPlayerCredit(lua_State* L, Player* player)
-    {
-    player->KilledPlayerCredit();
-    return 0;
-    }*/
-
-    /*int RemoveRewardedQuest(lua_State* L, Player* player)
-    {
-    uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-    player->RemoveRewardedQuest(entry);
-    return 0;
-    }*/
-
-    /*int RemoveActiveQuest(lua_State* L, Player* player)
-    {
-    uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-
-    player->RemoveActiveQuest(entry);
-    return 0;
-    }*/
-
-    /*int SummonPet(lua_State* L, Player* player)
-    {
-    uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-    float x = ALE::CHECKVAL<float>(L, 3);
-    float y = ALE::CHECKVAL<float>(L, 4);
-    float z = ALE::CHECKVAL<float>(L, 5);
-    float o = ALE::CHECKVAL<float>(L, 6);
-    uint32 petType = ALE::CHECKVAL<uint32>(L, 7);
-    uint32 despwtime = ALE::CHECKVAL<uint32>(L, 8);
-
-    if (petType >= MAX_PET_TYPE)
-    return 0;
-
-    player->SummonPet(entry, x, y, z, o, (PetType)petType, despwtime);
-    return 0;
-    }*/
-
-    /*int RemovePet(lua_State* L, Player* player)
-    {
-    int mode = ALE::CHECKVAL<int>(L, 2, PET_SAVE_AS_DELETED);
-    bool returnreagent = ALE::CHECKVAL<bool>(L, 2, false);
-
-    if (!player->GetPet())
-    return 0;
-
-    player->RemovePet(player->GetPet(), (PetSaveMode)mode, returnreagent);
-    return 0;
-    }*/
 
     /**
      * Set bonus talent count to a specific count for the [Player]
      *
      * @param uint32 value : bonus talent points
      */
-    int SetBonusTalentCount(lua_State* L, Player* player)
+    void SetBonusTalentCount(Player* player, uint32 value)
     {
-        uint32 value = ALE::CHECKVAL<uint32>(L, 2);
-
         player->SetBonusTalentCount(value);
-        return 0;
     }
 
     /**
@@ -4077,34 +3423,29 @@ namespace LuaPlayer
      *
      * @return uint32 bonusTalent
      */
-    int GetBonusTalentCount(lua_State* L, Player* player)
+    uint32 GetBonusTalentCount(Player* player)
     {
-        ALE::Push(L, player->GetBonusTalentCount());
-        return 1;
+        return player->GetBonusTalentCount();
     }
-  
+
     /**
      *  Returns the [Player] spells list
      *
      * @return table playerSpells
      */
-    int GetSpells(lua_State* L, Player* player)
+    sol::table GetSpells(Player* player, sol::this_state s)
     {
-        std::list<uint32> list;
-        lua_createtable(L, list.size(), 0);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         PlayerSpellMap spellMap = player->GetSpellMap();
         for (PlayerSpellMap::const_iterator itr = spellMap.begin(); itr != spellMap.end(); ++itr)
         {
             SpellInfo const* spellInfo = sSpellMgr->AssertSpellInfo(itr->first);
-            ALE::Push(L, spellInfo->Id);
-            lua_rawseti(L, tbl, ++i);
+            tbl[++i] = spellInfo->Id;
         }
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
     /**
@@ -4112,12 +3453,9 @@ namespace LuaPlayer
      *
      * @param uint32 count = count of bonus talent
      */
-    int AddBonusTalent(lua_State* L, Player* player)
+    void AddBonusTalent(Player* player, uint32 count)
     {
-        uint32 count = ALE::CHECKVAL<uint32>(L, 2);
-
         player->AddBonusTalent(count);
-        return 0;
     }
 
     /**
@@ -4125,14 +3463,11 @@ namespace LuaPlayer
      *
      * @param uint32 count = count of bonus talent
      */
-    int RemoveBonusTalent(lua_State* L, Player* player)
+    void RemoveBonusTalent(Player* player, uint32 count)
     {
-        uint32 count = ALE::CHECKVAL<uint32>(L, 2);
-
         player->RemoveBonusTalent(count);
-        return 0;
     }
-  
+
     /**
      *  Returns the [Player] homebind location.
      *
@@ -4142,22 +3477,16 @@ namespace LuaPlayer
      *      - float y: The Y coordinate of the homebind location.
      *      - float z: The Z coordinate of the homebind location.
      */
-    int GetHomebind(lua_State* L, Player* player)
+    sol::table GetHomebind(Player* player, sol::this_state s)
     {
-        lua_newtable(L);
-        lua_pushinteger(L, player->m_homebindMapId);
-        lua_setfield(L, -2, "mapId");
+        sol::table tbl = sol::state_view(s).create_table();
 
-        lua_pushnumber(L, player->m_homebindX);
-        lua_setfield(L, -2, "x");
+        tbl["mapId"] = player->m_homebindMapId;
+        tbl["x"] = player->m_homebindX;
+        tbl["y"] = player->m_homebindY;
+        tbl["z"] = player->m_homebindZ;
 
-        lua_pushnumber(L, player->m_homebindY);
-        lua_setfield(L, -2, "y");
-
-        lua_pushnumber(L, player->m_homebindZ);
-        lua_setfield(L, -2, "z");
-
-        return 1;
+        return tbl;
     }
 
     /**
@@ -4165,10 +3494,9 @@ namespace LuaPlayer
      *
      *  @param string tele : The name of the predefined teleport location.
      */
-    int TeleportTo(lua_State* L, Player* player)
+    void TeleportTo(Player* player, std::string const& tele)
     {
-        std::string tele = ALE::CHECKVAL<std::string>(L, 2);
-        const GameTele* game_tele = sObjectMgr->GetGameTele(tele);
+        GameTele const* game_tele = sObjectMgr->GetGameTele(tele);
 
         if (player->IsInFlight())
         {
@@ -4177,7 +3505,6 @@ namespace LuaPlayer
         }
 
         player->TeleportTo(game_tele->mapId, game_tele->position_x, game_tele->position_y, game_tele->position_z, game_tele->orientation);
-        return 0;
     }
 
     /**
@@ -4185,10 +3512,9 @@ namespace LuaPlayer
      *
      * @return [Pet] pet : the player's pet, or `nil` if no pet
      */
-    int GetPet(lua_State* L, Player* player)
+    Pet* GetPet(Player* player)
     {
-        ALE::Push(L, player->GetPet());
-        return 1;
+        return player->GetPet();
     }
 
     /**
@@ -4196,10 +3522,9 @@ namespace LuaPlayer
      *
      * @return bool isMaxLevel
      */
-    int IsMaxLevel(lua_State* L, Player* player)
+    bool IsMaxLevel(Player* player)
     {
-        ALE::Push(L, player->IsMaxLevel());
-        return 1;
+        return player->IsMaxLevel();
     }
 
     /**
@@ -4215,20 +3540,13 @@ namespace LuaPlayer
      * @param uint32 healthPct = 0 : initial health percentage
      * @return [Pet] pet : the summoned pet, or `nil` if failed
      */
-    int SummonPet(lua_State* L, Player* player)
+    Pet* SummonPet(Player* player, uint32 entry, float x, float y, float z, float ang, uint32 petType, sol::optional<uint32> durationArg, sol::optional<uint32> healthPctArg)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        float x = ALE::CHECKVAL<float>(L, 3);
-        float y = ALE::CHECKVAL<float>(L, 4);
-        float z = ALE::CHECKVAL<float>(L, 5);
-        float ang = ALE::CHECKVAL<float>(L, 6);
-        uint32 petType = ALE::CHECKVAL<uint32>(L, 7);
-        uint32 duration = ALE::CHECKVAL<uint32>(L, 8, 0);
-        uint32 healthPct = ALE::CHECKVAL<uint32>(L, 9, 0);
+        uint32 duration = durationArg.value_or(0);
+        uint32 healthPct = healthPctArg.value_or(0);
 
         Pet* pet = player->SummonPet(entry, x, y, z, ang, static_cast<PetType>(petType), Milliseconds(duration), healthPct);
-        ALE::Push(L, pet);
-        return 1;
+        return pet;
     }
 
     /**
@@ -4236,10 +3554,9 @@ namespace LuaPlayer
      *
      * @return float averageItemLevel
      */
-    int GetAverageItemLevel(lua_State* L, Player* player)
+    float GetAverageItemLevel(Player* player)
     {
-        ALE::Push(L, player->GetAverageItemLevel());
-        return 1;
+        return player->GetAverageItemLevel();
     }
 
     /**
@@ -4254,22 +3571,19 @@ namespace LuaPlayer
      * @param uint32 spellID = 0 : spell used for taming (second form)
      * @return [Pet] pet : the created pet, or `nil` if failed
      */
-    int CreatePet(lua_State* L, Player* player)
+    Pet* CreatePet(Player* player, sol::object creatureOrEntry, sol::optional<uint32> spellIDArg)
     {
-        if (lua_gettop(L) == 2)
+        if (creatureOrEntry.is<CreatureRef>())
         {
-            uint32 creatureEntry = ALE::CHECKVAL<uint32>(L, 2);
-            Pet* pet = player->CreatePet(creatureEntry);
-            ALE::Push(L, pet);
-        }
-        else
-        {
-            Creature* creatureTarget = ALE::CHECKOBJ<Creature>(L, 2);
-            uint32 spellID = ALE::CHECKVAL<uint32>(L, 3, 0);
+            Creature* creatureTarget = creatureOrEntry.as<CreatureRef>().Require();
+            uint32 spellID = spellIDArg.value_or(0);
             Pet* pet = player->CreatePet(creatureTarget, spellID);
-            ALE::Push(L, pet);
+            return pet;
         }
-        return 1;
+
+        uint32 creatureEntry = creatureOrEntry.as<uint32>();
+        Pet* pet = player->CreatePet(creatureEntry);
+        return pet;
     }
 
     /**
@@ -4278,11 +3592,9 @@ namespace LuaPlayer
      * @param uint32 questId
      * @return bool isDailyQuestDone
      */
-    int IsDailyQuestDone(lua_State* L, Player* player)
+    bool IsDailyQuestDone(Player* player, uint32 questId)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, player->IsDailyQuestDone(questId));
-        return 1;
+        return player->IsDailyQuestDone(questId);
     }
 
     /**
@@ -4290,10 +3602,9 @@ namespace LuaPlayer
      *
      * The pet can be resummoned later. Used during teleportation, mounting, etc.
      */
-    int UnsummonPetTemporarily(lua_State* /*L*/, Player* player)
+    void UnsummonPetTemporarily(Player* player)
     {
         player->UnsummonPetTemporaryIfAny();
-        return 0;
     }
 
     /**
@@ -4301,11 +3612,9 @@ namespace LuaPlayer
      *
      * @param uint32 flag : the player flag to set
      */
-    int SetPlayerFlag(lua_State* L, Player* player)
+    void SetPlayerFlag(Player* player, uint32 flag)
     {
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 2);
         player->SetPlayerFlag((PlayerFlags)flag);
-        return 0;
     }
 
     /**
@@ -4315,13 +3624,10 @@ namespace LuaPlayer
      * @param [PetSaveMode] mode : how to handle pet removal
      * @param bool returnReagent = false : if `true`, returns reagents used to summon
      */
-    int RemovePet(lua_State* L, Player* player)
+    void RemovePet(Player* player, Pet* pet, uint32 mode, sol::optional<bool> returnReagentArg)
     {
-        Pet* pet = ALE::CHECKOBJ<Pet>(L, 2);
-        uint32 mode = ALE::CHECKVAL<uint32>(L, 3);
-        bool returnReagent = ALE::CHECKVAL<bool>(L, 4, false);
+        bool returnReagent = returnReagentArg.value_or(false);
         player->RemovePet(pet, static_cast<PetSaveMode>(mode), returnReagent);
-        return 1;
     }
 
     /**
@@ -4329,11 +3635,9 @@ namespace LuaPlayer
      *
      * @param uint32 flag : the player flag to remove
      */
-    int RemovePlayerFlag(lua_State* L, Player* player)
+    void RemovePlayerFlag(Player* player, uint32 flag)
     {
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 2);
         player->RemovePlayerFlag((PlayerFlags)flag);
-        return 0;
     }
 
     /**
@@ -4341,10 +3645,9 @@ namespace LuaPlayer
      *
      * @return bool canResurrect
      */
-    int CanPetResurrect(lua_State* L, Player* player)
+    bool CanPetResurrect(Player* player)
     {
-        ALE::Push(L, player->CanPetResurrect());
-        return 1;
+        return player->CanPetResurrect();
     }
 
     /**
@@ -4354,12 +3657,9 @@ namespace LuaPlayer
      * @param uint32 maximum : the maximum value
      * @return uint32 randomValue : a random number between min and max
      */
-    int DoRandomRoll(lua_State* L, Player* player)
+    uint32 DoRandomRoll(Player* player, uint32 minimum, uint32 maximum)
     {
-        uint32 minimum = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 maximum = ALE::CHECKVAL<uint32>(L, 3);
-        ALE::Push(L, player->DoRandomRoll(minimum, maximum));
-        return 1;
+        return player->DoRandomRoll(minimum, maximum);
     }
 
     /**
@@ -4367,10 +3667,9 @@ namespace LuaPlayer
      *
      * @return bool isPvP
      */
-    int IsPvP(lua_State* L, Player* player)
+    bool IsPvP(Player* player)
     {
-        ALE::Push(L, player->IsPvP());
-        return 1;
+        return player->IsPvP();
     }
 
     /**
@@ -4378,10 +3677,9 @@ namespace LuaPlayer
      *
      * @return bool isFFAPvP
      */
-    int IsFFAPvP(lua_State* L, Player* player)
+    bool IsFFAPvP(Player* player)
     {
-        ALE::Push(L, player->IsFFAPvP());
-        return 1;
+        return player->IsFFAPvP();
     }
 
     /**
@@ -4389,10 +3687,9 @@ namespace LuaPlayer
      *
      * @return bool isUsingLfg
      */
-    int IsUsingLfg(lua_State* L, Player* player)
+    bool IsUsingLfg(Player* player)
     {
-        ALE::Push(L, player->IsUsingLfg());
-        return 1;
+        return player->IsUsingLfg();
     }
 
     /**
@@ -4400,10 +3697,9 @@ namespace LuaPlayer
      *
      * @return bool inRandomLfgDungeon
      */
-    int InRandomLfgDungeon(lua_State* L, Player* player)
+    bool InRandomLfgDungeon(Player* player)
     {
-        ALE::Push(L, player->inRandomLfgDungeon());
-        return 1;
+        return player->inRandomLfgDungeon();
     }
 
     /**
@@ -4412,11 +3708,9 @@ namespace LuaPlayer
      * @param [Object] questGiver : the quest giver object
      * @return bool canInteract
      */
-    int CanInteractWithQuestGiver(lua_State* L, Player* player)
+    bool CanInteractWithQuestGiver(Player* player, Object* questGiver)
     {
-        Object* questGiver = ALE::CHECKOBJ<Object>(L, 2);
-        ALE::Push(L, player->CanInteractWithQuestGiver(questGiver));
-        return 1;
+        return player->CanInteractWithQuestGiver(questGiver);
     }
 
     /**
@@ -4425,11 +3719,9 @@ namespace LuaPlayer
      * @param [Quest] quest : the quest to check
      * @return bool canSeeStartQuest
      */
-    int CanSeeStartQuest(lua_State* L, Player* player)
+    bool CanSeeStartQuest(Player* player, Quest const* quest)
     {
-        Quest const* quest = ALE::CHECKOBJ<Quest>(L, 2);
-        ALE::Push(L, player->CanSeeStartQuest(quest));
-        return 1;
+        return player->CanSeeStartQuest(quest);
     }
 
     /**
@@ -4437,10 +3729,9 @@ namespace LuaPlayer
      *
      * @return bool hasExistingPet
      */
-    int IsExistPet(lua_State* L, Player* player)
+    bool IsExistPet(Player* player)
     {
-        ALE::Push(L, player->IsExistPet());
-        return 1;
+        return player->IsExistPet();
     }
 
     /**
@@ -4450,22 +3741,19 @@ namespace LuaPlayer
      * @param bool msg : whether to send error messages
      * @return bool canTakeQuest
      */
-    int CanTakeQuest(lua_State* L, Player* player)
+    bool CanTakeQuest(Player* player, Quest const* quest, sol::optional<bool> msgArg)
     {
-        Quest const* quest = ALE::CHECKOBJ<Quest>(L, 2);
-        bool msg = ALE::CHECKVAL<bool>(L, 3, true);
-        ALE::Push(L, player->CanTakeQuest(quest, msg));
-        return 1;
+        bool msg = msgArg.value_or(true);
+        return player->CanTakeQuest(quest, msg);
     }
 
     /**
      * Resets the [Player]'s pet talents.
      *
      */
-    int ResetPetTalents(lua_State* /*L*/, Player* player)
+    void ResetPetTalents(Player* player)
     {
         player->ResetPetTalents();
-        return 0;
     }
 
     /**
@@ -4475,12 +3763,10 @@ namespace LuaPlayer
      * @param bool msg : whether to send error messages
      * @return bool canAddQuest
      */
-    int CanAddQuest(lua_State* L, Player* player)
+    bool CanAddQuest(Player* player, Quest const* quest, sol::optional<bool> msgArg)
     {
-        Quest const* quest = ALE::CHECKOBJ<Quest>(L, 2);
-        bool msg = ALE::CHECKVAL<bool>(L, 3, true);
-        ALE::Push(L, player->CanAddQuest(quest, msg));
-        return 1;
+        bool msg = msgArg.value_or(true);
+        return player->CanAddQuest(quest, msg);
     }
 
     /**
@@ -4491,13 +3777,9 @@ namespace LuaPlayer
      * @param uint8 newfacialhair : the new facial hair
      * @return uint32 cost : the cost in copper
      */
-    int GetBarberShopCost(lua_State* L, Player* player)
+    uint32 GetBarberShopCost(Player* player, uint8 newhairstyle, uint8 newhaircolor, uint8 newfacialhair)
     {
-        uint8 newhairstyle = ALE::CHECKVAL<uint8>(L, 2);
-        uint8 newhaircolor = ALE::CHECKVAL<uint8>(L, 3);
-        uint8 newfacialhair = ALE::CHECKVAL<uint8>(L, 4);
-        ALE::Push(L, player->GetBarberShopCost(newhairstyle, newhaircolor, newfacialhair));
-        return 1;
+        return player->GetBarberShopCost(newhairstyle, newhaircolor, newfacialhair);
     }
 
     /**
@@ -4506,11 +3788,10 @@ namespace LuaPlayer
      * @param [WorldObject] target : the target to check sight range for (optional)
      * @return float sightRange
      */
-    int GetSightRange(lua_State* L, Player* player)
+    float GetSightRange(Player* player, sol::optional<WorldObjectRef> targetArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2, false);
-        ALE::Push(L, player->GetSightRange(target));
-        return 1;
+        WorldObject* target = targetArg ? targetArg->Resolve() : nullptr;
+        return player->GetSightRange(target);
     }
 
     /**
@@ -4523,16 +3804,11 @@ namespace LuaPlayer
      * @param bool noQuestBonus : whether to skip quest bonus
      * @return float reputationGain
      */
-    int CalculateReputationGain(lua_State* L, Player* player)
+    float CalculateReputationGain(Player* player, uint32 source, uint32 creatureOrQuestLevel, float rep, uint32 faction, sol::optional<bool> noQuestBonusArg)
     {
-        uint32 source = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 creatureOrQuestLevel = ALE::CHECKVAL<uint32>(L, 3);
-        float rep = ALE::CHECKVAL<float>(L, 4);
-        uint32 faction = ALE::CHECKVAL<uint32>(L, 5);
-        bool noQuestBonus = ALE::CHECKVAL<bool>(L, 6, false);
-        
-        ALE::Push(L, player->CalculateReputationGain((ReputationSource)source, creatureOrQuestLevel, rep, faction, noQuestBonus));
-        return 1;
+        bool noQuestBonus = noQuestBonusArg.value_or(false);
+
+        return player->CalculateReputationGain((ReputationSource)source, creatureOrQuestLevel, rep, faction, noQuestBonus);
     }
 
     /**
@@ -4542,21 +3818,17 @@ namespace LuaPlayer
      * @param uint32 damage : damage amount
      * @return uint32 actualDamage : the actual damage dealt
      */
-    int EnvironmentalDamage(lua_State* L, Player* player)
+    uint32 EnvironmentalDamage(Player* player, uint32 type, uint32 damage)
     {
-        uint32 type = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 damage = ALE::CHECKVAL<uint32>(L, 3);
-        ALE::Push(L, player->EnvironmentalDamage((EnviromentalDamage)type, damage));
-        return 1;
+        return player->EnvironmentalDamage((EnviromentalDamage)type, damage);
     }
 
     /**
      * Initializes taxi nodes for the [Player]'s current level.
      */
-    int InitTaxiNodesForLevel(lua_State* /*L*/, Player* player)
+    void InitTaxiNodesForLevel(Player* player)
     {
         player->InitTaxiNodesForLevel();
-        return 0;
     }
 
     /**
@@ -4566,13 +3838,9 @@ namespace LuaPlayer
      * @param uint32 talentId : ID of the talent to learn
      * @param uint32 talentRank : rank of the talent to learn
      */
-    int LearnPetTalent(lua_State* L, Player* player)
+    void LearnPetTalent(Player* player, ObjectGuid petGuid, uint32 talentId, uint32 talentRank)
     {
-        ObjectGuid petGuid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-        uint32 talentId = ALE::CHECKVAL<uint32>(L, 3);
-        uint32 talentRank = ALE::CHECKVAL<uint32>(L, 4);
         player->LearnPetTalent(petGuid, talentId, talentRank);
-        return 0;
     }
 
     /**
@@ -4581,11 +3849,9 @@ namespace LuaPlayer
      * @param uint32 bitIndex : the title bit index to check
      * @return bool hasTitle
      */
-    int HasTitleByIndex(lua_State* L, Player* player)
+    bool HasTitleByIndex(Player* player, uint32 bitIndex)
     {
-        uint32 bitIndex = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, player->HasTitle(bitIndex));
-        return 1;
+        return player->HasTitle(bitIndex);
     }
 
     /**
@@ -4594,11 +3860,9 @@ namespace LuaPlayer
      * @param [WorldObject] target : the target to check distance to
      * @return bool isAtGroupRewardDistance
      */
-    int IsAtGroupRewardDistance(lua_State* L, Player* player)
+    bool IsAtGroupRewardDistance(Player* player, WorldObject const* target)
     {
-        WorldObject const* target = ALE::CHECKOBJ<WorldObject>(L, 2);
-        ALE::Push(L, player->IsAtGroupRewardDistance(target));
-        return 1;
+        return player->IsAtGroupRewardDistance(target);
     }
 
     /**
@@ -4607,11 +3871,9 @@ namespace LuaPlayer
      * @param [WorldObject] target : the target to check distance to
      * @return bool isAtLootRewardDistance
      */
-    int IsAtLootRewardDistance(lua_State* L, Player* player)
+    bool IsAtLootRewardDistance(Player* player, WorldObject const* target)
     {
-        WorldObject const* target = ALE::CHECKOBJ<WorldObject>(L, 2);
-        ALE::Push(L, player->IsAtLootRewardDistance(target));
-        return 1;
+        return player->IsAtLootRewardDistance(target);
     }
 
     /**
@@ -4619,11 +3881,9 @@ namespace LuaPlayer
      *
      * @param uint32 questId : the quest entry ID to abandon
      */
-    int AbandonQuest(lua_State* L, Player* player)
+    void AbandonQuest(Player* player, uint32 questId)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 2);
         player->AbandonQuest(questId);
-        return 0;
     }
 
     /**
@@ -4631,10 +3891,9 @@ namespace LuaPlayer
      *
      * @return bool canTameExoticPets : `true` if the player can tame exotic pets, `false` otherwise
      */
-    int CanTameExoticPets(lua_State* L, Player* player)
+    bool CanTameExoticPets(Player* player)
     {
-        ALE::Push(L, player->CanTameExoticPets());
-        return 1;
+        return player->CanTameExoticPets();
     }
 
     /**
@@ -4642,10 +3901,9 @@ namespace LuaPlayer
      *
      * @return uint32 proficiencyFlags : bitmask of weapon proficiencies
      */
-    int GetWeaponProficiency(lua_State* L, Player* player)
+    uint32 GetWeaponProficiency(Player* player)
     {
-        ALE::Push(L, player->GetWeaponProficiency());
-        return 1;
+        return player->GetWeaponProficiency();
     }
 
     /**
@@ -4653,10 +3911,9 @@ namespace LuaPlayer
      *
      * @return uint32 petNumber : the temporary unsummoned pet number
      */
-    int GetTemporaryUnsummonedPetNumber(lua_State* L, Player* player)
+    uint32 GetTemporaryUnsummonedPetNumber(Player* player)
     {
-        ALE::Push(L, player->GetTemporaryUnsummonedPetNumber());
-        return 1;
+        return player->GetTemporaryUnsummonedPetNumber();
     }
 
     /**
@@ -4664,10 +3921,9 @@ namespace LuaPlayer
      *
      * @return uint32 proficiencyFlags : bitmask of armor proficiencies
      */
-    int GetArmorProficiency(lua_State* L, Player* player)
+    uint32 GetArmorProficiency(Player* player)
     {
-        ALE::Push(L, player->GetArmorProficiency());
-        return 1;
+        return player->GetArmorProficiency();
     }
 
     /**
@@ -4675,11 +3931,9 @@ namespace LuaPlayer
      *
      * @param uint32 petNumber : the pet number to set
      */
-    int SetTemporaryUnsummonedPetNumber(lua_State* L, Player* player)
+    void SetTemporaryUnsummonedPetNumber(Player* player, uint32 petNumber)
     {
-        uint32 petNumber = ALE::CHECKVAL<uint32>(L, 2);
         player->SetTemporaryUnsummonedPetNumber(petNumber);
-        return 0;
     }
 
     /**
@@ -4687,21 +3941,18 @@ namespace LuaPlayer
      *
      * @param uint32 flag : weapon proficiency flag to add
      */
-    int AddWeaponProficiency(lua_State* L, Player* player)
+    void AddWeaponProficiency(Player* player, uint32 flag)
     {
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 2);
         player->AddWeaponProficiency(flag);
-        return 0;
     }
 
     /**
      * Resummons the [Player]'s pet if it was temporarily unsummoned.
      *
      */
-    int ResummonPetTemporaryUnSummonedIfAny(lua_State* /*L*/, Player* player)
+    void ResummonPetTemporaryUnSummonedIfAny(Player* player)
     {
         player->ResummonPetTemporaryUnSummonedIfAny();
-        return 0;
     }
 
     /**
@@ -4709,11 +3960,9 @@ namespace LuaPlayer
      *
      * @param uint32 flag : armor proficiency flag to add
      */
-    int AddArmorProficiency(lua_State* L, Player* player)
+    void AddArmorProficiency(Player* player, uint32 flag)
     {
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 2);
         player->AddArmorProficiency(flag);
-        return 0;
     }
 
     /**
@@ -4722,10 +3971,9 @@ namespace LuaPlayer
      *
      * @return bool isPetNeedBeTemporaryUnsummoned : `true` if the pet needs to be temporarily unsummoned, `false` otherwise
      */
-    int IsPetNeedBeTemporaryUnsummoned(lua_State* L, Player* player)
+    bool IsPetNeedBeTemporaryUnsummoned(Player* player)
     {
-        ALE::Push(L, player->IsPetNeedBeTemporaryUnsummoned());
-        return 1;
+        return player->IsPetNeedBeTemporaryUnsummoned();
     }
 
     /**
@@ -4733,20 +3981,17 @@ namespace LuaPlayer
      *
      * @param uint32 itemEntry : ammo item entry ID
      */
-    int SetAmmo(lua_State* L, Player* player)
+    void SetAmmo(Player* player, uint32 itemEntry)
     {
-        uint32 itemEntry = ALE::CHECKVAL<uint32>(L, 2);
         player->SetAmmo(itemEntry);
-        return 0;
     }
 
     /**
      * Removes the [Player]'s ammo.
      */
-    int RemoveAmmo(lua_State* /*L*/, Player* player)
+    void RemoveAmmo(Player* player)
     {
         player->RemoveAmmo();
-        return 0;
     }
 
     /**
@@ -4754,10 +3999,9 @@ namespace LuaPlayer
      *
      * @return float ammoDPS : damage per second from ammo
      */
-    int GetAmmoDPS(lua_State* L, Player* player)
+    float GetAmmoDPS(Player* player)
     {
-        ALE::Push(L, player->GetAmmoDPS());
-        return 1;
+        return player->GetAmmoDPS();
     }
 
     /**
@@ -4766,11 +4010,9 @@ namespace LuaPlayer
      * @param uint32 spellId : the spell ID to check
      * @return bool canResummon : `true` if the player can resummon the pet, `false` otherwise
      */
-    int CanResummonPet(lua_State* L, Player* player)
+    bool CanResummonPet(Player* player, uint32 spellId)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, player->CanResummonPet(spellId));
-        return 1;
+        return player->CanResummonPet(spellId);
     }
 
     /**
@@ -4778,10 +4020,9 @@ namespace LuaPlayer
      *
      * @return [Item] shield : the equipped shield or nil
      */
-    int GetShield(lua_State* L, Player* player)
+    Item* GetShield(Player* player)
     {
-        ALE::Push(L, player->GetShield());
-        return 1;
+        return player->GetShield();
     }
 
     /**
@@ -4789,10 +4030,9 @@ namespace LuaPlayer
      *
      * @return uint32 petNumber : the last pet number
      */
-    int GetLastPetNumber(lua_State* L, Player* player)
+    uint32 GetLastPetNumber(Player* player)
     {
-        ALE::Push(L, player->GetLastPetNumber());
-        return 1;
+        return player->GetLastPetNumber();
     }
 
     /**
@@ -4800,10 +4040,9 @@ namespace LuaPlayer
      *
      * @return bool canTeleport
      */
-    int CanTeleport(lua_State* L, Player* player)
+    bool CanTeleport(Player* player)
     {
-        ALE::Push(L, player->CanTeleport());
-        return 1;
+        return player->CanTeleport();
     }
 
     /**
@@ -4811,11 +4050,9 @@ namespace LuaPlayer
      *
      * @param uint32 petNumber : the pet number to set
      */
-    int SetLastPetNumber(lua_State* L, Player* player)
+    void SetLastPetNumber(Player* player, uint32 petNumber)
     {
-        uint32 petNumber = ALE::CHECKVAL<uint32>(L, 2);
         player->SetLastPetNumber(petNumber);
-        return 0;
     }
 
     /**
@@ -4823,11 +4060,9 @@ namespace LuaPlayer
      *
      * @param bool canTeleport : true to allow teleportation, false to disallow
      */
-    int SetCanTeleport(lua_State* L, Player* player)
+    void SetCanTeleport(Player* player, bool canTeleport)
     {
-        bool canTeleport = ALE::CHECKVAL<bool>(L, 2);
         player->SetCanTeleport(canTeleport);
-        return 0;
     }
 
     /**
@@ -4835,10 +4070,9 @@ namespace LuaPlayer
      *
      * @return uint32 petSpell : the pet spell ID
      */
-    int GetLastPetSpell(lua_State* L, Player* player)
+    uint32 GetLastPetSpell(Player* player)
     {
-        ALE::Push(L, player->GetLastPetSpell());
-        return 1;
+        return player->GetLastPetSpell();
     }
 
     /**
@@ -4846,10 +4080,9 @@ namespace LuaPlayer
      *
      * @return uint32 runesState : current runes state bitmask
      */
-    int GetRunesState(lua_State* L, Player* player)
+    uint8 GetRunesState(Player* player)
     {
-        ALE::Push(L, player->GetRunesState());
-        return 1;
+        return player->GetRunesState();
     }
 
     /**
@@ -4857,11 +4090,9 @@ namespace LuaPlayer
      *
      * @param uint32 petSpell : the pet spell ID to set
      */
-    int SetLastPetSpell(lua_State* L, Player* player)
+    void SetLastPetSpell(Player* player, uint32 petSpell)
     {
-        uint32 petSpell = ALE::CHECKVAL<uint32>(L, 2);
         player->SetLastPetSpell(petSpell);
-        return 0;
     }
 
     /**
@@ -4869,10 +4100,9 @@ namespace LuaPlayer
      *
      * @return bool isSpectator
      */
-    int IsSpectator(lua_State* L, Player* player)
+    bool IsSpectator(Player* player)
     {
-        ALE::Push(L, player->IsSpectator());
-        return 1;
+        return player->IsSpectator();
     }
 
     /**
@@ -4880,11 +4110,9 @@ namespace LuaPlayer
      *
      * @param bool isSpectator : true to set as spectator, false otherwise
      */
-    int SetIsSpectator(lua_State* L, Player* player)
+    void SetIsSpectator(Player* player, bool isSpectator)
     {
-        bool isSpectator = ALE::CHECKVAL<bool>(L, 2);
         player->SetIsSpectator(isSpectator);
-        return 0;
     }
 
     /**
@@ -4892,10 +4120,9 @@ namespace LuaPlayer
      *
      * @return bool canSeeDKPet
      */
-    int CanSeeDKPet(lua_State* L, Player* player)
+    bool CanSeeDKPet(Player* player)
     {
-        ALE::Push(L, player->CanSeeDKPet());
-        return 1;
+        return player->CanSeeDKPet();
     }
 
     /**
@@ -4903,10 +4130,9 @@ namespace LuaPlayer
      *
      * @return [WorldObject] viewpoint : the object the player is viewing from
      */
-    int GetViewpoint(lua_State* L, Player* player)
+    WorldObject* GetViewpoint(Player* player)
     {
-        ALE::Push(L, player->GetViewpoint());
-        return 1;
+        return player->GetViewpoint();
     }
 
     /**
@@ -4914,11 +4140,9 @@ namespace LuaPlayer
      *
      * @param bool show : `true` to show DK pets, `false` to hide them
      */
-    int SetShowDKPet(lua_State* L, Player* player)
+    void SetShowDKPet(Player* player, bool show)
     {
-        bool show = ALE::CHECKVAL<bool>(L, 2);
         player->SetShowDKPet(show);
-        return 0;
     }
 
     /**
@@ -4926,21 +4150,18 @@ namespace LuaPlayer
      *
      * @param [WorldObject] target : the object to view from
      */
-    int SetViewpoint(lua_State* L, Player* player)
+    void SetViewpoint(Player* player, WorldObject* target, sol::optional<bool> applyArg)
     {
-        WorldObject* target = ALE::CHECKOBJ<WorldObject>(L, 2);
-        bool apply = ALE::CHECKVAL<bool>(L, 3, false);
+        bool apply = applyArg.value_or(false);
         player->SetViewpoint(target, apply);
-        return 0;
     }
 
     /**
      * Toggles instant flight mode for the [Player].
      */
-    int ToggleInstantFlight(lua_State* /*L*/, Player* player)
+    void ToggleInstantFlight(Player* player)
     {
         player->ToggleInstantFlight();
-        return 0;
     }
 
     /**
@@ -4948,10 +4169,9 @@ namespace LuaPlayer
      *
      * @return uint32 creationTime : Unix timestamp of character creation
      */
-    int GetCreationTime(lua_State* L, Player* player)
+    uint32 GetCreationTime(Player* player)
     {
-        ALE::Push(L, static_cast<uint32>(player->GetCreationTime().count()));
-        return 1;
+        return static_cast<uint32>(player->GetCreationTime().count());
     }
 
     /**
@@ -4959,11 +4179,9 @@ namespace LuaPlayer
      *
      * @param uint32 creationTime : Unix timestamp to set as creation time
      */
-    int SetCreationTime(lua_State* L, Player* player)
+    void SetCreationTime(Player* player, uint32 creationTime)
     {
-        uint32 creationTime = ALE::CHECKVAL<uint32>(L, 2);
         player->SetCreationTime(Seconds(creationTime));
-        return 0;
     }
 
     /**
@@ -4971,12 +4189,11 @@ namespace LuaPlayer
      *
      * @return float dodgeChance : dodge percentage from agility stat
      */
-    int GetDodgeFromAgility(lua_State* L, Player* player)
+    float GetDodgeFromAgility(Player* player)
     {
         float diminishing, nondiminishing;
         player->GetDodgeFromAgility(diminishing, nondiminishing);
-        ALE::Push(L, diminishing + nondiminishing);
-        return 1;
+        return diminishing + nondiminishing;
     }
 
     /**
@@ -4984,10 +4201,9 @@ namespace LuaPlayer
      *
      * @return float critChance : melee crit percentage from agility stat
      */
-    int GetMeleeCritFromAgility(lua_State* L, Player* player)
+    float GetMeleeCritFromAgility(Player* player)
     {
-        ALE::Push(L, player->GetMeleeCritFromAgility());
-        return 1;
+        return player->GetMeleeCritFromAgility();
     }
 
     /**
@@ -4995,10 +4211,9 @@ namespace LuaPlayer
      *
      * @return float critChance : spell crit percentage from intellect stat
      */
-    int GetSpellCritFromIntellect(lua_State* L, Player* player)
+    float GetSpellCritFromIntellect(Player* player)
     {
-        ALE::Push(L, player->GetSpellCritFromIntellect());
-        return 1;
+        return player->GetSpellCritFromIntellect();
     }
 
     /**
@@ -5007,13 +4222,12 @@ namespace LuaPlayer
      * @param uint32 slot : inventory slot number
      * @return [Item] item : the item in the specified slot or nil
      */
-    int GetInventoryItem(lua_State* L, Player* player)
+    Item* GetInventoryItem(Player* player, uint32 slot)
     {
-        uint32 slot = ALE::CHECKVAL<uint32>(L, 2);
         if (slot >= INVENTORY_SLOT_ITEM_END)
-            return 1;
-        ALE::Push(L, player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot));
-        return 1;
+            return nullptr;
+
+        return player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
     }
 
     /**
@@ -5022,13 +4236,12 @@ namespace LuaPlayer
      * @param uint32 slot : bank slot number
      * @return [Item] item : the item in the specified bank slot or nil
      */
-    int GetBankItem(lua_State* L, Player* player)
+    Item* GetBankItem(Player* player, uint32 slot)
     {
-        uint32 slot = ALE::CHECKVAL<uint32>(L, 2);
         if (slot >= BANK_SLOT_ITEM_END)
-            return 1;
-        ALE::Push(L, player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot + BANK_SLOT_ITEM_START));
-        return 1;
+            return nullptr;
+
+        return player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot + BANK_SLOT_ITEM_START);
     }
 
     /**
@@ -5037,14 +4250,12 @@ namespace LuaPlayer
      * @param uint16 slot : quest log slot
      * @return uint32 questId : quest ID or 0 if slot is invalid
      */
-    int GetQuestSlotQuestId(lua_State* L, Player* player)
+    sol::optional<uint32> GetQuestSlotQuestId(Player* player, uint16 slot)
     {
-        uint16 slot = ALE::CHECKVAL<uint16>(L, 2);
         if (slot > MAX_QUEST_LOG_SIZE)
-            return 0;
+            return sol::nullopt;
 
-        ALE::Push(L, player->GetQuestSlotQuestId(slot));
-        return 1;
+        return player->GetQuestSlotQuestId(slot);
     }
 
     /**
@@ -5052,11 +4263,10 @@ namespace LuaPlayer
      *
      * @param bool activate = false : true to enable flying, false to disable
      */
-    int SetCanFly(lua_State* L, Player* player)
+    void SetCanFly(Player* player, sol::optional<bool> activateArg)
     {
-        bool activate = ALE::CHECKVAL<bool>(L, 2, false);
+        bool activate = activateArg.value_or(false);
         player->SetCanFly(activate);
-        return 0;
     }
 
     /**
@@ -5097,15 +4307,11 @@ namespace LuaPlayer
      *
      */
 
-    int ApplyRatingMod(lua_State* L, Player* player)
+    void ApplyRatingMod(Player* player, int32 stat, float value, sol::optional<bool> applyArg)
     {
-        int32 stat = ALE::CHECKVAL<int32>(L, 2);
-
-        float value = ALE::CHECKVAL<float>(L, 3);
-        bool apply = ALE::CHECKVAL<bool>(L, 4, false);
+        bool apply = applyArg.value_or(false);
 
         player->ApplyRatingMod(CombatRating(stat), value, apply);
-        return 0;
     }
 
     /**
@@ -5114,24 +4320,12 @@ namespace LuaPlayer
      * @param uint32 nodeId
      * @return bool known
      */
-    int HasKnownTaxiNode(lua_State* L, Player* player)
+    bool HasKnownTaxiNode(Player* player, uint32 nodeId)
     {
-        if (!player)
-        {
-            ALE::Push(L, false);
-            return 1;
-        }
-
-        uint32 nodeId = ALE::CHECKVAL<uint32>(L, 2);
-
         if (nodeId == 0)
-        {
-            ALE::Push(L, false);
-            return 1;
-        }
+            return false;
 
-        ALE::Push(L, player->m_taxi.IsTaximaskNodeKnown(nodeId));
-        return 1;
+        return player->m_taxi.IsTaximaskNodeKnown(nodeId);
     }
 
     /**
@@ -5139,30 +4333,26 @@ namespace LuaPlayer
      *
      * @return bool isBot
      */
-    int IsBot(lua_State* L, Player* player)
+    bool IsBot(Player* player)
     {
     #if defined(MOD_PLAYERBOTS)
-        ALE::Push(L, player->GetSession()->IsBot());
+        return player->GetSession()->IsBot();
     #else
         (void)player;
-        ALE::Push(L, false);
+        return false;
     #endif
-        return 1;
     }
-    
+
     /**
      * Returns the [Player]s spent talent points in each talent tree for the active spec
      *
      * @return uint8 tree1, uint8 tree2, uint8 tree3
      */
-    int GetTalentTreePoints(lua_State* L, Player* player)
+    std::tuple<uint8, uint8, uint8> GetTalentTreePoints(Player* player)
     {
         uint8 specPoints[3] = {0, 0, 0};
         player->GetTalentTreePoints(specPoints);
-        ALE::Push(L, specPoints[0]);
-        ALE::Push(L, specPoints[1]);
-        ALE::Push(L, specPoints[2]);
-        return 3;
+        return std::tuple<uint8, uint8, uint8>(specPoints[0], specPoints[1], specPoints[2]);
     }
 
     /**
@@ -5170,11 +4360,348 @@ namespace LuaPlayer
      *
      * @return uint8 treeIndex
      */
-    int GetMostPointsTalentTree(lua_State* L, Player* player)
+    uint8 GetMostPointsTalentTree(Player* player)
     {
-        ALE::Push(L, player->GetMostPointsTalentTree());
-        return 1;
+        return player->GetMostPointsTalentTree();
     }
-};
-#endif
+}
+void RegisterPlayerMethods(sol::state& lua)
+{
+    sol::usertype<PlayerRef> type = ALEBind::NewHandleType<PlayerRef, UnitRef, WorldObjectRef, ObjectRef>(lua, "Player");
 
+    type["GetInventoryFreeSlots"              ] = ALEBind::Method(&LuaPlayer::GetInventoryFreeSlots);
+    type["GetBankFreeSlots"                   ] = ALEBind::Method(&LuaPlayer::GetBankFreeSlots);
+    type["GetSelection"                       ] = ALEBind::Method(&LuaPlayer::GetSelection);
+    type["GetGMRank"                          ] = ALEBind::Method(&LuaPlayer::GetGMRank);
+    type["GetGuildId"                         ] = ALEBind::Method(&LuaPlayer::GetGuildId);
+    type["GetCoinage"                         ] = ALEBind::Method(&LuaPlayer::GetCoinage);
+    type["GetTeam"                            ] = ALEBind::Method(&LuaPlayer::GetTeam);
+    type["GetItemCount"                       ] = ALEBind::Method(&LuaPlayer::GetItemCount);
+    type["GetGroup"                           ] = ALEBind::Method(&LuaPlayer::GetGroup);
+    type["GetGuild"                           ] = ALEBind::Method(&LuaPlayer::GetGuild);
+    type["GetAccountId"                       ] = ALEBind::Method(&LuaPlayer::GetAccountId);
+    type["GetAccountName"                     ] = ALEBind::Method(&LuaPlayer::GetAccountName);
+    type["GetCompletedQuestsCount"            ] = ALEBind::Method(&LuaPlayer::GetCompletedQuestsCount);
+    type["GetArenaPoints"                     ] = ALEBind::Method(&LuaPlayer::GetArenaPoints);
+    type["GetHonorPoints"                     ] = ALEBind::Method(&LuaPlayer::GetHonorPoints);
+    type["GetTodayHonorPoints"                ] = ALEBind::Method(&LuaPlayer::GetTodayHonorPoints);
+    type["GetYesterdayHonorPoints"            ] = ALEBind::Method(&LuaPlayer::GetYesterdayHonorPoints);
+    type["GetLifetimeKills"                   ] = ALEBind::Method(&LuaPlayer::GetLifetimeKills);
+    type["GetTodayKills"                      ] = ALEBind::Method(&LuaPlayer::GetTodayKills);
+    type["GetYesterdayKills"                  ] = ALEBind::Method(&LuaPlayer::GetYesterdayKills);
+    type["GetPlayerIP"                        ] = ALEBind::Method(&LuaPlayer::GetPlayerIP);
+    type["GetLevelPlayedTime"                 ] = ALEBind::Method(&LuaPlayer::GetLevelPlayedTime);
+    type["GetTotalPlayedTime"                 ] = ALEBind::Method(&LuaPlayer::GetTotalPlayedTime);
+    type["GetItemByPos"                       ] = ALEBind::Method(&LuaPlayer::GetItemByPos);
+    type["GetItemByEntry"                     ] = ALEBind::Method(&LuaPlayer::GetItemByEntry);
+    type["GetItemByGUID"                      ] = ALEBind::Method(&LuaPlayer::GetItemByGUID);
+    type["GetMailCount"                       ] = ALEBind::Method(&LuaPlayer::GetMailCount);
+    type["GetMailItem"                        ] = ALEBind::Method(&LuaPlayer::GetMailItem);
+    type["GetReputation"                      ] = ALEBind::Method(&LuaPlayer::GetReputation);
+    type["GetEquippedItemBySlot"              ] = ALEBind::Method(&LuaPlayer::GetEquippedItemBySlot);
+    type["GetQuestLevel"                      ] = ALEBind::Method(&LuaPlayer::GetQuestLevel);
+    type["GetChatTag"                         ] = ALEBind::Method(&LuaPlayer::GetChatTag);
+    type["GetRestBonus"                       ] = ALEBind::Method(&LuaPlayer::GetRestBonus);
+    type["GetPhaseMaskForSpawn"               ] = ALEBind::Method(&LuaPlayer::GetPhaseMaskForSpawn);
+    type["GetAchievementPoints"               ] = ALEBind::Method(&LuaPlayer::GetAchievementPoints);
+    type["GetCompletedAchievementsCount"      ] = ALEBind::Method(&LuaPlayer::GetCompletedAchievementsCount);
+    type["GetReqKillOrCastCurrentCount"       ] = ALEBind::Method(&LuaPlayer::GetReqKillOrCastCurrentCount);
+    type["GetQuestStatus"                     ] = ALEBind::Method(&LuaPlayer::GetQuestStatus);
+    type["GetInGameTime"                      ] = ALEBind::Method(&LuaPlayer::GetInGameTime);
+    type["GetComboPoints"                     ] = ALEBind::Method(&LuaPlayer::GetComboPoints);
+    type["GetComboTarget"                     ] = ALEBind::Method(&LuaPlayer::GetComboTarget);
+    type["GetGuildName"                       ] = ALEBind::Method(&LuaPlayer::GetGuildName);
+    type["GetFreeTalentPoints"                ] = ALEBind::Method(&LuaPlayer::GetFreeTalentPoints);
+    type["GetActiveSpec"                      ] = ALEBind::Method(&LuaPlayer::GetActiveSpec);
+    type["GetSpecsCount"                      ] = ALEBind::Method(&LuaPlayer::GetSpecsCount);
+    type["GetSpellCooldownDelay"              ] = ALEBind::Method(&LuaPlayer::GetSpellCooldownDelay);
+    type["GetGuildRank"                       ] = ALEBind::Method(&LuaPlayer::GetGuildRank);
+    type["GetDifficulty"                      ] = ALEBind::Method(&LuaPlayer::GetDifficulty);
+    type["GetHealthBonusFromStamina"          ] = ALEBind::Method(&LuaPlayer::GetHealthBonusFromStamina);
+    type["GetManaBonusFromIntellect"          ] = ALEBind::Method(&LuaPlayer::GetManaBonusFromIntellect);
+    type["GetMaxSkillValue"                   ] = ALEBind::Method(&LuaPlayer::GetMaxSkillValue);
+    type["GetPureMaxSkillValue"               ] = ALEBind::Method(&LuaPlayer::GetPureMaxSkillValue);
+    type["GetSkillValue"                      ] = ALEBind::Method(&LuaPlayer::GetSkillValue);
+    type["GetBaseSkillValue"                  ] = ALEBind::Method(&LuaPlayer::GetBaseSkillValue);
+    type["GetPureSkillValue"                  ] = ALEBind::Method(&LuaPlayer::GetPureSkillValue);
+    type["GetSkillPermBonusValue"             ] = ALEBind::Method(&LuaPlayer::GetSkillPermBonusValue);
+    type["GetSkillTempBonusValue"             ] = ALEBind::Method(&LuaPlayer::GetSkillTempBonusValue);
+    type["GetReputationRank"                  ] = ALEBind::Method(&LuaPlayer::GetReputationRank);
+    type["GetDrunkValue"                      ] = ALEBind::Method(&LuaPlayer::GetDrunkValue);
+    type["GetBattlegroundId"                  ] = ALEBind::Method(&LuaPlayer::GetBattlegroundId);
+    type["GetBattlegroundTypeId"              ] = ALEBind::Method(&LuaPlayer::GetBattlegroundTypeId);
+    type["GetXP"                              ] = ALEBind::Method(&LuaPlayer::GetXP);
+    type["GetXPRestBonus"                     ] = ALEBind::Method(&LuaPlayer::GetXPRestBonus);
+    type["GetGroupInvite"                     ] = ALEBind::Method(&LuaPlayer::GetGroupInvite);
+    type["GetSubGroup"                        ] = ALEBind::Method(&LuaPlayer::GetSubGroup);
+    type["GetNextRandomRaidMember"            ] = ALEBind::Method(&LuaPlayer::GetNextRandomRaidMember);
+    type["GetOriginalGroup"                   ] = ALEBind::Method(&LuaPlayer::GetOriginalGroup);
+    type["GetOriginalSubGroup"                ] = ALEBind::Method(&LuaPlayer::GetOriginalSubGroup);
+    type["GetChampioningFaction"              ] = ALEBind::Method(&LuaPlayer::GetChampioningFaction);
+    type["GetLatency"                         ] = ALEBind::Method(&LuaPlayer::GetLatency);
+    type["GetDbLocaleIndex"                   ] = ALEBind::Method(&LuaPlayer::GetDbLocaleIndex);
+    type["GetDbcLocale"                       ] = ALEBind::Method(&LuaPlayer::GetDbcLocale);
+    type["GetCorpse"                          ] = ALEBind::Method(&LuaPlayer::GetCorpse);
+    type["GetGossipTextId"                    ] = ALEBind::Method(&LuaPlayer::GetGossipTextId);
+    type["GetQuestRewardStatus"               ] = ALEBind::Method(&LuaPlayer::GetQuestRewardStatus);
+    type["GetShieldBlockValue"                ] = ALEBind::Method(&LuaPlayer::GetShieldBlockValue);
+    type["GetPlayerSettingValue"              ] = ALEBind::Method(&LuaPlayer::GetPlayerSettingValue);
+    type["GetTrader"                          ] = ALEBind::Method(&LuaPlayer::GetTrader);
+    type["GetBonusTalentCount"                ] = ALEBind::Method(&LuaPlayer::GetBonusTalentCount);
+    type["GetKnownTaxiNodes"                  ] = ALEBind::Method(&LuaPlayer::GetKnownTaxiNodes);
+    type["GetPet"                             ] = ALEBind::Method(&LuaPlayer::GetPet);
+    type["GetTemporaryUnsummonedPetNumber"    ] = ALEBind::Method(&LuaPlayer::GetTemporaryUnsummonedPetNumber);
+    type["GetLastPetNumber"                   ] = ALEBind::Method(&LuaPlayer::GetLastPetNumber);
+    type["GetLastPetSpell"                    ] = ALEBind::Method(&LuaPlayer::GetLastPetSpell);
+    type["GetQuestSlotQuestId"                ] = ALEBind::Method(&LuaPlayer::GetQuestSlotQuestId);
+    type["GetTalentTreePoints"                ] = ALEBind::Method(&LuaPlayer::GetTalentTreePoints);
+    type["GetMostPointsTalentTree"            ] = ALEBind::Method(&LuaPlayer::GetMostPointsTalentTree);
+    type["SetTemporaryUnsummonedPetNumber"    ] = ALEBind::Method(&LuaPlayer::SetTemporaryUnsummonedPetNumber);
+    type["SetLastPetNumber"                   ] = ALEBind::Method(&LuaPlayer::SetLastPetNumber);
+    type["SetLastPetSpell"                    ] = ALEBind::Method(&LuaPlayer::SetLastPetSpell);
+    type["SetShowDKPet"                       ] = ALEBind::Method(&LuaPlayer::SetShowDKPet);
+    type["AdvanceSkillsToMax"                 ] = ALEBind::Method(&LuaPlayer::AdvanceSkillsToMax);
+    type["AdvanceSkill"                       ] = ALEBind::Method(&LuaPlayer::AdvanceSkill);
+    type["AdvanceAllSkills"                   ] = ALEBind::Method(&LuaPlayer::AdvanceAllSkills);
+    type["AddLifetimeKills"                   ] = ALEBind::Method(&LuaPlayer::AddLifetimeKills);
+    type["SetCoinage"                         ] = ALEBind::Method(&LuaPlayer::SetCoinage);
+    type["SetKnownTitle"                      ] = ALEBind::Method(&LuaPlayer::SetKnownTitle);
+    type["UnsetKnownTitle"                    ] = ALEBind::Method(&LuaPlayer::UnsetKnownTitle);
+    type["SetBindPoint"                       ] = ALEBind::Method(&LuaPlayer::SetBindPoint);
+    type["SetArenaPoints"                     ] = ALEBind::Method(&LuaPlayer::SetArenaPoints);
+    type["SetHonorPoints"                     ] = ALEBind::Method(&LuaPlayer::SetHonorPoints);
+    type["SetSpellPower"                      ] = ALEBind::Method(&LuaPlayer::SetSpellPower);
+    type["SetLifetimeKills"                   ] = ALEBind::Method(&LuaPlayer::SetLifetimeKills);
+    type["SetGameMaster"                      ] = ALEBind::Method(&LuaPlayer::SetGameMaster);
+    type["SetGMChat"                          ] = ALEBind::Method(&LuaPlayer::SetGMChat);
+    type["SetKnownTaxiNodes"                  ] = ALEBind::Method(&LuaPlayer::SetKnownTaxiNodes);
+    type["SetTaxiCheat"                       ] = ALEBind::Method(&LuaPlayer::SetTaxiCheat);
+    type["SetGMVisible"                       ] = ALEBind::Method(&LuaPlayer::SetGMVisible);
+    type["SetPvPDeath"                        ] = ALEBind::Method(&LuaPlayer::SetPvPDeath);
+    type["SetAcceptWhispers"                  ] = ALEBind::Method(&LuaPlayer::SetAcceptWhispers);
+    type["SetRestBonus"                       ] = ALEBind::Method(&LuaPlayer::SetRestBonus);
+    type["SetQuestStatus"                     ] = ALEBind::Method(&LuaPlayer::SetQuestStatus);
+    type["SetReputation"                      ] = ALEBind::Method(&LuaPlayer::SetReputation);
+    type["SetFreeTalentPoints"                ] = ALEBind::Method(&LuaPlayer::SetFreeTalentPoints);
+    type["SetGuildRank"                       ] = ALEBind::Method(&LuaPlayer::SetGuildRank);
+    type["SetSkill"                           ] = ALEBind::Method(&LuaPlayer::SetSkill);
+    type["SetFactionForRace"                  ] = ALEBind::Method(&LuaPlayer::SetFactionForRace);
+    type["SetDrunkValue"                      ] = ALEBind::Method(&LuaPlayer::SetDrunkValue);
+    type["SetAtLoginFlag"                     ] = ALEBind::Method(&LuaPlayer::SetAtLoginFlag);
+    type["SetPlayerLock"                      ] = ALEBind::Method(&LuaPlayer::SetPlayerLock);
+    type["SetGender"                          ] = ALEBind::Method(&LuaPlayer::SetGender);
+    type["SetSheath"                          ] = ALEBind::Method(&LuaPlayer::SetSheath);
+    type["SetBonusTalentCount"                ] = ALEBind::Method(&LuaPlayer::SetBonusTalentCount);
+    type["AddBonusTalent"                     ] = ALEBind::Method(&LuaPlayer::AddBonusTalent);
+    type["RemoveBonusTalent"                  ] = ALEBind::Method(&LuaPlayer::RemoveBonusTalent);
+    type["GetHomebind"                        ] = ALEBind::Method(&LuaPlayer::GetHomebind);
+    type["GetSpells"                          ] = ALEBind::Method(&LuaPlayer::GetSpells);
+    type["GetAverageItemLevel"                ] = ALEBind::Method(&LuaPlayer::GetAverageItemLevel);
+    type["GetBarberShopCost"                  ] = ALEBind::Method(&LuaPlayer::GetBarberShopCost);
+    type["GetSightRange"                      ] = ALEBind::Method(&LuaPlayer::GetSightRange);
+    type["GetWeaponProficiency"               ] = ALEBind::Method(&LuaPlayer::GetWeaponProficiency);
+    type["GetArmorProficiency"                ] = ALEBind::Method(&LuaPlayer::GetArmorProficiency);
+    type["GetAmmoDPS"                         ] = ALEBind::Method(&LuaPlayer::GetAmmoDPS);
+    type["GetShield"                          ] = ALEBind::Method(&LuaPlayer::GetShield);
+    type["GetRunesState"                      ] = ALEBind::Method(&LuaPlayer::GetRunesState);
+    type["GetViewpoint"                       ] = ALEBind::Method(&LuaPlayer::GetViewpoint);
+    type["GetDodgeFromAgility"                ] = ALEBind::Method(&LuaPlayer::GetDodgeFromAgility);
+    type["GetMeleeCritFromAgility"            ] = ALEBind::Method(&LuaPlayer::GetMeleeCritFromAgility);
+    type["GetSpellCritFromIntellect"          ] = ALEBind::Method(&LuaPlayer::GetSpellCritFromIntellect);
+    type["GetInventoryItem"                   ] = ALEBind::Method(&LuaPlayer::GetInventoryItem);
+    type["GetBankItem"                        ] = ALEBind::Method(&LuaPlayer::GetBankItem);
+    type["GetCreationTime"                    ] = ALEBind::Method(&LuaPlayer::GetCreationTime);
+    type["SetCanFly"                          ] = ALEBind::Method(&LuaPlayer::SetCanFly);
+    type["HasTankSpec"                        ] = ALEBind::Method(&LuaPlayer::HasTankSpec);
+    type["HasMeleeSpec"                       ] = ALEBind::Method(&LuaPlayer::HasMeleeSpec);
+    type["HasCasterSpec"                      ] = ALEBind::Method(&LuaPlayer::HasCasterSpec);
+    type["HasHealSpec"                        ] = ALEBind::Method(&LuaPlayer::HasHealSpec);
+    type["IsInGroup"                          ] = ALEBind::Method(&LuaPlayer::IsInGroup);
+    type["IsInGuild"                          ] = ALEBind::Method(&LuaPlayer::IsInGuild);
+    type["IsGM"                               ] = ALEBind::Method(&LuaPlayer::IsGM);
+    type["IsImmuneToDamage"                   ] = ALEBind::Method(&LuaPlayer::IsImmuneToDamage);
+    type["IsAlliance"                         ] = ALEBind::Method(&LuaPlayer::IsAlliance);
+    type["IsHorde"                            ] = ALEBind::Method(&LuaPlayer::IsHorde);
+    type["HasTitle"                           ] = ALEBind::Method(&LuaPlayer::HasTitle);
+    type["HasItem"                            ] = ALEBind::Method(&LuaPlayer::HasItem);
+    type["Teleport"                           ] = ALEBind::Method(&LuaPlayer::Teleport);
+    type["AddItem"                            ] = ALEBind::Method(&LuaPlayer::AddItem);
+    type["IsInArenaTeam"                      ] = ALEBind::Method(&LuaPlayer::IsInArenaTeam);
+    type["CanRewardQuest"                     ] = ALEBind::Method(&LuaPlayer::CanRewardQuest);
+    type["CanCompleteRepeatableQuest"         ] = ALEBind::Method(&LuaPlayer::CanCompleteRepeatableQuest);
+    type["CanCompleteQuest"                   ] = ALEBind::Method(&LuaPlayer::CanCompleteQuest);
+    type["CanEquipItem"                       ] = ALEBind::Method(&LuaPlayer::CanEquipItem);
+    type["IsFalling"                          ] = ALEBind::Method(&LuaPlayer::IsFalling);
+    type["ToggleAFK"                          ] = ALEBind::Method(&LuaPlayer::ToggleAFK);
+    type["ToggleDND"                          ] = ALEBind::Method(&LuaPlayer::ToggleDND);
+    type["IsAFK"                              ] = ALEBind::Method(&LuaPlayer::IsAFK);
+    type["IsDND"                              ] = ALEBind::Method(&LuaPlayer::IsDND);
+    type["IsAcceptingWhispers"                ] = ALEBind::Method(&LuaPlayer::IsAcceptingWhispers);
+    type["IsGMChat"                           ] = ALEBind::Method(&LuaPlayer::IsGMChat);
+    type["IsTaxiCheater"                      ] = ALEBind::Method(&LuaPlayer::IsTaxiCheater);
+    type["IsGMVisible"                        ] = ALEBind::Method(&LuaPlayer::IsGMVisible);
+    type["HasQuest"                           ] = ALEBind::Method(&LuaPlayer::HasQuest);
+    type["InBattlegroundQueue"                ] = ALEBind::Method(&LuaPlayer::InBattlegroundQueue);
+    type["CanSpeak"                           ] = ALEBind::Method(&LuaPlayer::CanSpeak);
+    type["HasAtLoginFlag"                     ] = ALEBind::Method(&LuaPlayer::HasAtLoginFlag);
+    type["HasAchieved"                        ] = ALEBind::Method(&LuaPlayer::HasAchieved);
+    type["GetAchievementCriteriaProgress"     ] = ALEBind::Method(&LuaPlayer::GetAchievementCriteriaProgress);
+    type["SetAchievement"                     ] = ALEBind::Method(&LuaPlayer::SetAchievement);
+    type["CanUninviteFromGroup"               ] = ALEBind::Method(&LuaPlayer::CanUninviteFromGroup);
+    type["IsRested"                           ] = ALEBind::Method(&LuaPlayer::IsRested);
+    type["IsVisibleForPlayer"                 ] = ALEBind::Method(&LuaPlayer::IsVisibleForPlayer);
+    type["HasQuestForItem"                    ] = ALEBind::Method(&LuaPlayer::HasQuestForItem);
+    type["HasQuestForGO"                      ] = ALEBind::Method(&LuaPlayer::HasQuestForGO);
+    type["CanShareQuest"                      ] = ALEBind::Method(&LuaPlayer::CanShareQuest);
+    type["HasTalent"                          ] = ALEBind::Method(&LuaPlayer::HasTalent);
+    type["IsInSameGroupWith"                  ] = ALEBind::Method(&LuaPlayer::IsInSameGroupWith);
+    type["IsInSameRaidWith"                   ] = ALEBind::Method(&LuaPlayer::IsInSameRaidWith);
+    type["IsGroupVisibleFor"                  ] = ALEBind::Method(&LuaPlayer::IsGroupVisibleFor);
+    type["HasSkill"                           ] = ALEBind::Method(&LuaPlayer::HasSkill);
+    type["IsHonorOrXPTarget"                  ] = ALEBind::Method(&LuaPlayer::IsHonorOrXPTarget);
+    type["CanParry"                           ] = ALEBind::Method(&LuaPlayer::CanParry);
+    type["CanBlock"                           ] = ALEBind::Method(&LuaPlayer::CanBlock);
+    type["CanTitanGrip"                       ] = ALEBind::Method(&LuaPlayer::CanTitanGrip);
+    type["InBattleground"                     ] = ALEBind::Method(&LuaPlayer::InBattleground);
+    type["InArena"                            ] = ALEBind::Method(&LuaPlayer::InArena);
+    type["CanUseItem"                         ] = ALEBind::Method(&LuaPlayer::CanUseItem);
+    type["HasSpell"                           ] = ALEBind::Method(&LuaPlayer::HasSpell);
+    type["HasSpellCooldown"                   ] = ALEBind::Method(&LuaPlayer::HasSpellCooldown);
+    type["IsInWater"                          ] = ALEBind::Method(&LuaPlayer::IsInWater);
+    type["CanFly"                             ] = ALEBind::Method(&LuaPlayer::CanFly);
+    type["IsMoving"                           ] = ALEBind::Method(&LuaPlayer::IsMoving);
+    type["IsFlying"                           ] = ALEBind::Method(&LuaPlayer::IsFlying);
+    type["CanPetResurrect"                    ] = ALEBind::Method(&LuaPlayer::CanPetResurrect);
+    type["IsExistPet"                         ] = ALEBind::Method(&LuaPlayer::IsExistPet);
+    type["CanTameExoticPets"                  ] = ALEBind::Method(&LuaPlayer::CanTameExoticPets);
+    type["IsPetNeedBeTemporaryUnsummoned"     ] = ALEBind::Method(&LuaPlayer::IsPetNeedBeTemporaryUnsummoned);
+    type["CanResummonPet"                     ] = ALEBind::Method(&LuaPlayer::CanResummonPet);
+    type["CanSeeDKPet"                        ] = ALEBind::Method(&LuaPlayer::CanSeeDKPet);
+    type["IsMaxLevel"                         ] = ALEBind::Method(&LuaPlayer::IsMaxLevel);
+    type["IsDailyQuestDone"                   ] = ALEBind::Method(&LuaPlayer::IsDailyQuestDone);
+    type["IsPvP"                              ] = ALEBind::Method(&LuaPlayer::IsPvP);
+    type["IsFFAPvP"                           ] = ALEBind::Method(&LuaPlayer::IsFFAPvP);
+    type["IsUsingLfg"                         ] = ALEBind::Method(&LuaPlayer::IsUsingLfg);
+    type["InRandomLfgDungeon"                 ] = ALEBind::Method(&LuaPlayer::InRandomLfgDungeon);
+    type["CanInteractWithQuestGiver"          ] = ALEBind::Method(&LuaPlayer::CanInteractWithQuestGiver);
+    type["CanSeeStartQuest"                   ] = ALEBind::Method(&LuaPlayer::CanSeeStartQuest);
+    type["CanTakeQuest"                       ] = ALEBind::Method(&LuaPlayer::CanTakeQuest);
+    type["CanAddQuest"                        ] = ALEBind::Method(&LuaPlayer::CanAddQuest);
+    type["CalculateReputationGain"            ] = ALEBind::Method(&LuaPlayer::CalculateReputationGain);
+    type["HasTitleByIndex"                    ] = ALEBind::Method(&LuaPlayer::HasTitleByIndex);
+    type["IsAtGroupRewardDistance"            ] = ALEBind::Method(&LuaPlayer::IsAtGroupRewardDistance);
+    type["IsAtLootRewardDistance"             ] = ALEBind::Method(&LuaPlayer::IsAtLootRewardDistance);
+    type["CanTeleport"                        ] = ALEBind::Method(&LuaPlayer::CanTeleport);
+    type["IsSpectator"                        ] = ALEBind::Method(&LuaPlayer::IsSpectator);
+    type["HasKnownTaxiNode"                   ] = ALEBind::Method(&LuaPlayer::HasKnownTaxiNode);
+    type["IsBot"                              ] = ALEBind::Method(&LuaPlayer::IsBot);
+    type["GossipMenuAddItem"                  ] = ALEBind::Method(&LuaPlayer::GossipMenuAddItem);
+    type["GossipSendMenu"                     ] = ALEBind::Method(&LuaPlayer::GossipSendMenu);
+    type["GossipComplete"                     ] = ALEBind::Method(&LuaPlayer::GossipComplete);
+    type["GossipClearMenu"                    ] = ALEBind::Method(&LuaPlayer::GossipClearMenu);
+    type["SendBroadcastMessage"               ] = ALEBind::Method(&LuaPlayer::SendBroadcastMessage);
+    type["SendAreaTriggerMessage"             ] = ALEBind::Method(&LuaPlayer::SendAreaTriggerMessage);
+    type["SendNotification"                   ] = ALEBind::Method(&LuaPlayer::SendNotification);
+    type["SendPacket"                         ] = ALEBind::Method(&LuaPlayer::SendPacket);
+    type["SendAddonMessage"                   ] = ALEBind::Method(&LuaPlayer::SendAddonMessage);
+    type["ModifyMoney"                        ] = ALEBind::Method(&LuaPlayer::ModifyMoney);
+    type["LearnSpell"                         ] = ALEBind::Method(&LuaPlayer::LearnSpell);
+    type["LearnTalent"                        ] = ALEBind::Method(&LuaPlayer::LearnTalent);
+    type["RunCommand"                         ] = ALEBind::Method(&LuaPlayer::RunCommand);
+    type["SetGlyph"                           ] = ALEBind::Method(&LuaPlayer::SetGlyph);
+    type["GetGlyph"                           ] = ALEBind::Method(&LuaPlayer::GetGlyph);
+    type["RemoveArenaSpellCooldowns"          ] = ALEBind::Method(&LuaPlayer::RemoveArenaSpellCooldowns);
+    type["RemoveItem"                         ] = ALEBind::Method(&LuaPlayer::RemoveItem);
+    type["RemoveLifetimeKills"                ] = ALEBind::Method(&LuaPlayer::RemoveLifetimeKills);
+    type["ResurrectPlayer"                    ] = ALEBind::Method(&LuaPlayer::ResurrectPlayer);
+    type["EquipItem"                          ] = ALEBind::Method(&LuaPlayer::EquipItem);
+    type["ResetSpellCooldown"                 ] = ALEBind::Method(&LuaPlayer::ResetSpellCooldown);
+    type["ResetTypeCooldowns"                 ] = ALEBind::Method(&LuaPlayer::ResetTypeCooldowns);
+    type["ResetAllCooldowns"                  ] = ALEBind::Method(&LuaPlayer::ResetAllCooldowns);
+    type["GiveXP"                             ] = ALEBind::Method(&LuaPlayer::GiveXP);
+    type["Say"                                ] = ALEBind::Method(&LuaPlayer::Say);
+    type["Yell"                               ] = ALEBind::Method(&LuaPlayer::Yell);
+    type["TextEmote"                          ] = ALEBind::Method(&LuaPlayer::TextEmote);
+    type["Whisper"                            ] = ALEBind::Method(&LuaPlayer::Whisper);
+    type["CompleteQuest"                      ] = ALEBind::Method(&LuaPlayer::CompleteQuest);
+    type["IncompleteQuest"                    ] = ALEBind::Method(&LuaPlayer::IncompleteQuest);
+    type["FailQuest"                          ] = ALEBind::Method(&LuaPlayer::FailQuest);
+    type["AddQuest"                           ] = ALEBind::Method(&LuaPlayer::AddQuest);
+    type["RemoveQuest"                        ] = ALEBind::Method(&LuaPlayer::RemoveQuest);
+    type["AreaExploredOrEventHappens"         ] = ALEBind::Method(&LuaPlayer::AreaExploredOrEventHappens);
+    type["GroupEventHappens"                  ] = ALEBind::Method(&LuaPlayer::GroupEventHappens);
+    type["KilledMonsterCredit"                ] = ALEBind::Method(&LuaPlayer::KilledMonsterCredit);
+    type["TalkedToCreature"                   ] = ALEBind::Method(&LuaPlayer::TalkedToCreature);
+    type["ResetPetTalents"                    ] = ALEBind::Method(&LuaPlayer::ResetPetTalents);
+    type["AddComboPoints"                     ] = ALEBind::Method(&LuaPlayer::AddComboPoints);
+    type["ClearComboPoints"                   ] = ALEBind::Method(&LuaPlayer::ClearComboPoints);
+    type["RemoveSpell"                        ] = ALEBind::Method(&LuaPlayer::RemoveSpell);
+    type["ResetTalents"                       ] = ALEBind::Method(&LuaPlayer::ResetTalents);
+    type["ResetTalentsCost"                   ] = ALEBind::Method(&LuaPlayer::ResetTalentsCost);
+    type["RemoveFromGroup"                    ] = ALEBind::Method(&LuaPlayer::RemoveFromGroup);
+    type["KillPlayer"                         ] = ALEBind::Method(&LuaPlayer::KillPlayer);
+    type["DurabilityLossAll"                  ] = ALEBind::Method(&LuaPlayer::DurabilityLossAll);
+    type["DurabilityLoss"                     ] = ALEBind::Method(&LuaPlayer::DurabilityLoss);
+    type["DurabilityPointsLoss"               ] = ALEBind::Method(&LuaPlayer::DurabilityPointsLoss);
+    type["DurabilityPointsLossAll"            ] = ALEBind::Method(&LuaPlayer::DurabilityPointsLossAll);
+    type["DurabilityPointLossForEquipSlot"    ] = ALEBind::Method(&LuaPlayer::DurabilityPointLossForEquipSlot);
+    type["DurabilityRepairAll"                ] = ALEBind::Method(&LuaPlayer::DurabilityRepairAll);
+    type["DurabilityRepair"                   ] = ALEBind::Method(&LuaPlayer::DurabilityRepair);
+    type["ModifyHonorPoints"                  ] = ALEBind::Method(&LuaPlayer::ModifyHonorPoints);
+    type["ModifyArenaPoints"                  ] = ALEBind::Method(&LuaPlayer::ModifyArenaPoints);
+    type["LeaveBattleground"                  ] = ALEBind::Method(&LuaPlayer::LeaveBattleground);
+    type["UnbindInstance"                     ] = ALEBind::Method(&LuaPlayer::UnbindInstance);
+    type["UnbindAllInstances"                 ] = ALEBind::Method(&LuaPlayer::UnbindAllInstances);
+    type["RemoveFromBattlegroundRaid"         ] = ALEBind::Method(&LuaPlayer::RemoveFromBattlegroundRaid);
+    type["ResetAchievements"                  ] = ALEBind::Method(&LuaPlayer::ResetAchievements);
+    type["KickPlayer"                         ] = ALEBind::Method(&LuaPlayer::KickPlayer);
+    type["LogoutPlayer"                       ] = ALEBind::Method(&LuaPlayer::LogoutPlayer);
+    type["SendTrainerList"                    ] = ALEBind::Method(&LuaPlayer::SendTrainerList);
+    type["SendListInventory"                  ] = ALEBind::Method(&LuaPlayer::SendListInventory);
+    type["SendShowBank"                       ] = ALEBind::Method(&LuaPlayer::SendShowBank);
+    type["SendTabardVendorActivate"           ] = ALEBind::Method(&LuaPlayer::SendTabardVendorActivate);
+    type["SendSpiritResurrect"                ] = ALEBind::Method(&LuaPlayer::SendSpiritResurrect);
+    type["SendTaxiMenu"                       ] = ALEBind::Method(&LuaPlayer::SendTaxiMenu);
+    type["SendUpdateWorldState"               ] = ALEBind::Method(&LuaPlayer::SendUpdateWorldState);
+    type["RewardQuest"                        ] = ALEBind::Method(&LuaPlayer::RewardQuest);
+    type["SendAuctionMenu"                    ] = ALEBind::Method(&LuaPlayer::SendAuctionMenu);
+    type["SendShowMailBox"                    ] = ALEBind::Method(&LuaPlayer::SendShowMailBox);
+    type["StartTaxi"                          ] = ALEBind::Method(&LuaPlayer::StartTaxi);
+    type["GossipSendPOI"                      ] = ALEBind::Method(&LuaPlayer::GossipSendPOI);
+    type["GossipAddQuests"                    ] = ALEBind::Method(&LuaPlayer::GossipAddQuests);
+    type["SendQuestTemplate"                  ] = ALEBind::Method(&LuaPlayer::SendQuestTemplate);
+    type["SpawnBones"                         ] = ALEBind::Method(&LuaPlayer::SpawnBones);
+    type["RemovedInsignia"                    ] = ALEBind::Method(&LuaPlayer::RemovedInsignia);
+    type["SendGuildInvite"                    ] = ALEBind::Method(&LuaPlayer::SendGuildInvite);
+    type["Mute"                               ] = ALEBind::Method(&LuaPlayer::Mute);
+    type["SummonPlayer"                       ] = ALEBind::Method(&LuaPlayer::SummonPlayer);
+    type["SaveToDB"                           ] = ALEBind::Method(&LuaPlayer::SaveToDB);
+    type["GroupInvite"                        ] = ALEBind::Method(&LuaPlayer::GroupInvite);
+    type["GroupCreate"                        ] = ALEBind::Method(&LuaPlayer::GroupCreate);
+    type["SendCinematicStart"                 ] = ALEBind::Method(&LuaPlayer::SendCinematicStart);
+    type["SendMovieStart"                     ] = ALEBind::Method(&LuaPlayer::SendMovieStart);
+    type["UpdatePlayerSetting"                ] = ALEBind::Method(&LuaPlayer::UpdatePlayerSetting);
+    type["TeleportTo"                         ] = ALEBind::Method(&LuaPlayer::TeleportTo);
+    type["SummonPet"                          ] = ALEBind::Method(&LuaPlayer::SummonPet);
+    type["CreatePet"                          ] = ALEBind::Method(&LuaPlayer::CreatePet);
+    type["UnsummonPetTemporarily"             ] = ALEBind::Method(&LuaPlayer::UnsummonPetTemporarily);
+    type["RemovePet"                          ] = ALEBind::Method(&LuaPlayer::RemovePet);
+    type["LearnPetTalent"                     ] = ALEBind::Method(&LuaPlayer::LearnPetTalent);
+    type["ResummonPetTemporaryUnSummonedIfAny"] = ALEBind::Method(&LuaPlayer::ResummonPetTemporaryUnSummonedIfAny);
+    type["SetPlayerFlag"                      ] = ALEBind::Method(&LuaPlayer::SetPlayerFlag);
+    type["RemovePlayerFlag"                   ] = ALEBind::Method(&LuaPlayer::RemovePlayerFlag);
+    type["DoRandomRoll"                       ] = ALEBind::Method(&LuaPlayer::DoRandomRoll);
+    type["EnvironmentalDamage"                ] = ALEBind::Method(&LuaPlayer::EnvironmentalDamage);
+    type["InitTaxiNodesForLevel"              ] = ALEBind::Method(&LuaPlayer::InitTaxiNodesForLevel);
+    type["AbandonQuest"                       ] = ALEBind::Method(&LuaPlayer::AbandonQuest);
+    type["AddWeaponProficiency"               ] = ALEBind::Method(&LuaPlayer::AddWeaponProficiency);
+    type["AddArmorProficiency"                ] = ALEBind::Method(&LuaPlayer::AddArmorProficiency);
+    type["SetAmmo"                            ] = ALEBind::Method(&LuaPlayer::SetAmmo);
+    type["RemoveAmmo"                         ] = ALEBind::Method(&LuaPlayer::RemoveAmmo);
+    type["SetCanTeleport"                     ] = ALEBind::Method(&LuaPlayer::SetCanTeleport);
+    type["SetIsSpectator"                     ] = ALEBind::Method(&LuaPlayer::SetIsSpectator);
+    type["SetViewpoint"                       ] = ALEBind::Method(&LuaPlayer::SetViewpoint);
+    type["ToggleInstantFlight"                ] = ALEBind::Method(&LuaPlayer::ToggleInstantFlight);
+    type["SetCreationTime"                    ] = ALEBind::Method(&LuaPlayer::SetCreationTime);
+    type["ApplyRatingMod"                     ] = ALEBind::Method(&LuaPlayer::ApplyRatingMod);
+}

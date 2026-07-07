@@ -4,8 +4,7 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef ROLLMETHODS_H
-#define ROLLMETHODS_H
+#include "ALEBind.h"
 
 #include "Group.h"
 
@@ -23,10 +22,9 @@ namespace LuaRoll
      *
      * @return ObjectGuid guid
      */
-    int GetItemGUID(lua_State* L, Roll* roll)
+    uint32 GetItemGUID(Roll* roll)
     {
-        ALE::Push(L, roll->itemGUID.GetCounter());
-        return 1;
+        return roll->itemGUID.GetCounter();
     }
 
     /**
@@ -34,10 +32,9 @@ namespace LuaRoll
      *
      * @return uint32 entry
      */
-    int GetItemId(lua_State* L, Roll* roll)
+    uint32 GetItemId(Roll* roll)
     {
-        ALE::Push(L, roll->itemid);
-        return 1;
+        return roll->itemid;
     }
 
     /**
@@ -45,10 +42,9 @@ namespace LuaRoll
      *
      * @return int32 randomPropId
      */
-    int GetItemRandomPropId(lua_State* L, Roll* roll)
+    int32 GetItemRandomPropId(Roll* roll)
     {
-        ALE::Push(L, roll->itemRandomPropId);
-        return 1;
+        return roll->itemRandomPropId;
     }
 
     /**
@@ -56,10 +52,9 @@ namespace LuaRoll
      *
      * @return uint32 randomSuffix
      */
-    int GetItemRandomSuffix(lua_State* L, Roll* roll)
+    uint32 GetItemRandomSuffix(Roll* roll)
     {
-        ALE::Push(L, roll->itemRandomSuffix);
-        return 1;
+        return roll->itemRandomSuffix;
     }
 
     /**
@@ -67,10 +62,9 @@ namespace LuaRoll
      *
      * @return uint8 count
      */
-    int GetItemCount(lua_State* L, Roll* roll)
+    uint8 GetItemCount(Roll* roll)
     {
-        ALE::Push(L, roll->itemCount);
-        return 1;
+        return roll->itemCount;
     }
 
     /**
@@ -92,26 +86,18 @@ namespace LuaRoll
      * @param ObjectGuid guid
      * @return [RollVote] vote
      */
-    int GetPlayerVote(lua_State* L, Roll* roll)
+    sol::optional<RollVote> GetPlayerVote(Roll* roll, ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
-
-        bool found = false;
+        sol::optional<RollVote> vote;
         for (std::pair<const ObjectGuid, RollVote>& pair : roll->playerVote)
         {
             if (pair.first == guid)
             {
-                ALE::Push(L, pair.second);
-                found = true;
+                vote = pair.second;
             }
         }
 
-        if (!found)
-        {
-            ALE::Push(L);
-        }
-
-        return 1;
+        return vote;
     }
 
     /**
@@ -120,20 +106,17 @@ namespace LuaRoll
      *
      * @return table guids
      */
-    int GetPlayerVoteGUIDs(lua_State* L, Roll* roll)
+    sol::table GetPlayerVoteGUIDs(Roll* roll, sol::this_state s)
     {
-        lua_newtable(L);
-        int table = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 1;
         for (std::pair<const ObjectGuid, RollVote>& pair : roll->playerVote)
         {
-            ALE::Push(L, pair.first);
-            lua_rawseti(L, table, i);
+            tbl[i] = pair.first;
             ++i;
         }
 
-        lua_settop(L, table); // push table to top of stack
-        return 1;
+        return tbl;
     }
 
     /**
@@ -141,10 +124,9 @@ namespace LuaRoll
      *
      * @return uint8 playersCount
      */
-    int GetTotalPlayersRolling(lua_State* L, Roll* roll)
+    uint8 GetTotalPlayersRolling(Roll* roll)
     {
-        ALE::Push(L, roll->totalPlayersRolling);
-        return 1;
+        return roll->totalPlayersRolling;
     }
 
     /**
@@ -152,10 +134,9 @@ namespace LuaRoll
      *
      * @return uint8 playersCount
      */
-    int GetTotalNeed(lua_State* L, Roll* roll)
+    uint8 GetTotalNeed(Roll* roll)
     {
-        ALE::Push(L, roll->totalNeed);
-        return 1;
+        return roll->totalNeed;
     }
 
     /**
@@ -163,10 +144,9 @@ namespace LuaRoll
      *
      * @return uint8 playersCount
      */
-    int GetTotalGreed(lua_State* L, Roll* roll)
+    uint8 GetTotalGreed(Roll* roll)
     {
-        ALE::Push(L, roll->totalGreed);
-        return 1;
+        return roll->totalGreed;
     }
 
     /**
@@ -174,10 +154,9 @@ namespace LuaRoll
      *
      * @return uint8 playersCount
      */
-    int GetTotalPass(lua_State* L, Roll* roll)
+    uint8 GetTotalPass(Roll* roll)
     {
-        ALE::Push(L, roll->totalPass);
-        return 1;
+        return roll->totalPass;
     }
 
     /**
@@ -185,10 +164,9 @@ namespace LuaRoll
      *
      * @return uint8 slot
      */
-    int GetItemSlot(lua_State* L, Roll* roll)
+    uint8 GetItemSlot(Roll* roll)
     {
-        ALE::Push(L, roll->itemSlot);
-        return 1;
+        return roll->itemSlot;
     }
 
     /**
@@ -201,7 +179,7 @@ namespace LuaRoll
      *     ROLL_FLAG_TYPE_NEED                 = 0x02,
      *     ROLL_FLAG_TYPE_GREED                = 0x04,
      *     ROLL_FLAG_TYPE_DISENCHANT           = 0x08,
-     * 
+     *
      *     ROLL_ALL_TYPE_NO_DISENCHANT         = 0x07,
      *     ROLL_ALL_TYPE_MASK                  = 0x0F
      * };
@@ -209,11 +187,27 @@ namespace LuaRoll
      *
      * @return [RollMask] rollMask
      */
-    int GetRollVoteMask(lua_State* L, Roll* roll)
+    uint8 GetRollVoteMask(Roll* roll)
     {
-        ALE::Push(L, roll->rollVoteMask);
-        return 1;
+        return roll->rollVoteMask;
     }
 }
 
-#endif
+void RegisterRollMethods(sol::state& lua)
+{
+    sol::usertype<ScopedRef<Roll>> type = ALEBind::NewHandleType<ScopedRef<Roll>>(lua, "Roll");
+
+    type["GetItemGUID"]            = ALEBind::Method(&LuaRoll::GetItemGUID);
+    type["GetItemId"]              = ALEBind::Method(&LuaRoll::GetItemId);
+    type["GetItemRandomPropId"]    = ALEBind::Method(&LuaRoll::GetItemRandomPropId);
+    type["GetItemRandomSuffix"]    = ALEBind::Method(&LuaRoll::GetItemRandomSuffix);
+    type["GetItemCount"]           = ALEBind::Method(&LuaRoll::GetItemCount);
+    type["GetPlayerVote"]          = ALEBind::Method(&LuaRoll::GetPlayerVote);
+    type["GetPlayerVoteGUIDs"]     = ALEBind::Method(&LuaRoll::GetPlayerVoteGUIDs);
+    type["GetTotalPlayersRolling"] = ALEBind::Method(&LuaRoll::GetTotalPlayersRolling);
+    type["GetTotalNeed"]           = ALEBind::Method(&LuaRoll::GetTotalNeed);
+    type["GetTotalGreed"]          = ALEBind::Method(&LuaRoll::GetTotalGreed);
+    type["GetTotalPass"]           = ALEBind::Method(&LuaRoll::GetTotalPass);
+    type["GetItemSlot"]            = ALEBind::Method(&LuaRoll::GetItemSlot);
+    type["GetRollVoteMask"]        = ALEBind::Method(&LuaRoll::GetRollVoteMask);
+}

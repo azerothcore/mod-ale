@@ -4,8 +4,11 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef PETMETHODS_H
-#define PETMETHODS_H
+#include "ALEBind.h"
+
+#include "Item.h"
+#include "Pet.h"
+#include "SpellMgr.h"
 
 /***
  * Non-[Player] controlled companions that fight alongside their owners.
@@ -31,10 +34,9 @@ namespace LuaPet
      *
      * @return [PetType] petType
      */
-    int GetPetType(lua_State* L, Pet* pet)
+    PetType GetPetType(Pet* pet)
     {
-        ALE::Push(L, pet->getPetType());
-        return 1;
+        return pet->getPetType();
     }
 
     /**
@@ -51,11 +53,9 @@ namespace LuaPet
      *
      * @param [PetType] petType : the pet type to set
      */
-    int SetPetType(lua_State* L, Pet* pet)
+    void SetPetType(Pet* pet, uint32 petType)
     {
-        uint32 petType = ALE::CHECKVAL<uint32>(L, 2);
         pet->setPetType(static_cast<PetType>(petType));
-        return 0;
     }
 
     /**
@@ -63,10 +63,9 @@ namespace LuaPet
      *
      * @return bool isControlled
      */
-    int IsControlled(lua_State* L, Pet* pet)
+    bool IsControlled(Pet* pet)
     {
-        ALE::Push(L, pet->isControlled());
-        return 1;
+        return pet->isControlled();
     }
 
     /**
@@ -74,10 +73,9 @@ namespace LuaPet
      *
      * @return bool isTemporary
      */
-    int IsTemporarySummoned(lua_State* L, Pet* pet)
+    bool IsTemporarySummoned(Pet* pet)
     {
-        ALE::Push(L, pet->isTemporarySummoned());
-        return 1;
+        return pet->isTemporarySummoned();
     }
 
     /**
@@ -86,11 +84,9 @@ namespace LuaPet
      * @param [Player] owner : the player to check ownership for
      * @return bool isPermanent
      */
-    int IsPermanentPetFor(lua_State* L, Pet* pet)
+    bool IsPermanentPetFor(Pet* pet, Player* owner)
     {
-        Player* owner = ALE::CHECKOBJ<Player>(L, 2);
-        ALE::Push(L, pet->IsPermanentPetFor(owner));
-        return 1;
+        return pet->IsPermanentPetFor(owner);
     }
 
     /**
@@ -99,11 +95,9 @@ namespace LuaPet
      * @param [Creature] creature : the creature to base the pet on
      * @return bool success : `true` if successful, `false` otherwise
      */
-    int CreateBaseAtCreature(lua_State* L, Pet* pet)
+    bool CreateBaseAtCreature(Pet* pet, Creature* creature)
     {
-        Creature* creature = ALE::CHECKOBJ<Creature>(L, 2);
-        ALE::Push(L, pet->CreateBaseAtCreature(creature));
-        return 1;
+        return pet->CreateBaseAtCreature(creature);
     }
 
     /**
@@ -111,10 +105,9 @@ namespace LuaPet
      *
      * @return uint32 duration : remaining time in milliseconds, 0 if permanent
      */
-    int GetDuration(lua_State* L, Pet* pet)
+    int64 GetDuration(Pet* pet)
     {
-        ALE::Push(L, pet->GetDuration().count());
-        return 1;
+        return pet->GetDuration().count();
     }
 
     /**
@@ -122,11 +115,9 @@ namespace LuaPet
      *
      * @param uint32 duration : duration in milliseconds, 0 for permanent
      */
-    int SetDuration(lua_State* L, Pet* pet)
+    void SetDuration(Pet* pet, uint32 duration)
     {
-        uint32 duration = ALE::CHECKVAL<uint32>(L, 2);
         pet->SetDuration(Milliseconds(duration));
-        return 0;
     }
 
     /**
@@ -143,10 +134,9 @@ namespace LuaPet
      *
      * @return [HappinessState] happinessState
      */
-    int GetHappinessState(lua_State* L, Pet* pet)
+    HappinessState GetHappinessState(Pet* pet)
     {
-        ALE::Push(L, pet->GetHappinessState());
-        return 1;
+        return pet->GetHappinessState();
     }
 
     /**
@@ -154,11 +144,9 @@ namespace LuaPet
      *
      * @param uint32 xp : amount of experience to give
      */
-    int GivePetXP(lua_State* L, Pet* pet)
+    void GivePetXP(Pet* pet, uint32 xp)
     {
-        uint32 xp = ALE::CHECKVAL<uint32>(L, 2);
         pet->GivePetXP(xp);
-        return 0;
     }
 
     /**
@@ -166,11 +154,9 @@ namespace LuaPet
      *
      * @param uint8 level : the level to set
      */
-    int GivePetLevel(lua_State* L, Pet* pet)
+    void GivePetLevel(Pet* pet, uint8 level)
     {
-        uint8 level = ALE::CHECKVAL<uint8>(L, 2);
         pet->GivePetLevel(level);
-        return 0;
     }
 
     /**
@@ -178,10 +164,9 @@ namespace LuaPet
      *
      * The pet's level will be adjusted based on the owner's level and pet scaling rules.
      */
-    int SynchronizeLevelWithOwner(lua_State* /*L*/, Pet* pet)
+    void SynchronizeLevelWithOwner(Pet* pet)
     {
         pet->SynchronizeLevelWithOwner();
-        return 0;
     }
 
     /**
@@ -190,11 +175,9 @@ namespace LuaPet
      * @param [Item] item : the item to check
      * @return bool canEat
      */
-    int HaveInDiet(lua_State* L, Pet* pet)
+    bool HaveInDiet(Pet* pet, Item* item)
     {
-        Item* item = ALE::CHECKOBJ<Item>(L, 2);
-        ALE::Push(L, pet->HaveInDiet(item->GetTemplate()));
-        return 1;
+        return pet->HaveInDiet(item->GetTemplate());
     }
 
     /**
@@ -203,11 +186,9 @@ namespace LuaPet
      * @param uint32 itemLevel : the level of the food item
      * @return uint32 benefitLevel
      */
-    int GetCurrentFoodBenefitLevel(lua_State* L, Pet* pet)
+    uint32 GetCurrentFoodBenefitLevel(Pet* pet, uint32 itemLevel)
     {
-        uint32 itemLevel = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, pet->GetCurrentFoodBenefitLevel(itemLevel));
-        return 1;
+        return pet->GetCurrentFoodBenefitLevel(itemLevel);
     }
 
     /**
@@ -216,16 +197,11 @@ namespace LuaPet
      * @param uint32 spellId : the spell ID to toggle autocast for
      * @param bool apply : `true` to enable autocast, `false` to disable
      */
-    int ToggleAutocast(lua_State* L, Pet* pet)
+    void ToggleAutocast(Pet* pet, uint32 spellId, bool apply)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-        bool apply = ALE::CHECKVAL<bool>(L, 3);
-        
         SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spellId);
         if (spellInfo)
             pet->ToggleAutocast(spellInfo, apply);
-        
-        return 0;
     }
 
     /**
@@ -233,10 +209,9 @@ namespace LuaPet
      *
      * This includes racial passives and pet-specific passive abilities.
      */
-    int LearnPetPassives(lua_State* /*L*/, Pet* pet)
+    void LearnPetPassives(Pet* pet)
     {
         pet->LearnPetPassives();
-        return 0;
     }
 
     /**
@@ -246,24 +221,18 @@ namespace LuaPet
      * @param [Unit] target : the target for the spell
      * @param bool isPositive = false : whether the spell is beneficial
      */
-    int CastWhenWillAvailable(lua_State* L, Pet* pet)
+    void CastWhenWillAvailable(Pet* pet, uint32 spellId, Unit* target, sol::optional<bool> isPositive)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-        Unit* target = ALE::CHECKOBJ<Unit>(L, 3);
         ObjectGuid oldTarget = ObjectGuid::Empty;
-        bool isPositive = ALE::CHECKVAL<bool>(L, 4, false);
-        
-        pet->CastWhenWillAvailable(spellId, target, oldTarget, isPositive);
-        return 0;
+        pet->CastWhenWillAvailable(spellId, target, oldTarget, isPositive.value_or(false));
     }
 
     /**
      * Clears any queued spell that was set to cast when available.
      */
-    int ClearCastWhenWillAvailable(lua_State* /*L*/, Pet* pet)
+    void ClearCastWhenWillAvailable(Pet* pet)
     {
         pet->ClearCastWhenWillAvailable();
-        return 0;
     }
 
     /**
@@ -306,15 +275,13 @@ namespace LuaPet
      * @param [PetSpellType] type : the spell's type by default is PETSPELL_NORMAL
      * @return bool success : `true` if the spell was added successfully
      */
-    int AddSpell(lua_State* L, Pet* pet)
+    bool AddSpell(Pet* pet, uint32 spellId, sol::optional<uint32> active, sol::optional<uint32> state,
+        sol::optional<uint32> type)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 active = ALE::CHECKVAL<uint32>(L, 3, ACT_DECIDE);
-        uint32 state = ALE::CHECKVAL<uint32>(L, 4, PETSPELL_NEW);
-        uint32 type = ALE::CHECKVAL<uint32>(L, 5, PETSPELL_NORMAL);
-        
-        ALE::Push(L, pet->addSpell(spellId, static_cast<ActiveStates>(active), static_cast<PetSpellState>(state), static_cast<PetSpellType>(type)));
-        return 1;
+        return pet->addSpell(spellId,
+            static_cast<ActiveStates>(active.value_or(ACT_DECIDE)),
+            static_cast<PetSpellState>(state.value_or(PETSPELL_NEW)),
+            static_cast<PetSpellType>(type.value_or(PETSPELL_NORMAL)));
     }
 
     /**
@@ -323,11 +290,9 @@ namespace LuaPet
      * @param uint32 spellId : the spell ID to learn
      * @return bool success : `true` if the spell was learned successfully
      */
-    int LearnSpell(lua_State* L, Pet* pet)
+    bool LearnSpell(Pet* pet, uint32 spellId)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, pet->learnSpell(spellId));
-        return 1;
+        return pet->learnSpell(spellId);
     }
 
     /**
@@ -335,11 +300,9 @@ namespace LuaPet
      *
      * @param uint32 spellId : the base spell ID
      */
-    int LearnSpellHighRank(lua_State* L, Pet* pet)
+    void LearnSpellHighRank(Pet* pet, uint32 spellId)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
         pet->learnSpellHighRank(spellId);
-        return 0;
     }
 
     /**
@@ -347,10 +310,9 @@ namespace LuaPet
      *
      * This teaches the pet all spells it should know at its current level.
      */
-    int InitLevelupSpellsForLevel(lua_State* /*L*/, Pet* pet)
+    void InitLevelupSpellsForLevel(Pet* pet)
     {
         pet->InitLevelupSpellsForLevel();
-        return 0;
     }
 
     /**
@@ -361,14 +323,9 @@ namespace LuaPet
      * @param bool clearAb : if `true`, clears the spell from action bar by default is true
      * @return bool success : `true` if the spell was unlearned successfully
      */
-    int UnlearnSpell(lua_State* L, Pet* pet)
+    bool UnlearnSpell(Pet* pet, uint32 spellId, sol::optional<bool> learnPrev, sol::optional<bool> clearAb)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-        bool learnPrev = ALE::CHECKVAL<bool>(L, 3, false);
-        bool clearAb = ALE::CHECKVAL<bool>(L, 4, true);
-        
-        ALE::Push(L, pet->unlearnSpell(spellId, learnPrev, clearAb));
-        return 1;
+        return pet->unlearnSpell(spellId, learnPrev.value_or(false), clearAb.value_or(true));
     }
 
     /**
@@ -379,23 +336,17 @@ namespace LuaPet
      * @param bool clearAb : if `true`, clears the spell from action bar by default is true
      * @return bool success : `true` if the spell was removed successfully
      */
-    int RemoveSpell(lua_State* L, Pet* pet)
+    bool RemoveSpell(Pet* pet, uint32 spellId, sol::optional<bool> learnPrev, sol::optional<bool> clearAb)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
-        bool learnPrev = ALE::CHECKVAL<bool>(L, 3, false);
-        bool clearAb = ALE::CHECKVAL<bool>(L, 4, true);
-        
-        ALE::Push(L, pet->removeSpell(spellId, learnPrev, clearAb));
-        return 1;
+        return pet->removeSpell(spellId, learnPrev.value_or(false), clearAb.value_or(true));
     }
 
     /**
      * Cleans up the [Pet]'s action bar, removing invalid spells.
      */
-    int CleanupActionBar(lua_State* /*L*/, Pet* pet)
+    void CleanupActionBar(Pet* pet)
     {
         pet->CleanupActionBar();
-        return 0;
     }
 
     /**
@@ -403,10 +354,9 @@ namespace LuaPet
      *
      * @return string actionBarData : the action bar data as a string
      */
-    int GenerateActionBarData(lua_State* L, Pet* pet)
+    std::string GenerateActionBarData(Pet* pet)
     {
-        ALE::Push(L, pet->GenerateActionBarData());
-        return 1;
+        return pet->GenerateActionBarData();
     }
 
     /**
@@ -414,10 +364,9 @@ namespace LuaPet
      *
      * This sets up the basic spells the pet should have when first created.
      */
-    int InitPetCreateSpells(lua_State* /*L*/, Pet* pet)
+    void InitPetCreateSpells(Pet* pet)
     {
         pet->InitPetCreateSpells();
-        return 0;
     }
 
     /**
@@ -425,10 +374,9 @@ namespace LuaPet
      *
      * @return bool success : `true` if talents were reset successfully
      */
-    int ResetTalents(lua_State* L, Pet* pet)
+    bool ResetTalents(Pet* pet)
     {
-        ALE::Push(L, pet->resetTalents());
-        return 1;
+        return pet->resetTalents();
     }
 
     /**
@@ -436,10 +384,9 @@ namespace LuaPet
      *
      * This assigns talent points based on the pet's level.
      */
-    int InitTalentForLevel(lua_State* /*L*/, Pet* pet)
+    void InitTalentForLevel(Pet* pet)
     {
         pet->InitTalentForLevel();
-        return 0;
     }
 
     /**
@@ -448,11 +395,9 @@ namespace LuaPet
      * @param uint8 level : the level to check
      * @return uint8 maxTalentPoints
      */
-    int GetMaxTalentPointsForLevel(lua_State* L, Pet* pet)
+    uint8 GetMaxTalentPointsForLevel(Pet* pet, uint8 level)
     {
-        uint8 level = ALE::CHECKVAL<uint8>(L, 2);
-        ALE::Push(L, pet->GetMaxTalentPointsForLevel(level));
-        return 1;
+        return pet->GetMaxTalentPointsForLevel(level);
     }
 
     /**
@@ -460,10 +405,9 @@ namespace LuaPet
      *
      * @return uint8 freeTalentPoints
      */
-    int GetFreeTalentPoints(lua_State* L, Pet* pet)
+    uint8 GetFreeTalentPoints(Pet* pet)
     {
-        ALE::Push(L, pet->GetFreeTalentPoints());
-        return 1;
+        return pet->GetFreeTalentPoints();
     }
 
     /**
@@ -471,11 +415,9 @@ namespace LuaPet
      *
      * @param uint8 points : the number of free talent points to set
      */
-    int SetFreeTalentPoints(lua_State* L, Pet* pet)
+    void SetFreeTalentPoints(Pet* pet, uint8 points)
     {
-        uint8 points = ALE::CHECKVAL<uint8>(L, 2);
         pet->SetFreeTalentPoints(points);
-        return 0;
     }
 
     /**
@@ -483,10 +425,9 @@ namespace LuaPet
      *
      * @return uint32 usedTalentCount
      */
-    int GetUsedTalentCount(lua_State* L, Pet* pet)
+    uint32 GetUsedTalentCount(Pet* pet)
     {
-        ALE::Push(L, pet->m_usedTalentCount);
-        return 1;
+        return pet->m_usedTalentCount;
     }
 
     /**
@@ -494,11 +435,9 @@ namespace LuaPet
      *
      * @param uint32 count : the number of used talents to set
      */
-    int SetUsedTalentCount(lua_State* L, Pet* pet)
+    void SetUsedTalentCount(Pet* pet, uint32 count)
     {
-        uint32 count = ALE::CHECKVAL<uint32>(L, 2);
         pet->m_usedTalentCount = count;
-        return 0;
     }
 
     /**
@@ -506,10 +445,9 @@ namespace LuaPet
      *
      * @return uint64 auraUpdateMask
      */
-    int GetAuraUpdateMaskForRaid(lua_State* L, Pet* pet)
+    uint64 GetAuraUpdateMaskForRaid(Pet* pet)
     {
-        ALE::Push(L, pet->GetAuraUpdateMaskForRaid());
-        return 1;
+        return pet->GetAuraUpdateMaskForRaid();
     }
 
     /**
@@ -517,20 +455,17 @@ namespace LuaPet
      *
      * @param uint8 slot : the aura slot to set
      */
-    int SetAuraUpdateMaskForRaid(lua_State* L, Pet* pet)
+    void SetAuraUpdateMaskForRaid(Pet* pet, uint8 slot)
     {
-        uint8 slot = ALE::CHECKVAL<uint8>(L, 2);
         pet->SetAuraUpdateMaskForRaid(slot);
-        return 0;
     }
 
     /**
      * Resets the aura update mask for raid members.
      */
-    int ResetAuraUpdateMaskForRaid(lua_State* /*L*/, Pet* pet)
+    void ResetAuraUpdateMaskForRaid(Pet* pet)
     {
         pet->ResetAuraUpdateMaskForRaid();
-        return 0;
     }
 
     /**
@@ -538,10 +473,9 @@ namespace LuaPet
      *
      * @return [Player] owner : the pet's owner
      */
-    int GetOwner(lua_State* L, Pet* pet)
+    Player* GetOwner(Pet* pet)
     {
-        ALE::Push(L, pet->GetOwner());
-        return 1;
+        return pet->GetOwner();
     }
 
     /**
@@ -549,10 +483,9 @@ namespace LuaPet
      *
      * @return bool hasTempSpell
      */
-    int HasTempSpell(lua_State* L, Pet* pet)
+    bool HasTempSpell(Pet* pet)
     {
-        ALE::Push(L, pet->HasTempSpell());
-        return 1;
+        return pet->HasTempSpell();
     }
 
     /**
@@ -560,10 +493,9 @@ namespace LuaPet
      *
      * @return bool isRemoved
      */
-    int IsRemoved(lua_State* L, Pet* pet)
+    bool IsRemoved(Pet* pet)
     {
-        ALE::Push(L, pet->m_removed);
-        return 1;
+        return pet->m_removed;
     }
 
     /**
@@ -571,11 +503,9 @@ namespace LuaPet
      *
      * @param bool removed : `true` to mark as removed, `false` otherwise
      */
-    int SetRemoved(lua_State* L, Pet* pet)
+    void SetRemoved(Pet* pet, bool removed)
     {
-        bool removed = ALE::CHECKVAL<bool>(L, 2);
         pet->m_removed = removed;
-        return 0;
     }
 
     /**
@@ -583,10 +513,9 @@ namespace LuaPet
      *
      * @return uint8 autoSpellCount
      */
-    int GetPetAutoSpellSize(lua_State* L, Pet* pet)
+    uint8 GetPetAutoSpellSize(Pet* pet)
     {
-        ALE::Push(L, pet->GetPetAutoSpellSize());
-        return 1;
+        return pet->GetPetAutoSpellSize();
     }
 
     /**
@@ -595,11 +524,9 @@ namespace LuaPet
      * @param uint8 pos : the position in the auto-spell list
      * @return uint32 spellId : the spell ID, or 0 if invalid position
      */
-    int GetPetAutoSpellOnPos(lua_State* L, Pet* pet)
+    uint32 GetPetAutoSpellOnPos(Pet* pet, uint8 pos)
     {
-        uint8 pos = ALE::CHECKVAL<uint8>(L, 2);
-        ALE::Push(L, pet->GetPetAutoSpellOnPos(pos));
-        return 1;
+        return pet->GetPetAutoSpellOnPos(pos);
     }
 
     /**
@@ -618,11 +545,9 @@ namespace LuaPet
      *
      * @param [PetSaveMode] mode : the save mode to use
      */
-    int SavePetToDB(lua_State* L, Pet* pet)
+    void SavePetToDB(Pet* pet, uint32 mode)
     {
-        uint32 mode = ALE::CHECKVAL<uint32>(L, 2);
         pet->SavePetToDB(static_cast<PetSaveMode>(mode));
-        return 0;
     }
 
     /**
@@ -642,12 +567,9 @@ namespace LuaPet
      * @param [PetSaveMode] mode : how to handle the removal
      * @param bool returnReagent = false : if `true`, returns reagents used to summon
      */
-    int Remove(lua_State* L, Pet* pet)
+    void Remove(Pet* pet, uint32 mode, sol::optional<bool> returnReagent)
     {
-        uint32 mode = ALE::CHECKVAL<uint32>(L, 2);
-        bool returnReagent = ALE::CHECKVAL<bool>(L, 3, false);
-        pet->Remove(static_cast<PetSaveMode>(mode), returnReagent);
-        return 0;
+        pet->Remove(static_cast<PetSaveMode>(mode), returnReagent.value_or(false));
     }
 
     /**
@@ -655,11 +577,60 @@ namespace LuaPet
      *
      * @return bool isBeingLoaded
      */
-    int IsBeingLoaded(lua_State* L, Pet* pet)
+    bool IsBeingLoaded(Pet* pet)
     {
-        ALE::Push(L, pet->isBeingLoaded());
-        return 1;
+        return pet->isBeingLoaded();
     }
-};
-#endif // PETMETHODS_H
+}
 
+void RegisterPetMethods(sol::state& lua)
+{
+    sol::usertype<PetRef> type = ALEBind::NewHandleType<PetRef, CreatureRef, UnitRef, WorldObjectRef, ObjectRef>(lua, "Pet");
+
+    type["GetPetType"]                 = ALEBind::Method(&LuaPet::GetPetType);
+    type["SetPetType"]                 = ALEBind::Method(&LuaPet::SetPetType);
+    type["IsControlled"]               = ALEBind::Method(&LuaPet::IsControlled);
+    type["IsTemporarySummoned"]        = ALEBind::Method(&LuaPet::IsTemporarySummoned);
+    type["IsPermanentPetFor"]          = ALEBind::Method(&LuaPet::IsPermanentPetFor);
+    type["CreateBaseAtCreature"]       = ALEBind::Method(&LuaPet::CreateBaseAtCreature);
+    type["GetDuration"]                = ALEBind::Method(&LuaPet::GetDuration);
+    type["SetDuration"]                = ALEBind::Method(&LuaPet::SetDuration);
+    type["GetHappinessState"]          = ALEBind::Method(&LuaPet::GetHappinessState);
+    type["GivePetXP"]                  = ALEBind::Method(&LuaPet::GivePetXP);
+    type["GivePetLevel"]               = ALEBind::Method(&LuaPet::GivePetLevel);
+    type["SynchronizeLevelWithOwner"]  = ALEBind::Method(&LuaPet::SynchronizeLevelWithOwner);
+    type["HaveInDiet"]                 = ALEBind::Method(&LuaPet::HaveInDiet);
+    type["GetCurrentFoodBenefitLevel"] = ALEBind::Method(&LuaPet::GetCurrentFoodBenefitLevel);
+    type["ToggleAutocast"]             = ALEBind::Method(&LuaPet::ToggleAutocast);
+    type["LearnPetPassives"]           = ALEBind::Method(&LuaPet::LearnPetPassives);
+    type["CastWhenWillAvailable"]      = ALEBind::Method(&LuaPet::CastWhenWillAvailable);
+    type["ClearCastWhenWillAvailable"] = ALEBind::Method(&LuaPet::ClearCastWhenWillAvailable);
+    type["AddSpell"]                   = ALEBind::Method(&LuaPet::AddSpell);
+    type["LearnSpell"]                 = ALEBind::Method(&LuaPet::LearnSpell);
+    type["LearnSpellHighRank"]         = ALEBind::Method(&LuaPet::LearnSpellHighRank);
+    type["InitLevelupSpellsForLevel"]  = ALEBind::Method(&LuaPet::InitLevelupSpellsForLevel);
+    type["UnlearnSpell"]               = ALEBind::Method(&LuaPet::UnlearnSpell);
+    type["RemoveSpell"]                = ALEBind::Method(&LuaPet::RemoveSpell);
+    type["CleanupActionBar"]           = ALEBind::Method(&LuaPet::CleanupActionBar);
+    type["GenerateActionBarData"]      = ALEBind::Method(&LuaPet::GenerateActionBarData);
+    type["InitPetCreateSpells"]        = ALEBind::Method(&LuaPet::InitPetCreateSpells);
+    type["ResetTalents"]               = ALEBind::Method(&LuaPet::ResetTalents);
+    type["InitTalentForLevel"]         = ALEBind::Method(&LuaPet::InitTalentForLevel);
+    type["GetMaxTalentPointsForLevel"] = ALEBind::Method(&LuaPet::GetMaxTalentPointsForLevel);
+    type["GetFreeTalentPoints"]        = ALEBind::Method(&LuaPet::GetFreeTalentPoints);
+    type["SetFreeTalentPoints"]        = ALEBind::Method(&LuaPet::SetFreeTalentPoints);
+    type["GetUsedTalentCount"]         = ALEBind::Method(&LuaPet::GetUsedTalentCount);
+    type["SetUsedTalentCount"]         = ALEBind::Method(&LuaPet::SetUsedTalentCount);
+    type["GetAuraUpdateMaskForRaid"]   = ALEBind::Method(&LuaPet::GetAuraUpdateMaskForRaid);
+    type["SetAuraUpdateMaskForRaid"]   = ALEBind::Method(&LuaPet::SetAuraUpdateMaskForRaid);
+    type["ResetAuraUpdateMaskForRaid"] = ALEBind::Method(&LuaPet::ResetAuraUpdateMaskForRaid);
+    type["GetOwner"]                   = ALEBind::Method(&LuaPet::GetOwner);
+    type["HasTempSpell"]               = ALEBind::Method(&LuaPet::HasTempSpell);
+    type["IsRemoved"]                  = ALEBind::Method(&LuaPet::IsRemoved);
+    type["SetRemoved"]                 = ALEBind::Method(&LuaPet::SetRemoved);
+    type["GetPetAutoSpellSize"]        = ALEBind::Method(&LuaPet::GetPetAutoSpellSize);
+    type["GetPetAutoSpellOnPos"]       = ALEBind::Method(&LuaPet::GetPetAutoSpellOnPos);
+    type["SavePetToDB"]                = ALEBind::Method(&LuaPet::SavePetToDB);
+    type["Remove"]                     = ALEBind::Method(&LuaPet::Remove);
+    type["IsBeingLoaded"]              = ALEBind::Method(&LuaPet::IsBeingLoaded);
+}

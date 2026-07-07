@@ -4,8 +4,10 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef OBJECTMETHODS_H
-#define OBJECTMETHODS_H
+#include "ALEBind.h"
+
+#include "Object.h"
+#include "UpdateFields.h"
 
 /***
  * A basic game object (either an [Item] or a [WorldObject]).
@@ -31,13 +33,9 @@ namespace LuaObject
      * @param uint32 flag : the flag to check for in the flags data
      * @return bool hasFlag
      */
-    int HasFlag(lua_State* L, Object* obj)
+    bool HasFlag(Object* obj, uint16 index, uint32 flag)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 3);
-
-        ALE::Push(L, obj->HasFlag(index, flag));
-        return 1;
+        return obj->HasFlag(index, flag);
     }
 
     /**
@@ -45,21 +43,19 @@ namespace LuaObject
      *
      * @return bool inWorld
      */
-    int IsInWorld(lua_State* L, Object* obj)
+    bool IsInWorld(Object* obj)
     {
-        ALE::Push(L, obj->IsInWorld());
-        return 1;
+        return obj->IsInWorld();
     }
 
     /**
- * Returns 'true' if the [Object] is a player, 'false' otherwise.
- *
- * @return bool IsPlayer
- */
-    int IsPlayer(lua_State* L, Object* obj)
+     * Returns 'true' if the [Object] is a player, 'false' otherwise.
+     *
+     * @return bool IsPlayer
+     */
+    bool IsPlayer(Object* obj)
     {
-        ALE::Push(L, obj->IsPlayer());
-        return 1;
+        return obj->IsPlayer();
     }
 
     /**
@@ -68,11 +64,9 @@ namespace LuaObject
      * @param uint16 index
      * @return int32 value
      */
-    int GetInt32Value(lua_State* L, Object* obj)
+    int32 GetInt32Value(Object* obj, uint16 index)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        ALE::Push(L, obj->GetInt32Value(index));
-        return 1;
+        return obj->GetInt32Value(index);
     }
 
     /**
@@ -81,11 +75,9 @@ namespace LuaObject
      * @param uint16 index
      * @return uint32 value
      */
-    int GetUInt32Value(lua_State* L, Object* obj)
+    uint32 GetUInt32Value(Object* obj, uint16 index)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        ALE::Push(L, obj->GetUInt32Value(index));
-        return 1;
+        return obj->GetUInt32Value(index);
     }
 
     /**
@@ -94,11 +86,9 @@ namespace LuaObject
      * @param uint16 index
      * @return float value
      */
-    int GetFloatValue(lua_State* L, Object* obj)
+    float GetFloatValue(Object* obj, uint16 index)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        ALE::Push(L, obj->GetFloatValue(index));
-        return 1;
+        return obj->GetFloatValue(index);
     }
 
     /**
@@ -110,12 +100,9 @@ namespace LuaObject
      * @param uint8 offset : should be 0, 1, 2, or 3
      * @return uint8 value
      */
-    int GetByteValue(lua_State* L, Object* obj)
+    uint8 GetByteValue(Object* obj, uint16 index, uint8 offset)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint8 offset = ALE::CHECKVAL<uint8>(L, 3);
-        ALE::Push(L, obj->GetByteValue(index, offset));
-        return 1;
+        return obj->GetByteValue(index, offset);
     }
 
     /**
@@ -127,12 +114,9 @@ namespace LuaObject
      * @param uint8 offset : should be 0 or 1
      * @return uint16 value
      */
-    int GetUInt16Value(lua_State* L, Object* obj)
+    uint16 GetUInt16Value(Object* obj, uint16 index, uint8 offset)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint8 offset = ALE::CHECKVAL<uint8>(L, 3);
-        ALE::Push(L, obj->GetUInt16Value(index, offset));
-        return 1;
+        return obj->GetUInt16Value(index, offset);
     }
 
     /**
@@ -142,10 +126,9 @@ namespace LuaObject
      *
      * @return float scale
      */
-    int GetScale(lua_State* L, Object* obj)
+    float GetScale(Object* obj)
     {
-        ALE::Push(L, obj->GetFloatValue(OBJECT_FIELD_SCALE_X));
-        return 1;
+        return obj->GetFloatValue(OBJECT_FIELD_SCALE_X);
     }
 
     /**
@@ -155,10 +138,9 @@ namespace LuaObject
      *
      * @return uint32 entry
      */
-    int GetEntry(lua_State* L, Object* obj)
+    uint32 GetEntry(Object* obj)
     {
-        ALE::Push(L, obj->GetEntry());
-        return 1;
+        return obj->GetEntry();
     }
 
     /**
@@ -173,10 +155,9 @@ namespace LuaObject
      *
      * @return ObjectGuid guid
      */
-    int GetGUID(lua_State* L, Object* obj)
+    ObjectGuid GetGUID(Object* obj)
     {
-        ALE::Push(L, obj->GET_GUID());
-        return 1;
+        return obj->GetGUID();
     }
 
     /**
@@ -191,10 +172,9 @@ namespace LuaObject
      *
      * @return uint32 guidLow
      */
-    int GetGUIDLow(lua_State* L, Object* obj)
+    uint32 GetGUIDLow(Object* obj)
     {
-        ALE::Push(L, obj->GetGUID().GetCounter());
-        return 1;
+        return obj->GetGUID().GetCounter();
     }
 
     /**
@@ -214,10 +194,9 @@ namespace LuaObject
      *
      * @return uint8 typeID
      */
-    int GetTypeId(lua_State* L, Object* obj)
+    uint8 GetTypeId(Object* obj)
     {
-        ALE::Push(L, obj->GetTypeId());
-        return 1;
+        return obj->GetTypeId();
     }
 
     /**
@@ -226,11 +205,9 @@ namespace LuaObject
      * @param uint16 index
      * @return uint64 value
      */
-    int GetUInt64Value(lua_State* L, Object* obj)
+    uint64 GetUInt64Value(Object* obj, uint16 index)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        ALE::Push(L, obj->GetUInt64Value(index));
-        return 1;
+        return obj->GetUInt64Value(index);
     }
 
     /**
@@ -243,13 +220,9 @@ namespace LuaObject
      * @param uint16 index
      * @param uint32 value
      */
-    int SetFlag(lua_State* L, Object* obj)
+    void SetFlag(Object* obj, uint16 index, uint32 flag)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 3);
-
         obj->SetFlag(index, flag);
-        return 0;
     }
 
     /**
@@ -258,12 +231,9 @@ namespace LuaObject
      * @param uint16 index
      * @param int32 value
      */
-    int SetInt32Value(lua_State* L, Object* obj)
+    void SetInt32Value(Object* obj, uint16 index, int32 value)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        int32 value = ALE::CHECKVAL<int32>(L, 3);
         obj->SetInt32Value(index, value);
-        return 0;
     }
 
     /**
@@ -272,12 +242,9 @@ namespace LuaObject
      * @param uint16 index
      * @param uint32 value
      */
-    int SetUInt32Value(lua_State* L, Object* obj)
+    void SetUInt32Value(Object* obj, uint16 index, uint32 value)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint32 value = ALE::CHECKVAL<uint32>(L, 3);
         obj->SetUInt32Value(index, value);
-        return 0;
     }
 
     /**
@@ -286,12 +253,9 @@ namespace LuaObject
      * @param uint16 index
      * @param uint32 value
      */
-    int UpdateUInt32Value(lua_State* L, Object* obj)
+    void UpdateUInt32Value(Object* obj, uint16 index, uint32 value)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint32 value = ALE::CHECKVAL<uint32>(L, 3);
         obj->UpdateUInt32Value(index, value);
-        return 0;
     }
 
     /**
@@ -300,13 +264,9 @@ namespace LuaObject
      * @param uint16 index
      * @param float value
      */
-    int SetFloatValue(lua_State* L, Object* obj)
+    void SetFloatValue(Object* obj, uint16 index, float value)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        float value = ALE::CHECKVAL<float>(L, 3);
-
         obj->SetFloatValue(index, value);
-        return 0;
     }
 
     /**
@@ -316,13 +276,9 @@ namespace LuaObject
      * @param uint8 offset : should be 0, 1, 2, or 3
      * @param uint8 value
      */
-    int SetByteValue(lua_State* L, Object* obj)
+    void SetByteValue(Object* obj, uint16 index, uint8 offset, uint8 value)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint8 offset = ALE::CHECKVAL<uint8>(L, 3);
-        uint8 value = ALE::CHECKVAL<uint8>(L, 4);
         obj->SetByteValue(index, offset, value);
-        return 0;
     }
 
     /**
@@ -332,13 +288,9 @@ namespace LuaObject
      * @param uint8 offset : should be 0 or 1
      * @param uint16 value
      */
-    int SetUInt16Value(lua_State* L, Object* obj)
+    void SetUInt16Value(Object* obj, uint16 index, uint8 offset, uint16 value)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint8 offset = ALE::CHECKVAL<uint8>(L, 3);
-        uint16 value = ALE::CHECKVAL<uint16>(L, 4);
         obj->SetUInt16Value(index, offset, value);
-        return 0;
     }
 
     /**
@@ -348,13 +300,9 @@ namespace LuaObject
      * @param uint8 offset : should be 0 or 1
      * @param int16 value
      */
-    int SetInt16Value(lua_State* L, Object* obj)
+    void SetInt16Value(Object* obj, uint16 index, uint8 offset, int16 value)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint8 offset = ALE::CHECKVAL<uint8>(L, 3);
-        int16 value = ALE::CHECKVAL<int16>(L, 4);
         obj->SetInt16Value(index, offset, value);
-        return 0;
     }
 
     /**
@@ -362,12 +310,9 @@ namespace LuaObject
      *
      * @param float scale
      */
-    int SetScale(lua_State* L, Object* obj)
+    void SetScale(Object* obj, float scale)
     {
-        float size = ALE::CHECKVAL<float>(L, 2);
-
-        obj->SetObjectScale(size);
-        return 0;
+        obj->SetObjectScale(scale);
     }
 
     /**
@@ -376,12 +321,9 @@ namespace LuaObject
      * @param uint16 index
      * @param uint64 value
      */
-    int SetUInt64Value(lua_State* L, Object* obj)
+    void SetUInt64Value(Object* obj, uint16 index, uint64 value)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint64 value = ALE::CHECKVAL<uint64>(L, 3);
         obj->SetUInt64Value(index, value);
-        return 0;
     }
 
     /**
@@ -390,13 +332,9 @@ namespace LuaObject
      * @param uint16 index
      * @param uint32 flag
      */
-    int RemoveFlag(lua_State* L, Object* obj)
+    void RemoveFlag(Object* obj, uint16 index, uint32 flag)
     {
-        uint16 index = ALE::CHECKVAL<uint16>(L, 2);
-        uint32 flag = ALE::CHECKVAL<uint32>(L, 3);
-
         obj->RemoveFlag(index, flag);
-        return 0;
     }
 
     /**
@@ -406,10 +344,9 @@ namespace LuaObject
      *
      * @return [Corpse] corpse : the [Object] as a [Corpse], or `nil`
      */
-    int ToCorpse(lua_State* L, Object* obj)
+    Corpse* ToCorpse(Object* obj)
     {
-        ALE::Push(L, obj->ToCorpse());
-        return 1;
+        return obj->ToCorpse();
     }
 
     /**
@@ -419,10 +356,9 @@ namespace LuaObject
      *
      * @return [GameObject] gameObject : the [Object] as a [GameObject], or `nil`
      */
-    int ToGameObject(lua_State* L, Object* obj)
+    GameObject* ToGameObject(Object* obj)
     {
-        ALE::Push(L, obj->ToGameObject());
-        return 1;
+        return obj->ToGameObject();
     }
 
     /**
@@ -432,10 +368,9 @@ namespace LuaObject
      *
      * @return [Unit] unit : the [Object] as a [Unit], or `nil`
      */
-    int ToUnit(lua_State* L, Object* obj)
+    Unit* ToUnit(Object* obj)
     {
-        ALE::Push(L, obj->ToUnit());
-        return 1;
+        return obj->ToUnit();
     }
 
     /**
@@ -445,10 +380,9 @@ namespace LuaObject
      *
      * @return [Creature] creature : the [Object] as a [Creature], or `nil`
      */
-    int ToCreature(lua_State* L, Object* obj)
+    Creature* ToCreature(Object* obj)
     {
-        ALE::Push(L, obj->ToCreature());
-        return 1;
+        return obj->ToCreature();
     }
 
     /**
@@ -458,10 +392,44 @@ namespace LuaObject
      *
      * @return [Player] player : the [Object] as a [Player], or `nil`
      */
-    int ToPlayer(lua_State* L, Object* obj)
+    Player* ToPlayer(Object* obj)
     {
-        ALE::Push(L, obj->ToPlayer());
-        return 1;
+        return obj->ToPlayer();
     }
-};
-#endif
+}
+
+void RegisterObjectMethods(sol::state& lua)
+{
+    sol::usertype<ObjectRef> type = ALEBind::NewHandleType<ObjectRef>(lua, "Object");
+
+    type["HasFlag"]           = ALEBind::Method(&LuaObject::HasFlag);
+    type["IsInWorld"]         = ALEBind::Method(&LuaObject::IsInWorld);
+    type["IsPlayer"]          = ALEBind::Method(&LuaObject::IsPlayer);
+    type["GetInt32Value"]     = ALEBind::Method(&LuaObject::GetInt32Value);
+    type["GetUInt32Value"]    = ALEBind::Method(&LuaObject::GetUInt32Value);
+    type["GetFloatValue"]     = ALEBind::Method(&LuaObject::GetFloatValue);
+    type["GetByteValue"]      = ALEBind::Method(&LuaObject::GetByteValue);
+    type["GetUInt16Value"]    = ALEBind::Method(&LuaObject::GetUInt16Value);
+    type["GetScale"]          = ALEBind::Method(&LuaObject::GetScale);
+    type["GetEntry"]          = ALEBind::Method(&LuaObject::GetEntry);
+    type["GetGUID"]           = ALEBind::Method(&LuaObject::GetGUID);
+    type["GetGUIDLow"]        = ALEBind::Method(&LuaObject::GetGUIDLow);
+    type["GetTypeId"]         = ALEBind::Method(&LuaObject::GetTypeId);
+    type["GetUInt64Value"]    = ALEBind::Method(&LuaObject::GetUInt64Value);
+    type["SetFlag"]           = ALEBind::Method(&LuaObject::SetFlag);
+    type["SetInt32Value"]     = ALEBind::Method(&LuaObject::SetInt32Value);
+    type["SetUInt32Value"]    = ALEBind::Method(&LuaObject::SetUInt32Value);
+    type["UpdateUInt32Value"] = ALEBind::Method(&LuaObject::UpdateUInt32Value);
+    type["SetFloatValue"]     = ALEBind::Method(&LuaObject::SetFloatValue);
+    type["SetByteValue"]      = ALEBind::Method(&LuaObject::SetByteValue);
+    type["SetUInt16Value"]    = ALEBind::Method(&LuaObject::SetUInt16Value);
+    type["SetInt16Value"]     = ALEBind::Method(&LuaObject::SetInt16Value);
+    type["SetScale"]          = ALEBind::Method(&LuaObject::SetScale);
+    type["SetUInt64Value"]    = ALEBind::Method(&LuaObject::SetUInt64Value);
+    type["RemoveFlag"]        = ALEBind::Method(&LuaObject::RemoveFlag);
+    type["ToCorpse"]          = ALEBind::Method(&LuaObject::ToCorpse);
+    type["ToGameObject"]      = ALEBind::Method(&LuaObject::ToGameObject);
+    type["ToUnit"]            = ALEBind::Method(&LuaObject::ToUnit);
+    type["ToCreature"]        = ALEBind::Method(&LuaObject::ToCreature);
+    type["ToPlayer"]          = ALEBind::Method(&LuaObject::ToPlayer);
+}

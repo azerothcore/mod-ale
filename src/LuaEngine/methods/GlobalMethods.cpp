@@ -4,18 +4,45 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef GLOBALMETHODS_H
-#define GLOBALMETHODS_H
+#include "ALEBind.h"
+#include "LuaEngine.h"
 
-#include "BindingMap.h"
 #include "ALEDBCRegistry.h"
+#include "ALEEventMgr.h"
 
 #include "BanMgr.h"
+#include "Config.h"
+#include "DatabaseEnv.h"
+#include "GameEventMgr.h"
+#include "GameObject.h"
 #include "GameTime.h"
-#include "SharedDefines.h"
+#include "GitRevision.h"
+#include "GuildMgr.h"
+#include "Mail.h"
+#include "MapMgr.h"
+#include "ObjectAccessor.h"
+#include "ObjectDefines.h"
+#include "ObjectMgr.h"
+#include "Opcodes.h"
 #include "OutdoorPvPMgr.h"
+#include "QueryCallback.h"
+#include "SharedDefines.h"
+#include "SpellMgr.h"
+#include "StringConvert.h"
+#include "StringFormat.h"
+#include "TemporarySummon.h"
+#include "Util.h"
+#include "WorldPacket.h"
+#include "WorldSessionMgr.h"
 #include "../../../../src/server/scripts/OutdoorPvP/OutdoorPvPNA.h"
 
+#include <algorithm>
+#include <cctype>
+#include <functional>
+#include <list>
+#include <shared_mutex>
+#include <sstream>
+#include <string>
 
 enum BanMode
 {
@@ -36,10 +63,9 @@ namespace LuaGlobalFunctions
      *
      * @return string engineName
      */
-    int GetLuaEngine(lua_State* L)
+    char const* GetLuaEngine()
     {
-        ALE::Push(L, "ALEEngine");
-        return 1;
+        return "ALEEngine";
     }
 
     /**
@@ -49,10 +75,9 @@ namespace LuaGlobalFunctions
      *
      * @return string coreName
      */
-    int GetCoreName(lua_State* L)
+    char const* GetCoreName()
     {
-        ALE::Push(L, CORE_NAME);
-        return 1;
+        return "AzerothCore";
     }
 
     /**
@@ -61,41 +86,28 @@ namespace LuaGlobalFunctions
      * @param string name : name of the value
      * @return string value
      */
-    int GetConfigValue(lua_State* L)
+    sol::object GetConfigValue(std::string key, sol::this_state s)
     {
-        const char* key = ALE::CHECKVAL<const char*>(L, 1);
-        if (!key) return 0;
-        
+        sol::state_view lua(s);
+
         std::string val = sConfigMgr->GetOption<std::string>(key, "", false);
 
         if (val.empty())
-        {
-            ALE::Push(L, val);
-            return 1;
-        }
+            return sol::make_object(lua, val);
 
         std::string lower = val;
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-        
+
         if (lower == "true")
-        {
-            ALE::Push(L, true);
-            return 1;
-        }
+            return sol::make_object(lua, true);
         else if (lower == "false")
-        {
-            ALE::Push(L, false);
-            return 1;
-        }
-        
+            return sol::make_object(lua, false);
+
         auto intVal = Acore::StringTo<uint32>(val);
-        if (intVal) {
-            ALE::Push(L, *intVal);
-            return 1;
-        }
-        
-        ALE::Push(L, val);
-        return 1;
+        if (intVal)
+            return sol::make_object(lua, *intVal);
+
+        return sol::make_object(lua, val);
     }
 
     /**
@@ -105,10 +117,9 @@ namespace LuaGlobalFunctions
      * - for TrinityCore returns the realmID as it is in the conf file.
      * @return uint32 realm ID
      */
-    int GetRealmID(lua_State* L)
+    uint32 GetRealmID()
     {
-        ALE::Push(L, sConfigMgr->GetOption<uint32>("RealmID", 1));
-        return 1;
+        return sConfigMgr->GetOption<uint32>("RealmID", 1);
     }
 
     /**
@@ -120,10 +131,9 @@ namespace LuaGlobalFunctions
      *
      * @return string version
      */
-    int GetCoreVersion(lua_State* L)
+    char const* GetCoreVersion()
     {
-        ALE::Push(L, CORE_VERSION);
-        return 1;
+        return GitRevision::GetFullVersion();
     }
 
     /**
@@ -133,22 +143,20 @@ namespace LuaGlobalFunctions
      *
      * @return int32 expansion
      */
-    int GetCoreExpansion(lua_State* L)
+    int32 GetCoreExpansion()
     {
-        ALE::Push(L, 2);
-        return 1;
+        return 2;
     }
-    
+
     /**
      * Returns the [Map] pointer of the Lua state. Returns null for the "World" state. 
      *
      * @return [Map] map
      */
-    int GetStateMap(lua_State* L)
+    Map* GetStateMap()
     {
         // Until AC supports multistate, this will always return nil
-        ALE::Push(L);
-        return 1;
+        return nullptr;
     }
 
     /**
@@ -156,11 +164,10 @@ namespace LuaGlobalFunctions
      *
      * @return int32 mapId
      */
-    int GetStateMapId(lua_State* L)
+    int32 GetStateMapId()
     {
         // Until AC supports multistate, this will always return -1
-        ALE::Push(L, -1);
-        return 1;
+        return -1;
     }
 
     /**
@@ -168,11 +175,10 @@ namespace LuaGlobalFunctions
      *
      * @return uint32 instanceId
      */
-    int GetStateInstanceId(lua_State* L)
+    uint32 GetStateInstanceId()
     {
         // Until AC supports multistate, this will always return 0
-        ALE::Push(L, 0);
-        return 1;
+        return 0;
     }
 
     /**
@@ -181,12 +187,9 @@ namespace LuaGlobalFunctions
      * @param uint32 questId : [Quest] entry ID
      * @return [Quest] quest
      */
-    int GetQuest(lua_State* L)
+    Quest* GetQuest(uint32 questId)
     {
-        uint32 questId = ALE::CHECKVAL<uint32>(L, 1);
-
-        ALE::Push(L, eObjectMgr->GetQuestTemplate(questId));
-        return 1;
+        return const_cast<Quest*>(sObjectMgr->GetQuestTemplate(questId));
     }
 
     /**
@@ -195,11 +198,9 @@ namespace LuaGlobalFunctions
      * @param ObjectGuid guid : guid of the [Player], you can get it with [Object:GetGUID]
      * @return [Player] player
      */
-    int GetPlayerByGUID(lua_State* L)
+    Player* GetPlayerByGUID(ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 1);
-        ALE::Push(L, eObjectAccessor()FindPlayer(guid));
-        return 1;
+        return ObjectAccessor::FindPlayer(guid);
     }
 
     /**
@@ -208,11 +209,9 @@ namespace LuaGlobalFunctions
      * @param string name : name of the [Player]
      * @return [Player] player
      */
-    int GetPlayerByName(lua_State* L)
+    Player* GetPlayerByName(std::string name)
     {
-        const char* name = ALE::CHECKVAL<const char*>(L, 1);
-        ALE::Push(L, eObjectAccessor()FindPlayerByName(name));
-        return 1;
+        return ObjectAccessor::FindPlayerByName(name);
     }
 
     /**
@@ -220,10 +219,9 @@ namespace LuaGlobalFunctions
      *
      * @return uint32 time
      */
-    int GetGameTime(lua_State* L)
+    int64 GetGameTime()
     {
-        ALE::Push(L, GameTime::GetGameTime().count());
-        return 1;
+        return GameTime::GetGameTime().count();
     }
 
     /**
@@ -242,18 +240,17 @@ namespace LuaGlobalFunctions
      * @param bool onlyGM = false : optional check if GM only
      * @return table worldPlayers
      */
-    int GetPlayersInWorld(lua_State* L)
+    sol::table GetPlayersInWorld(sol::optional<uint32> teamArg, sol::optional<bool> onlyGMArg, sol::this_state s)
     {
-        uint32 team = ALE::CHECKVAL<uint32>(L, 1, TEAM_NEUTRAL);
-        bool onlyGM = ALE::CHECKVAL<bool>(L, 2, false);
+        uint32 team = teamArg.value_or(TEAM_NEUTRAL);
+        bool onlyGM = onlyGMArg.value_or(false);
 
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         {
             std::shared_lock<std::shared_mutex> lock(*HashMapHolder<Player>::GetLock());
-            const HashMapHolder<Player>::MapType& m = eObjectAccessor()GetPlayers();
+            const HashMapHolder<Player>::MapType& m = ObjectAccessor::GetPlayers();
             for (HashMapHolder<Player>::MapType::const_iterator it = m.begin(); it != m.end(); ++it)
             {
                 if (Player* player = it->second)
@@ -262,16 +259,12 @@ namespace LuaGlobalFunctions
                         continue;
 
                     if ((team == TEAM_NEUTRAL || player->GetTeamId() == team) && (!onlyGM || player->IsGameMaster()))
-                    {
-                        ALE::Push(L, player);
-                        lua_rawseti(L, tbl, ++i);
-                    }
+                        tbl[++i] = PlayerRef(player);
                 }
             }
         }
 
-        lua_settop(L, tbl); // push table to top of stack
-        return 1;
+        return tbl;
     }
 
     /**
@@ -280,11 +273,9 @@ namespace LuaGlobalFunctions
      * @param string name
      * @return [Guild] guild : the Guild, or `nil` if it doesn't exist
      */
-    int GetGuildByName(lua_State* L)
+    Guild* GetGuildByName(std::string name)
     {
-        const char* name = ALE::CHECKVAL<const char*>(L, 1);
-        ALE::Push(L, eGuildMgr->GetGuildByName(name));
-        return 1;
+        return sGuildMgr->GetGuildByName(name);
     }
 
     /**
@@ -294,13 +285,11 @@ namespace LuaGlobalFunctions
      * @param uint32 instanceId = 0 : required if the map is an instance, otherwise don't pass anything
      * @return [Map] map : the Map, or `nil` if it doesn't exist
      */
-    int GetMapById(lua_State* L)
+    Map* GetMapById(uint32 mapid, sol::optional<uint32> instanceArg)
     {
-        uint32 mapid = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 instance = ALE::CHECKVAL<uint32>(L, 2, 0);
+        uint32 instance = instanceArg.value_or(0);
 
-        ALE::Push(L, eMapMgr->FindMap(mapid, instance));
-        return 1;
+        return sMapMgr->FindMap(mapid, instance);
     }
 
     /**
@@ -309,12 +298,9 @@ namespace LuaGlobalFunctions
      * @param ObjectGuid guid : the guid of a [Guild] leader
      * @return [Guild] guild, or `nil` if it doesn't exist
      */
-    int GetGuildByLeaderGUID(lua_State* L)
+    Guild* GetGuildByLeaderGUID(ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 1);
-
-        ALE::Push(L, eGuildMgr->GetGuildByLeader(guid));
-        return 1;
+        return sGuildMgr->GetGuildByLeader(guid);
     }
 
     /**
@@ -322,10 +308,9 @@ namespace LuaGlobalFunctions
      *
      * @return uint32 count
      */
-    int GetPlayerCount(lua_State* L)
+    uint32 GetPlayerCount()
     {
-        ALE::Push(L, eWorldSessionMgr->GetActiveSessionCount());
-        return 1;
+        return sWorldSessionMgr->GetActiveSessionCount();
     }
 
     /**
@@ -338,11 +323,9 @@ namespace LuaGlobalFunctions
      * @param uint32 lowguid : low GUID of the [Player]
      * @return ObjectGuid guid
      */
-    int GetPlayerGUID(lua_State* L)
+    ObjectGuid GetPlayerGUID(uint32 lowguid)
     {
-        uint32 lowguid = ALE::CHECKVAL<uint32>(L, 1);
-        ALE::Push(L, MAKE_NEW_GUID(lowguid, 0, HIGHGUID_PLAYER));
-        return 1;
+        return ObjectGuid(HighGuid::Player, 0, lowguid);
     }
 
     /**
@@ -354,11 +337,9 @@ namespace LuaGlobalFunctions
      * @param uint32 lowguid : low GUID of the [Item]
      * @return ObjectGuid guid
      */
-    int GetItemGUID(lua_State* L)
+    ObjectGuid GetItemGUID(uint32 lowguid)
     {
-        uint32 lowguid = ALE::CHECKVAL<uint32>(L, 1);
-        ALE::Push(L, MAKE_NEW_GUID(lowguid, 0, HIGHGUID_ITEM));
-        return 1;
+        return ObjectGuid(HighGuid::Item, 0, lowguid);
     }
 
     /**
@@ -367,11 +348,9 @@ namespace LuaGlobalFunctions
     * @param uint32 itemID : the item entry ID from `item_template` to look up
     * @return [ItemTemplate] itemTemplate
     */
-    int GetItemTemplate(lua_State* L)
+    ItemTemplate* GetItemTemplate(uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-        ALE::Push(L, eObjectMgr->GetItemTemplate(entry));
-        return 1;
+        return const_cast<ItemTemplate*>(sObjectMgr->GetItemTemplate(entry));
     }
 
     /**
@@ -385,12 +364,9 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : entry ID of the [GameObject]
      * @return ObjectGuid guid
      */
-    int GetObjectGUID(lua_State* L)
+    ObjectGuid GetObjectGUID(uint32 lowguid, uint32 entry)
     {
-        uint32 lowguid = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, MAKE_NEW_GUID(lowguid, entry, HIGHGUID_GAMEOBJECT));
-        return 1;
+        return ObjectGuid(HighGuid::GameObject, entry, lowguid);
     }
 
     /**
@@ -404,12 +380,9 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : entry ID of the [Creature]
      * @return ObjectGuid guid
      */
-    int GetUnitGUID(lua_State* L)
+    ObjectGuid GetUnitGUID(uint32 lowguid, uint32 entry)
     {
-        uint32 lowguid = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, MAKE_NEW_GUID(lowguid, entry, HIGHGUID_UNIT));
-        return 1;
+        return ObjectGuid(HighGuid::Unit, entry, lowguid);
     }
 
     /**
@@ -431,12 +404,9 @@ namespace LuaGlobalFunctions
      * @param ObjectGuid guid : GUID of an [Object]
      * @return uint32 lowguid : low GUID of the [Object]
      */
-    int GetGUIDLow(lua_State* L)
+    uint32 GetGUIDLow(ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 1);
-
-        ALE::Push(L, guid.GetCounter());
-        return 1;
+        return guid.GetCounter();
     }
 
     /**
@@ -459,19 +429,18 @@ namespace LuaGlobalFunctions
      * @param [LocaleConstant] locale = DEFAULT_LOCALE : locale to return the [Item] name in
      * @return string itemLink
      */
-    int GetItemLink(lua_State* L)
+    std::string GetItemLink(uint32 entry, sol::optional<uint8> localeArg)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-        uint8 locale = ALE::CHECKVAL<uint8>(L, 2, DEFAULT_LOCALE);
+        uint8 locale = localeArg.value_or(DEFAULT_LOCALE);
         if (locale >= TOTAL_LOCALES)
-            return luaL_argerror(L, 2, "valid LocaleConstant expected");
+            throw std::invalid_argument("valid LocaleConstant expected");
 
-        const ItemTemplate* temp = eObjectMgr->GetItemTemplate(entry);
+        const ItemTemplate* temp = sObjectMgr->GetItemTemplate(entry);
         if (!temp)
-            return luaL_argerror(L, 1, "valid ItemEntry expected");
+            throw std::invalid_argument("valid ItemEntry expected");
 
         std::string name = temp->Name1;
-        if (ItemLocale const* il = eObjectMgr->GetItemLocale(entry))
+        if (ItemLocale const* il = sObjectMgr->GetItemLocale(entry))
             ObjectMgr::GetLocaleString(il->Name, static_cast<LocaleConstant>(locale), name);
 
         std::ostringstream oss;
@@ -480,8 +449,7 @@ namespace LuaGlobalFunctions
             "0:0:0:0:" <<
             "0:0:0:0|h[" << name << "]|h|r";
 
-        ALE::Push(L, oss.str());
-        return 1;
+        return oss.str();
     }
 
     /**
@@ -494,11 +462,9 @@ namespace LuaGlobalFunctions
      * @param ObjectGuid guid : GUID of an [Object]
      * @return int32 typeId : type ID of the [Object]
      */
-    int GetGUIDType(lua_State* L)
+    int32 GetGUIDType(ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 1);
-        ALE::Push(L, static_cast<int>(guid.GetHigh()));
-        return 1;
+        return static_cast<int>(guid.GetHigh());
     }
 
     /**
@@ -509,11 +475,9 @@ namespace LuaGlobalFunctions
      * @param ObjectGuid guid : GUID of an [Creature] or [GameObject]
      * @return uint32 entry : entry ID, or `0` if `guid` is not a [Creature] or [GameObject]
      */
-    int GetGUIDEntry(lua_State* L)
+    uint32 GetGUIDEntry(ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 1);
-        ALE::Push(L, guid.GetEntry());
-        return 1;
+        return guid.GetEntry();
     }
 
     /**
@@ -522,12 +486,10 @@ namespace LuaGlobalFunctions
      * @param ObjectGuid guid : the ObjectGuid to get packed size for
      * @return number size
      */
-    int GetPackedGUIDSize(lua_State* L)
+    int32 GetPackedGUIDSize(ObjectGuid guid)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 1);
         PackedGuid packedGuid(guid);
-        ALE::Push(L, static_cast<int>(packedGuid.size()));
-        return 1;
+        return static_cast<int>(packedGuid.size());
     }
 
     /**
@@ -550,20 +512,18 @@ namespace LuaGlobalFunctions
      * @param [LocaleConstant] locale = DEFAULT_LOCALE : locale to return the name in
      * @return string areaOrZoneName
      */
-    int GetAreaName(lua_State* L)
+    char const* GetAreaName(uint32 areaOrZoneId, sol::optional<uint8> localeArg)
     {
-        uint32 areaOrZoneId = ALE::CHECKVAL<uint32>(L, 1);
-        uint8 locale = ALE::CHECKVAL<uint8>(L, 2, DEFAULT_LOCALE);
+        uint8 locale = localeArg.value_or(DEFAULT_LOCALE);
         if (locale >= TOTAL_LOCALES)
-            return luaL_argerror(L, 2, "valid LocaleConstant expected");
+            throw std::invalid_argument("valid LocaleConstant expected");
 
         AreaTableEntry const* areaEntry = sAreaTableStore.LookupEntry(areaOrZoneId);
 
         if (!areaEntry)
-            return luaL_argerror(L, 1, "valid Area or Zone ID expected");
+            throw std::invalid_argument("valid Area or Zone ID expected");
 
-        ALE::Push(L, areaEntry->area_name[locale]);
-        return 1;
+        return areaEntry->area_name[locale];
     }
 
     /**
@@ -571,71 +531,35 @@ namespace LuaGlobalFunctions
      *
      * @return table activeEvents
      */
-    int GetActiveGameEvents(lua_State* L)
+    sol::table GetActiveGameEvents(sol::this_state s)
     {
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 counter = 1;
-        GameEventMgr::ActiveEvents const& activeEvents = eGameEventMgr->GetActiveEventList();
+        GameEventMgr::ActiveEvents const& activeEvents = sGameEventMgr->GetActiveEventList();
 
         for (GameEventMgr::ActiveEvents::const_iterator i = activeEvents.begin(); i != activeEvents.end(); ++i)
         {
-            ALE::Push(L, *i);
-            lua_rawseti(L, tbl, counter);
+            tbl[counter] = *i;
 
             counter++;
         }
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
-    static int RegisterEntryHelper(lua_State* L, int regtype)
+    static sol::object RegisterEntryHelper(uint8 regtype, uint32 id, uint32 ev, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        uint32 id = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 ev = ALE::CHECKVAL<uint32>(L, 2);
-        luaL_checktype(L, 3, LUA_TFUNCTION);
-        uint32 shots = ALE::CHECKVAL<uint32>(L, 4, 0);
-
-        lua_pushvalue(L, 3);
-        int functionRef = luaL_ref(L, LUA_REGISTRYINDEX);
-        if (functionRef >= 0)
-            return ALE::GetALE(L)->Register(L, regtype, id, ObjectGuid(), 0, ev, functionRef, shots);
-        else
-            luaL_argerror(L, 3, "unable to make a ref to function");
-        return 0;
+        return sALE->Register(regtype, id, ObjectGuid::Empty, 0, ev, std::move(callback), shots.value_or(0));
     }
 
-    static int RegisterEventHelper(lua_State* L, int regtype)
+    static sol::object RegisterEventHelper(uint8 regtype, uint32 ev, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        uint32 ev = ALE::CHECKVAL<uint32>(L, 1);
-        luaL_checktype(L, 2, LUA_TFUNCTION);
-        uint32 shots = ALE::CHECKVAL<uint32>(L, 3, 0);
-
-        lua_pushvalue(L, 2);
-        int functionRef = luaL_ref(L, LUA_REGISTRYINDEX);
-        if (functionRef >= 0)
-            return ALE::GetALE(L)->Register(L, regtype, 0, ObjectGuid(), 0, ev, functionRef, shots);
-        else
-            luaL_argerror(L, 2, "unable to make a ref to function");
-        return 0;
+        return sALE->Register(regtype, 0, ObjectGuid::Empty, 0, ev, std::move(callback), shots.value_or(0));
     }
 
-    static int RegisterUniqueHelper(lua_State* L, int regtype)
+    static sol::object RegisterUniqueHelper(uint8 regtype, ObjectGuid guid, uint32 instanceId, uint32 ev, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 1);
-        uint32 instanceId = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 ev = ALE::CHECKVAL<uint32>(L, 3);
-        luaL_checktype(L, 4, LUA_TFUNCTION);
-        uint32 shots = ALE::CHECKVAL<uint32>(L, 5, 0);
-
-        lua_pushvalue(L, 4);
-        int functionRef = luaL_ref(L, LUA_REGISTRYINDEX);
-        if (functionRef >= 0)
-            return ALE::GetALE(L)->Register(L, regtype, 0, guid, instanceId, ev, functionRef, shots);
-        else
-            luaL_argerror(L, 4, "unable to make a ref to function");
-        return 0;
+        return sALE->Register(regtype, 0, guid, instanceId, ev, std::move(callback), shots.value_or(0));
     }
 
     /**
@@ -708,9 +632,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterServerEvent(lua_State* L)
+    sol::object RegisterServerEvent(uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEventHelper(L, Hooks::REGTYPE_SERVER);
+        return RegisterEventHelper(Hooks::REGTYPE_SERVER, event, std::move(callback), shots);
     }
 
     /**
@@ -806,9 +730,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterPlayerEvent(lua_State* L)
+    sol::object RegisterPlayerEvent(uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEventHelper(L, Hooks::REGTYPE_PLAYER);
+        return RegisterEventHelper(Hooks::REGTYPE_PLAYER, event, std::move(callback), shots);
     }
 
     /**
@@ -843,9 +767,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterGuildEvent(lua_State* L)
+    sol::object RegisterGuildEvent(uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEventHelper(L, Hooks::REGTYPE_GUILD);
+        return RegisterEventHelper(Hooks::REGTYPE_GUILD, event, std::move(callback), shots);
     }
 
     /**
@@ -875,9 +799,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterGroupEvent(lua_State* L)
+    sol::object RegisterGroupEvent(uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEventHelper(L, Hooks::REGTYPE_GROUP);
+        return RegisterEventHelper(Hooks::REGTYPE_GROUP, event, std::move(callback), shots);
     }
 
     /**
@@ -903,9 +827,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterBGEvent(lua_State* L)
+    sol::object RegisterBGEvent(uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEventHelper(L, Hooks::REGTYPE_BG);
+        return RegisterEventHelper(Hooks::REGTYPE_BG, event, std::move(callback), shots);
     }
 
     /**
@@ -932,9 +856,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterPacketEvent(lua_State* L)
+    sol::object RegisterPacketEvent(uint32 entry, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_PACKET);
+        return RegisterEntryHelper(Hooks::REGTYPE_PACKET, entry, event, std::move(callback), shots);
     }
 
     /**
@@ -959,9 +883,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterCreatureGossipEvent(lua_State* L)
+    sol::object RegisterCreatureGossipEvent(uint32 entry, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_CREATURE_GOSSIP);
+        return RegisterEntryHelper(Hooks::REGTYPE_CREATURE_GOSSIP, entry, event, std::move(callback), shots);
     }
 
     /**
@@ -986,9 +910,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterGameObjectGossipEvent(lua_State* L)
+    sol::object RegisterGameObjectGossipEvent(uint32 entry, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_GAMEOBJECT_GOSSIP);
+        return RegisterEntryHelper(Hooks::REGTYPE_GAMEOBJECT_GOSSIP, entry, event, std::move(callback), shots);
     }
 
     /**
@@ -1016,9 +940,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterItemEvent(lua_State* L)
+    sol::object RegisterItemEvent(uint32 entry, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_ITEM);
+        return RegisterEntryHelper(Hooks::REGTYPE_ITEM, entry, event, std::move(callback), shots);
     }
 
     /**
@@ -1043,9 +967,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterItemGossipEvent(lua_State* L)
+    sol::object RegisterItemGossipEvent(uint32 entry, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_ITEM_GOSSIP);
+        return RegisterEntryHelper(Hooks::REGTYPE_ITEM_GOSSIP, entry, event, std::move(callback), shots);
     }
 
     /**
@@ -1070,9 +994,9 @@ namespace LuaGlobalFunctions
      * @param function function : function to register
      * @param uint32 shots = 0 : the number of times the function will be called, 0 means "always call this function"
      */
-    int RegisterMapEvent(lua_State* L)
+    sol::object RegisterMapEvent(uint32 map_id, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_MAP);
+        return RegisterEntryHelper(Hooks::REGTYPE_MAP, map_id, event, std::move(callback), shots);
     }
 
     /**
@@ -1097,9 +1021,9 @@ namespace LuaGlobalFunctions
      * @param function function : function to register
      * @param uint32 shots = 0 : the number of times the function will be called, 0 means "always call this function"
      */
-    int RegisterInstanceEvent(lua_State* L)
+    sol::object RegisterInstanceEvent(uint32 instance_id, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_INSTANCE);
+        return RegisterEntryHelper(Hooks::REGTYPE_INSTANCE, instance_id, event, std::move(callback), shots);
     }
 
     /**
@@ -1126,9 +1050,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterPlayerGossipEvent(lua_State* L)
+    sol::object RegisterPlayerGossipEvent(uint32 menu_id, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_PLAYER_GOSSIP);
+        return RegisterEntryHelper(Hooks::REGTYPE_PLAYER_GOSSIP, menu_id, event, std::move(callback), shots);
     }
 
     /**
@@ -1197,9 +1121,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterCreatureEvent(lua_State* L)
+    sol::object RegisterCreatureEvent(uint32 entry, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_CREATURE);
+        return RegisterEntryHelper(Hooks::REGTYPE_CREATURE, entry, event, std::move(callback), shots);
     }
 
     /**
@@ -1269,9 +1193,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterUniqueCreatureEvent(lua_State* L)
+    sol::object RegisterUniqueCreatureEvent(ObjectGuid guid, uint32 instance_id, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterUniqueHelper(L, Hooks::REGTYPE_CREATURE);
+        return RegisterUniqueHelper(Hooks::REGTYPE_CREATURE, guid, instance_id, event, std::move(callback), shots);
     }
 
     /**
@@ -1308,9 +1232,9 @@ namespace LuaGlobalFunctions
      *
      * @return function cancel : a function that cancels the binding when called
      */
-    int RegisterGameObjectEvent(lua_State* L)
+    sol::object RegisterGameObjectEvent(uint32 entry, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_GAMEOBJECT);
+        return RegisterEntryHelper(Hooks::REGTYPE_GAMEOBJECT, entry, event, std::move(callback), shots);
     }
 
     /**
@@ -1332,9 +1256,9 @@ namespace LuaGlobalFunctions
      * @param function function : function to register
      * @param uint32 shots = 0 : the number of times the function will be called, 0 means "always call this function"
      */
-    int RegisterTicketEvent(lua_State* L)
+    sol::object RegisterTicketEvent(uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEventHelper(L, Hooks::REGTYPE_TICKET);
+        return RegisterEventHelper(Hooks::REGTYPE_TICKET, event, std::move(callback), shots);
     }
 
     /**
@@ -1355,9 +1279,9 @@ namespace LuaGlobalFunctions
      * @param function function : function to register
      * @param uint32 shots = 0 : the number of times the function will be called, 0 means "always call this function"
      */
-    int RegisterSpellEvent(lua_State* L)
+    sol::object RegisterSpellEvent(uint32 entry, uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEntryHelper(L, Hooks::REGTYPE_SPELL);
+        return RegisterEntryHelper(Hooks::REGTYPE_SPELL, entry, event, std::move(callback), shots);
     }
 
     /**
@@ -1387,18 +1311,26 @@ namespace LuaGlobalFunctions
      * @param function function : function to register
      * @param uint32 shots = 0 : the number of times the function will be called, 0 means "always call this function"
      */
-    int RegisterAllCreatureEvent(lua_State* L)
+    sol::object RegisterAllCreatureEvent(uint32 event, sol::protected_function callback, sol::optional<uint32> shots)
     {
-        return RegisterEventHelper(L, Hooks::REGTYPE_ALL_CREATURE);
+        return RegisterEventHelper(Hooks::REGTYPE_ALL_CREATURE, event, std::move(callback), shots);
     }
 
     /**
      * Reloads the Lua engine.
      */
-    int ReloadALE(lua_State* /*L*/)
+    void ReloadALE()
     {
         ALE::ReloadALE();
-        return 0;
+    }
+
+    static void PrintRunCommandOutput(void* /*callbackArg*/, std::string_view view)
+    {
+        std::string str = { view.begin(), view.end() };
+        // Remove trailing spaces and line breaks
+        while (!str.empty() && std::isspace(static_cast<unsigned char>(str.back())))
+            str.pop_back();
+        ALE_LOG_INFO("{}", str);
     }
 
     /**
@@ -1406,18 +1338,9 @@ namespace LuaGlobalFunctions
      *
      * @param string command : the command to run
      */
-    int RunCommand(lua_State* L)
+    void RunCommand(std::string command)
     {
-        const char* command = ALE::CHECKVAL<const char*>(L, 1);
-
-        eWorld->QueueCliCommand(new CliCommandHolder(nullptr, command, [](void*, std::string_view view)
-        {
-            std::string str = { view.begin(), view.end() };
-            str.erase(std::find_if(str.rbegin(), str.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), str.end()); // Remove trailing spaces and line breaks
-            ALE_LOG_INFO("{}", str);
-        }, nullptr));
-
-        return 0;
+        sWorld->QueueCliCommand(new CliCommandHolder(nullptr, command.c_str(), &PrintRunCommandOutput, nullptr));
     }
 
     /**
@@ -1425,45 +1348,23 @@ namespace LuaGlobalFunctions
      *
      * @param string message : message to send
      */
-    int SendWorldMessage(lua_State* L)
+    void SendWorldMessage(std::string message)
     {
-        const char* message = ALE::CHECKVAL<const char*>(L, 1);
-        eWorldSessionMgr->SendServerMessage(SERVER_MSG_STRING, message);
-        return 0;
+        sWorldSessionMgr->SendServerMessage(SERVER_MSG_STRING, message);
+    }
+
+    static void ForwardAsyncQueryResult(sol::protected_function callback, QueryResult result)
+    {
+        LOCK_ALE;
+
+        sALE->CallFunction(callback, result);
     }
 
     template <typename T>
-    static int DBQueryAsync(lua_State* L, DatabaseWorkerPool<T>& db)
+    static void DBQueryAsync(DatabaseWorkerPool<T>& db, std::string const& query, sol::protected_function callback)
     {
-        const char* query = ALE::CHECKVAL<const char*>(L, 1);
-        luaL_checktype(L, 2, LUA_TFUNCTION);
-        lua_pushvalue(L, 2);
-        int funcRef = luaL_ref(L, LUA_REGISTRYINDEX);
-        if (funcRef == LUA_REFNIL || funcRef == LUA_NOREF)
-        {
-            luaL_argerror(L, 2, "unable to make a ref to function");
-            return 0;
-        }
-
-        ALE::GALE->queryProcessor.AddCallback(db.AsyncQuery(query).WithCallback([L, funcRef](QueryResult result)
-            {
-                ALEQuery* eq = result ? new ALEQuery(result) : nullptr;
-
-                LOCK_ALE;
-
-                // Get function
-                lua_rawgeti(L, LUA_REGISTRYINDEX, funcRef);
-
-                // Push parameters
-                ALE::Push(L, eq);
-
-                // Call function
-                ALE::GALE->ExecuteCall(1, 0);
-
-                luaL_unref(L, LUA_REGISTRYINDEX, funcRef);
-            }));
-
-        return 0;
+        sALE->queryProcessor.AddCallback(db.AsyncQuery(query.c_str())
+            .WithCallback(std::bind(&ForwardAsyncQueryResult, std::move(callback), std::placeholders::_1)));
     }
 
     /**
@@ -1484,20 +1385,9 @@ namespace LuaGlobalFunctions
      * @param string sql : query to execute
      * @return [ALEQuery] results or nil if no rows found or nil if no rows found
      */
-    int WorldDBQuery(lua_State* L)
+    QueryResult WorldDBQuery(std::string query)
     {
-        const char* query = ALE::CHECKVAL<const char*>(L, 1);
-
-        int numArgs = lua_gettop(L);
-        if (numArgs > 1)
-            query = ALE::FormatQuery(L, query).c_str();
-
-        ALEQuery result = WorldDatabase.Query(query);
-        if (result)
-            ALE::Push(L, new ALEQuery(result));
-        else
-            ALE::Push(L);
-        return 1;
+        return WorldDatabase.Query(query.c_str());
     }
 
     /**
@@ -1519,9 +1409,9 @@ namespace LuaGlobalFunctions
      * @param string sql : query to execute
      * @param function callback : function that will be called when the results are available
      */
-    int WorldDBQueryAsync(lua_State* L)
+    void WorldDBQueryAsync(std::string query, sol::protected_function callback)
     {
-        return DBQueryAsync(L, WorldDatabase);
+        DBQueryAsync(WorldDatabase, query, std::move(callback));
     }
 
     /**
@@ -1537,16 +1427,9 @@ namespace LuaGlobalFunctions
      *
      * @param string sql : query to execute
      */
-    int WorldDBExecute(lua_State* L)
+    void WorldDBExecute(std::string query)
     {
-        const char* query = ALE::CHECKVAL<const char*>(L, 1);
-
-        int numArgs = lua_gettop(L);
-        if (numArgs > 1)
-            query = ALE::FormatQuery(L, query).c_str();
-
-        WorldDatabase.Execute(query);
-        return 0;
+        WorldDatabase.Execute(query.c_str());
     }
 
     /**
@@ -1561,20 +1444,9 @@ namespace LuaGlobalFunctions
      * @param string sql : query to execute
      * @return [ALEQuery] results or nil if no rows found
      */
-    int CharDBQuery(lua_State* L)
+    QueryResult CharDBQuery(std::string query)
     {
-        const char* query = ALE::CHECKVAL<const char*>(L, 1);
-
-        int numArgs = lua_gettop(L);
-        if (numArgs > 1)
-            query = ALE::FormatQuery(L, query).c_str();
-
-        QueryResult result = CharacterDatabase.Query(query);
-        if (result)
-            ALE::Push(L, new QueryResult(result));
-        else
-            ALE::Push(L);
-        return 1;
+        return CharacterDatabase.Query(query.c_str());
     }
 
     /**
@@ -1589,9 +1461,9 @@ namespace LuaGlobalFunctions
      * @param string sql : query to execute
      * @param function callback : function that will be called when the results are available
      */
-    int CharDBQueryAsync(lua_State* L)
+    void CharDBQueryAsync(std::string query, sol::protected_function callback)
     {
-        return DBQueryAsync(L, CharacterDatabase);
+        DBQueryAsync(CharacterDatabase, query, std::move(callback));
     }
 
     /**
@@ -1607,16 +1479,9 @@ namespace LuaGlobalFunctions
      *
      * @param string sql : query to execute
      */
-    int CharDBExecute(lua_State* L)
+    void CharDBExecute(std::string query)
     {
-        const char* query = ALE::CHECKVAL<const char*>(L, 1);
-
-        int numArgs = lua_gettop(L);
-        if (numArgs > 1)
-            query = ALE::FormatQuery(L, query).c_str();
-
-        CharacterDatabase.Execute(query);
-        return 0;
+        CharacterDatabase.Execute(query.c_str());
     }
 
     /**
@@ -1631,20 +1496,9 @@ namespace LuaGlobalFunctions
      * @param string sql : query to execute
      * @return [ALEQuery] results or nil if no rows found
      */
-    int AuthDBQuery(lua_State* L)
+    QueryResult AuthDBQuery(std::string query)
     {
-        const char* query = ALE::CHECKVAL<const char*>(L, 1);
-
-        int numArgs = lua_gettop(L);
-        if (numArgs > 1)
-            query = ALE::FormatQuery(L, query).c_str();
-
-        QueryResult result = LoginDatabase.Query(query);
-        if (result)
-            ALE::Push(L, new QueryResult(result));
-        else
-            ALE::Push(L);
-        return 1;
+        return LoginDatabase.Query(query.c_str());
     }
 
     /**
@@ -1659,9 +1513,9 @@ namespace LuaGlobalFunctions
      * @param string sql : query to execute
      * @param function callback : function that will be called when the results are available
      */
-    int AuthDBQueryAsync(lua_State* L)
+    void AuthDBQueryAsync(std::string query, sol::protected_function callback)
     {
-        return DBQueryAsync(L, LoginDatabase);
+        DBQueryAsync(LoginDatabase, query, std::move(callback));
     }
 
     /**
@@ -1677,16 +1531,9 @@ namespace LuaGlobalFunctions
      *
      * @param string sql : query to execute
      */
-    int AuthDBExecute(lua_State* L)
+    void AuthDBExecute(std::string query)
     {
-        const char* query = ALE::CHECKVAL<const char*>(L, 1);
-
-        int numArgs = lua_gettop(L);
-        if (numArgs > 1)
-            query = ALE::FormatQuery(L, query).c_str();
-            
-        LoginDatabase.Execute(query);
-        return 0;
+        LoginDatabase.Execute(query.c_str());
     }
 
     /**
@@ -1707,35 +1554,23 @@ namespace LuaGlobalFunctions
      * @param uint32 repeats = 1 : how many times for the event to repeat, 0 is infinite
      * @return int eventId : unique ID for the timed event used to cancel it or nil
      */
-    int CreateLuaEvent(lua_State* L)
+    uint64 CreateLuaEvent(sol::protected_function callback, sol::object delay, sol::optional<uint32> repeatsArg)
     {
-        luaL_checktype(L, 1, LUA_TFUNCTION);
         uint32 min, max;
-        if (lua_istable(L, 2))
+        if (delay.is<sol::table>())
         {
-            ALE::Push(L, 1);
-            lua_gettable(L, 2);
-            min = ALE::CHECKVAL<uint32>(L, -1);
-            ALE::Push(L, 2);
-            lua_gettable(L, 2);
-            max = ALE::CHECKVAL<uint32>(L, -1);
-            lua_pop(L, 2);
+            sol::table delayTable = delay.as<sol::table>();
+            min = delayTable.get<uint32>(1);
+            max = delayTable.get<uint32>(2);
         }
         else
-            min = max = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 repeats = ALE::CHECKVAL<uint32>(L, 3, 1);
+            min = max = delay.as<uint32>();
+        uint32 repeats = repeatsArg.value_or(1);
 
         if (min > max)
-            return luaL_argerror(L, 2, "min is bigger than max delay");
+            throw std::invalid_argument("min is bigger than max delay");
 
-        lua_pushvalue(L, 1);
-        int functionRef = luaL_ref(L, LUA_REGISTRYINDEX);
-        if (functionRef != LUA_REFNIL && functionRef != LUA_NOREF)
-        {
-            ALE::GetALE(L)->eventMgr->globalProcessor->AddEvent(functionRef, min, max, repeats);
-            ALE::Push(L, functionRef);
-        }
-        return 1;
+        return sALE->eventMgr->globalProcessor->AddEvent(std::move(callback), min, max, repeats);
     }
 
     /**
@@ -1744,17 +1579,15 @@ namespace LuaGlobalFunctions
      * @param int eventId : event Id to remove
      * @param bool all_Events = false : remove from all events, not just global
      */
-    int RemoveEventById(lua_State* L)
+    void RemoveEventById(uint64 eventId, sol::optional<bool> allEventsArg)
     {
-        int eventId = ALE::CHECKVAL<int>(L, 1);
-        bool all_Events = ALE::CHECKVAL<bool>(L, 1, false);
+        bool all_Events = allEventsArg.value_or(false);
 
         // not thread safe
         if (all_Events)
-            ALE::GetALE(L)->eventMgr->SetState(eventId, LUAEVENT_STATE_ABORT);
+            sALE->eventMgr->SetState(eventId, LUAEVENT_STATE_ABORT);
         else
-            ALE::GetALE(L)->eventMgr->globalProcessor->SetState(eventId, LUAEVENT_STATE_ABORT);
-        return 0;
+            sALE->eventMgr->globalProcessor->SetState(eventId, LUAEVENT_STATE_ABORT);
     }
 
     /**
@@ -1762,16 +1595,15 @@ namespace LuaGlobalFunctions
      *
      * @param bool all_Events = false : remove all events, not just global
      */
-    int RemoveEvents(lua_State* L)
+    void RemoveEvents(sol::optional<bool> allEventsArg)
     {
-        bool all_Events = ALE::CHECKVAL<bool>(L, 1, false);
+        bool all_Events = allEventsArg.value_or(false);
 
         // not thread safe
         if (all_Events)
-            ALE::GetALE(L)->eventMgr->SetStates(LUAEVENT_STATE_ABORT);
+            sALE->eventMgr->SetStates(LUAEVENT_STATE_ABORT);
         else
-            ALE::GetALE(L)->eventMgr->globalProcessor->SetStates(LUAEVENT_STATE_ABORT);
-        return 0;
+            sALE->eventMgr->globalProcessor->SetStates(LUAEVENT_STATE_ABORT);
     }
 
     /**
@@ -1790,33 +1622,20 @@ namespace LuaGlobalFunctions
      * @param uint32 phase = 1 : phase to put the [Creature] or [GameObject] in
      * @return [WorldObject] worldObject : returns [Creature] or [GameObject]
      */
-    int PerformIngameSpawn(lua_State* L)
+    WorldObject* PerformIngameSpawn(int32 spawntype, uint32 entry, uint32 mapID, uint32 instanceID,
+        float x, float y, float z, float o,
+        sol::optional<bool> saveArg, sol::optional<uint32> durorresptimeArg, sol::optional<uint32> phaseArg)
     {
-        int spawntype = ALE::CHECKVAL<int>(L, 1);
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 mapID = ALE::CHECKVAL<uint32>(L, 3);
-        uint32 instanceID = ALE::CHECKVAL<uint32>(L, 4);
+        bool save = saveArg.value_or(false);
+        uint32 durorresptime = durorresptimeArg.value_or(0);
+        uint32 phase = phaseArg.value_or(PHASEMASK_NORMAL);
 
-        float x = ALE::CHECKVAL<float>(L, 5);
-        float y = ALE::CHECKVAL<float>(L, 6);
-        float z = ALE::CHECKVAL<float>(L, 7);
-        float o = ALE::CHECKVAL<float>(L, 8);
-        bool save = ALE::CHECKVAL<bool>(L, 9, false);
-        uint32 durorresptime = ALE::CHECKVAL<uint32>(L, 10, 0);
-        uint32 phase = ALE::CHECKVAL<uint32>(L, 11, PHASEMASK_NORMAL);
-        
         if (!phase)
-        {
-            ALE::Push(L);
-            return 1;
-        }
+            return nullptr;
 
-        Map* map = eMapMgr->FindMap(mapID, instanceID);
+        Map* map = sMapMgr->FindMap(mapID, instanceID);
         if (!map)
-        {
-            ALE::Push(L);
-            return 1;
-        }
+            return nullptr;
 
         Position pos = { x, y, z, o };
 
@@ -1828,8 +1647,7 @@ namespace LuaGlobalFunctions
                 if (!creature->Create(map->GenerateLowGuid<HighGuid::Unit>(), map, phase, entry, 0, x, y, z, o))
                 {
                     delete creature;
-                    ALE::Push(L);
-                    return 1;
+                    return nullptr;
                 }
 
                 creature->SaveToDB(map->GetId(), (1 << map->GetSpawnMode()), phase);
@@ -1845,47 +1663,35 @@ namespace LuaGlobalFunctions
                 if (!creature->LoadCreatureFromDB(db_guid, map, true, true))
                 {
                     delete creature;
-                    ALE::Push(L);
-                    return 1;
+                    return nullptr;
                 }
 
-                eObjectMgr->AddCreatureToGrid(db_guid, eObjectMgr->GetCreatureData(db_guid));
-                ALE::Push(L, creature);
+                sObjectMgr->AddCreatureToGrid(db_guid, sObjectMgr->GetCreatureData(db_guid));
+                return creature;
             }
             else
             {
-                TempSummon* creature = map->SummonCreature(entry, pos, NULL, durorresptime);
+                TempSummon* creature = map->SummonCreature(entry, pos, nullptr, durorresptime);
                 if (!creature)
-                {
-                    ALE::Push(L);
-                    return 1;
-                }
+                    return nullptr;
 
                 if (durorresptime)
                     creature->SetTempSummonType(TEMPSUMMON_TIMED_OR_DEAD_DESPAWN);
                 else
                     creature->SetTempSummonType(TEMPSUMMON_MANUAL_DESPAWN);
 
-                ALE::Push(L, creature);
+                return creature;
             }
-
-            return 1;
         }
 
         if (spawntype == 2) // Spawn object
         {
-            const GameObjectTemplate* objectInfo = eObjectMgr->GetGameObjectTemplate(entry);
+            const GameObjectTemplate* objectInfo = sObjectMgr->GetGameObjectTemplate(entry);
             if (!objectInfo)
-            {
-                ALE::Push(L);
-                return 1;
-            }
+                return nullptr;
 
             if (objectInfo->displayId && !sGameObjectDisplayInfoStore.LookupEntry(objectInfo->displayId))
-            {
-                ALE::Push(L);
-                return 1;
-            }
+                return nullptr;
 
             GameObject* object = new GameObject;
             uint32 guidLow = map->GenerateLowGuid<HighGuid::GameObject>();
@@ -1893,8 +1699,7 @@ namespace LuaGlobalFunctions
             if (!object->Create(guidLow, entry, map, phase, x, y, z, o, G3D::Quat(0.0f, 0.0f, 0.0f, 0.0f), 100, GO_STATE_READY))
             {
                 delete object;
-                ALE::Push(L);
-                return 1;
+                return nullptr;
             }
 
             if (durorresptime)
@@ -1915,19 +1720,16 @@ namespace LuaGlobalFunctions
                 if (!object->LoadGameObjectFromDB(guidLow, map, true))
                 {
                     delete object;
-                    ALE::Push(L);
-                    return 1;
+                    return nullptr;
                 }
 
-                eObjectMgr->AddGameobjectToGrid(guidLow, eObjectMgr->GetGameObjectData(guidLow));
+                sObjectMgr->AddGameobjectToGrid(guidLow, sObjectMgr->GetGameObjectData(guidLow));
             }
             else
                 map->AddToMap(object);
-            ALE::Push(L, object);
-            return 1;
+            return object;
         }
-        ALE::Push(L);
-        return 1;
+        return nullptr;
     }
 
     /**
@@ -1937,15 +1739,12 @@ namespace LuaGlobalFunctions
      * @param uint32 size : the size of the packet
      * @return [WorldPacket] packet
      */
-    int CreatePacket(lua_State* L)
+    WorldPacket CreatePacket(uint32 opcode, size_t size)
     {
-        uint32 opcode = ALE::CHECKVAL<uint32>(L, 1);
-        size_t size = ALE::CHECKVAL<size_t>(L, 2);
         if (opcode >= NUM_MSG_TYPES)
-            return luaL_argerror(L, 1, "valid opcode expected");
+            throw std::invalid_argument("valid opcode expected");
 
-        ALE::Push(L, new WorldPacket((OpcodesList)opcode, size));
-        return 1;
+        return WorldPacket(static_cast<Opcodes>(opcode), size);
     }
 
     /**
@@ -1957,19 +1756,11 @@ namespace LuaGlobalFunctions
      * @param uint32 incrtime : combined with maxcount, incrtime tells how often (in seconds) the vendor list is refreshed and the limited [Item] copies are restocked
      * @param uint32 extendedcost : unique cost of an [Item], such as conquest points for example
      */
-    int AddVendorItem(lua_State* L)
+    void AddVendorItem(uint32 entry, uint32 item, int32 maxcount, uint32 incrtime, uint32 extendedcost)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 item = ALE::CHECKVAL<uint32>(L, 2);
-        int maxcount = ALE::CHECKVAL<int>(L, 3);
-        uint32 incrtime = ALE::CHECKVAL<uint32>(L, 4);
-        uint32 extendedcost = ALE::CHECKVAL<uint32>(L, 5);
-
-        if (!eObjectMgr->IsVendorItemValid(entry, item, maxcount, incrtime, extendedcost))
-            return 0;
-        eObjectMgr->AddVendorItem(entry, item, maxcount, incrtime, extendedcost);
-
-        return 0;
+        if (!sObjectMgr->IsVendorItemValid(entry, item, maxcount, incrtime, extendedcost))
+            return;
+        sObjectMgr->AddVendorItem(entry, item, maxcount, incrtime, extendedcost);
     }
 
     /**
@@ -1978,15 +1769,12 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : [Creature] entry Id
      * @param uint32 item : [Item] entry Id
      */
-    int VendorRemoveItem(lua_State* L)
+    void VendorRemoveItem(uint32 entry, uint32 item)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 item = ALE::CHECKVAL<uint32>(L, 2);
-        if (!eObjectMgr->GetCreatureTemplate(entry))
-            return luaL_argerror(L, 1, "valid CreatureEntry expected");
+        if (!sObjectMgr->GetCreatureTemplate(entry))
+            throw std::invalid_argument("valid CreatureEntry expected");
 
-        eObjectMgr->RemoveVendorItem(entry, item);
-        return 0;
+        sObjectMgr->RemoveVendorItem(entry, item);
     }
 
     /**
@@ -1994,18 +1782,15 @@ namespace LuaGlobalFunctions
      *
      * @param uint32 entry : [Creature] entry Id
      */
-    int VendorRemoveAllItems(lua_State* L)
+    void VendorRemoveAllItems(uint32 entry)
     {
-        uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-        VendorItemData const* items = eObjectMgr->GetNpcVendorItemList(entry);
+        VendorItemData const* items = sObjectMgr->GetNpcVendorItemList(entry);
         if (!items || items->Empty())
-            return 0;
+            return;
 
         auto const& itemlist = items->m_items;
         for (auto itr = itemlist.rbegin(); itr != itemlist.rend(); ++itr)
-            eObjectMgr->RemoveVendorItem(entry, (*itr)->item);
-        return 0;
+            sObjectMgr->RemoveVendorItem(entry, (*itr)->item);
     }
 
     /**
@@ -2013,11 +1798,9 @@ namespace LuaGlobalFunctions
      *
      * @param [Player] player : [Player] to kick
      */
-    int Kick(lua_State* L)
+    void Kick(Player* player)
     {
-        Player* player = ALE::CHECKOBJ<Player>(L, 1);
         player->GetSession()->KickPlayer();
-        return 0;
     }
 
     /**
@@ -2037,13 +1820,10 @@ namespace LuaGlobalFunctions
      * @param string whoBanned = "" : the [Player]'s name that banned the account, character or IP, this is optional
      * @return int result : status of the ban. 0 if success, 1 if syntax error, 2 if target not found, 3 if a longer ban already exists, nil if unknown result
      */
-    int Ban(lua_State* L)
+    sol::optional<int32> Ban(int32 banMode, std::string nameOrIP, uint32 duration, sol::optional<std::string> reasonArg, sol::optional<std::string> whoBannedArg)
     {
-        int banMode = ALE::CHECKVAL<int>(L, 1);
-        std::string nameOrIP = ALE::CHECKVAL<std::string>(L, 2);
-        uint32 duration = ALE::CHECKVAL<uint32>(L, 3);
-        const char* reason = ALE::CHECKVAL<const char*>(L, 4, "");
-        const char* whoBanned = ALE::CHECKVAL<const char*>(L, 5, "");
+        std::string reason = reasonArg.value_or("");
+        std::string whoBanned = whoBannedArg.value_or("");
 
         const int BAN_ACCOUNT = 0;
         const int BAN_CHARACTER = 1;
@@ -2053,18 +1833,18 @@ namespace LuaGlobalFunctions
         {
             case BAN_ACCOUNT:
                 if (!Utf8ToUpperOnlyLatin(nameOrIP))
-                    return luaL_argerror(L, 2, "invalid account name");
+                    throw std::invalid_argument("invalid account name");
                 break;
             case BAN_CHARACTER:
                 if (!normalizePlayerName(nameOrIP))
-                    return luaL_argerror(L, 2, "invalid character name");
+                    throw std::invalid_argument("invalid character name");
                 break;
             case BAN_IP:
                 if (!IsIPAddress(nameOrIP.c_str()))
-                    return luaL_argerror(L, 2, "invalid ip");
+                    throw std::invalid_argument("invalid ip");
                 break;
             default:
-                return luaL_argerror(L, 1, "unknown banmode");
+                throw std::invalid_argument("unknown banmode");
         }
 
         BanReturn result;
@@ -2084,28 +1864,23 @@ namespace LuaGlobalFunctions
         switch (result)
         {
         case BanReturn::BAN_SUCCESS:
-            ALE::Push(L, 0);
-            break;
+            return 0;
         case BanReturn::BAN_SYNTAX_ERROR:
-            ALE::Push(L, 1);
-            break;
+            return 1;
         case BanReturn::BAN_NOTFOUND:
-            ALE::Push(L, 2);
-            break;
+            return 2;
         case BanReturn::BAN_LONGER_EXISTS:
-            ALE::Push(L, 3);
-            break;
+            return 3;
         }
-        return 1;
+        return sol::nullopt;
     }
 
     /**
      * Saves all [Player]s.
      */
-    int SaveAllPlayers(lua_State* /*L*/)
+    void SaveAllPlayers()
     {
-        eObjectAccessor()SaveAllPlayers();
-        return 0;
+        ObjectAccessor::SaveAllPlayers();
     }
 
     /**
@@ -2137,18 +1912,15 @@ namespace LuaGlobalFunctions
      * @param uint32 amount = 0 : amount of the [Item] to send with mail
      * @return uint32 itemGUIDlow : low GUID of the item. Up to 12 values returned, returns nil if no further items are sent
      */
-    int SendMail(lua_State* L)
+    sol::variadic_results SendMail(std::string subject, std::string text, uint32 receiverGUIDLow,
+        sol::optional<uint32> senderGUIDLowArg, sol::optional<uint32> stationaryArg, sol::optional<uint32> delayArg,
+        sol::optional<uint32> moneyArg, sol::optional<uint32> codArg, sol::this_state s, sol::variadic_args itemArgs)
     {
-        int i = 0;
-        std::string subject = ALE::CHECKVAL<std::string>(L, ++i);
-        std::string text = ALE::CHECKVAL<std::string>(L, ++i);
-        uint32 receiverGUIDLow = ALE::CHECKVAL<uint32>(L, ++i);
-        uint32 senderGUIDLow = ALE::CHECKVAL<uint32>(L, ++i, 0);
-        uint32 stationary = ALE::CHECKVAL<uint32>(L, ++i, MAIL_STATIONERY_DEFAULT);
-        uint32 delay = ALE::CHECKVAL<uint32>(L, ++i, 0);
-        uint32 money = ALE::CHECKVAL<uint32>(L, ++i, 0);
-        uint32 cod = ALE::CHECKVAL<uint32>(L, ++i, 0);
-        int argAmount = lua_gettop(L);
+        uint32 senderGUIDLow = senderGUIDLowArg.value_or(0);
+        uint32 stationary = stationaryArg.value_or(MAIL_STATIONERY_DEFAULT);
+        uint32 delay = delayArg.value_or(0);
+        uint32 money = moneyArg.value_or(0);
+        uint32 cod = codArg.value_or(0);
 
         MailSender sender(MAIL_NORMAL, senderGUIDLow, (MailStationery)stationary);
         MailDraft draft(subject, text);
@@ -2159,36 +1931,32 @@ namespace LuaGlobalFunctions
             draft.AddMoney(money);
 
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+        sol::variadic_results results;
         uint8 addedItems = 0;
-        while (addedItems <= MAX_MAIL_ITEMS && i + 2 <= argAmount)
+        std::size_t argIndex = 0;
+        while (addedItems <= MAX_MAIL_ITEMS && argIndex + 2 <= itemArgs.size())
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, ++i);
-            uint32 amount = ALE::CHECKVAL<uint32>(L, ++i);
+            uint32 entry = itemArgs.get<uint32>(argIndex++);
+            uint32 amount = itemArgs.get<uint32>(argIndex++);
 
-            ItemTemplate const* item_proto = eObjectMgr->GetItemTemplate(entry);
+            ItemTemplate const* item_proto = sObjectMgr->GetItemTemplate(entry);
             if (!item_proto)
-            {
-                luaL_error(L, "Item entry %d does not exist", entry);
-                continue;
-            }
+                throw std::runtime_error(Acore::StringFormat("Item entry {} does not exist", entry));
             if (amount < 1 || (item_proto->MaxCount > 0 && amount > uint32(item_proto->MaxCount)))
-            {
-                luaL_error(L, "Item entry %d has invalid amount %d", entry, amount);
-                continue;
-            }
+                throw std::runtime_error(Acore::StringFormat("Item entry {} has invalid amount {}", entry, amount));
             if (Item* item = Item::CreateItem(entry, amount))
             {
                 item->SaveToDB(trans);
                 draft.AddItem(item);
-                ALE::Push(L, item->GetGUID().GetCounter());
+                results.push_back(sol::make_object(s, item->GetGUID().GetCounter()));
                 ++addedItems;
             }
         }
 
-        Player* receiverPlayer = eObjectAccessor()FindPlayer(MAKE_NEW_GUID(receiverGUIDLow, 0, HIGHGUID_PLAYER));
+        Player* receiverPlayer = ObjectAccessor::FindPlayer(ObjectGuid(HighGuid::Player, 0, receiverGUIDLow));
         draft.SendMailTo(trans, MailReceiver(receiverPlayer, receiverGUIDLow), sender, MAIL_CHECK_MASK_NONE, delay);
         CharacterDatabase.CommitTransaction(trans);
-        return addedItems;
+        return results;
     }
 
     /**
@@ -2198,12 +1966,9 @@ namespace LuaGlobalFunctions
      * @param uint32 b
      * @return uint32 result
      */
-    int bit_and(lua_State* L)
+    uint32 bit_and(uint32 a, uint32 b)
     {
-        uint32 a = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 b = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, a & b);
-        return 1;
+        return a & b;
     }
 
     /**
@@ -2213,12 +1978,9 @@ namespace LuaGlobalFunctions
      * @param uint32 b
      * @return uint32 result
      */
-    int bit_or(lua_State* L)
+    uint32 bit_or(uint32 a, uint32 b)
     {
-        uint32 a = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 b = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, a | b);
-        return 1;
+        return a | b;
     }
 
     /**
@@ -2228,12 +1990,9 @@ namespace LuaGlobalFunctions
      * @param uint32 b
      * @return uint32 result
      */
-    int bit_lshift(lua_State* L)
+    uint32 bit_lshift(uint32 a, uint32 b)
     {
-        uint32 a = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 b = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, a << b);
-        return 1;
+        return a << b;
     }
 
     /**
@@ -2243,12 +2002,9 @@ namespace LuaGlobalFunctions
      * @param uint32 b
      * @return uint32 result
      */
-    int bit_rshift(lua_State* L)
+    uint32 bit_rshift(uint32 a, uint32 b)
     {
-        uint32 a = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 b = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, a >> b);
-        return 1;
+        return a >> b;
     }
 
     /**
@@ -2258,12 +2014,9 @@ namespace LuaGlobalFunctions
      * @param uint32 b
      * @return uint32 result
      */
-    int bit_xor(lua_State* L)
+    uint32 bit_xor(uint32 a, uint32 b)
     {
-        uint32 a = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 b = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, a ^ b);
-        return 1;
+        return a ^ b;
     }
 
     /**
@@ -2272,11 +2025,9 @@ namespace LuaGlobalFunctions
      * @param uint32 a
      * @return uint32 result
      */
-    int bit_not(lua_State* L)
+    uint32 bit_not(uint32 a)
     {
-        uint32 a = ALE::CHECKVAL<uint32>(L, 1);
-        ALE::Push(L, ~a);
-        return 1;
+        return ~a;
     }
 
     /**
@@ -2301,73 +2052,38 @@ namespace LuaGlobalFunctions
      * @param uint32 pathId = 0 : path Id of the taxi path
      * @return uint32 actualPathId
      */
-    int AddTaxiPath(lua_State* L)
+    uint32 AddTaxiPath(sol::table waypoints, uint32 mountA, uint32 mountH, sol::optional<uint32> priceArg, sol::optional<uint32> pathIdArg)
     {
-        luaL_checktype(L, 1, LUA_TTABLE);
-        uint32 mountA = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 mountH = ALE::CHECKVAL<uint32>(L, 3);
-        uint32 price = ALE::CHECKVAL<uint32>(L, 4, 0);
-        uint32 pathId = ALE::CHECKVAL<uint32>(L, 5, 0);
-        lua_pushvalue(L, 1);
-        // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}
+        uint32 price = priceArg.value_or(0);
+        uint32 pathId = pathIdArg.value_or(0);
 
         std::list<TaxiPathNodeEntry> nodes;
 
-        int start = lua_gettop(L);
-        int end = start;
-
-        ALE::Push(L);
-        // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}, nil
-        while (lua_next(L, -2) != 0)
+        std::size_t nodeCount = waypoints.size();
+        for (std::size_t i = 1; i <= nodeCount; ++i)
         {
-            // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}, key, value
-            luaL_checktype(L, -1, LUA_TTABLE);
-            ALE::Push(L);
-            // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}, key, value, nil
-            while (lua_next(L, -2) != 0)
-            {
-                // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}, key, value, key2, value2
-                lua_insert(L, end++);
-                // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}, value2, key, value, key2
-            }
-            // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}, value2, key, value
-            if (start == end)
-                continue;
-            if (end - start < 4) // no mandatory args, dont add
-                return luaL_argerror(L, 1, "all waypoints do not have mandatory arguments");
+            sol::optional<sol::table> node = waypoints.get<sol::optional<sol::table>>(i);
+            if (!node)
+                throw std::invalid_argument("table expected as waypoint");
 
-            while (end - start < 8) // fill optional args with 0
-            {
-                ALE::Push(L, 0);
-                lua_insert(L, end++);
-                // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}, node, key, value
-            }
+            if (node->size() < 4) // no mandatory args, dont add
+                throw std::invalid_argument("all waypoints do not have mandatory arguments");
+
             TaxiPathNodeEntry entry;
             // mandatory
-            entry.mapid = ALE::CHECKVAL<uint32>(L, start);
-            entry.x = ALE::CHECKVAL<float>(L, start + 1);
-            entry.y = ALE::CHECKVAL<float>(L, start + 2);
-            entry.z = ALE::CHECKVAL<float>(L, start + 3);
+            entry.mapid = node->get<uint32>(1);
+            entry.x = node->get<float>(2);
+            entry.y = node->get<float>(3);
+            entry.z = node->get<float>(4);
             // optional
-            entry.actionFlag = ALE::CHECKVAL<uint32>(L, start + 4, 0);
-            entry.delay = ALE::CHECKVAL<uint32>(L, start + 5, 0);
+            entry.actionFlag = node->get_or<uint32>(5, 0);
+            entry.delay = node->get_or<uint32>(6, 0);
 
             nodes.push_back(entry);
-
-            while (end != start) // remove args
-                if (!lua_isnone(L, --end))
-                    lua_remove(L, end);
-            // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}, key, value
-
-            lua_pop(L, 1);
-            // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}, key
         }
-        // Stack: {nodes}, mountA, mountH, price, pathid, {nodes}
-        lua_pop(L, 1);
-        // Stack: {nodes}, mountA, mountH, price, pathid
 
         if (nodes.size() < 2)
-            return 1;
+            return pathId;
         if (!pathId)
             pathId = sTaxiPathNodesByPath.size();
         if (sTaxiPathNodesByPath.size() <= pathId)
@@ -2396,7 +2112,7 @@ namespace LuaGlobalFunctions
             sTaxiPathNodesByPath[pathId][index++] = new TaxiPathNodeEntry(entry);
         }
         if (startNode >= nodeId)
-            return 1;
+            return pathId;
 
         TaxiPathEntry* pathEntry = new TaxiPathEntry();
         pathEntry->from = startNode;
@@ -2406,8 +2122,7 @@ namespace LuaGlobalFunctions
         sTaxiPathStore.SetEntry(pathId, pathEntry);
         sTaxiPathSetBySource[startNode][nodeId - 1] = pathEntry;
 
-        ALE::Push(L, pathId);
-        return 1;
+        return pathId;
     }
 
     /**
@@ -2415,11 +2130,10 @@ namespace LuaGlobalFunctions
      *
      * @return bool isCompatibilityMode
      */
-    int IsCompatibilityMode(lua_State* L)
+    bool IsCompatibilityMode()
     {
         // Until AC supports multistate, this will always return true
-        ALE::Push(L, true);
-        return 1;
+        return true;
     }
 
     /**
@@ -2448,13 +2162,9 @@ namespace LuaGlobalFunctions
      * @param uint8 slot : the slot the [Item] is in within the bag, you can get this with [Item:GetSlot]
      * @return bool isInventoryPos
      */
-    int IsInventoryPos(lua_State* L)
+    bool IsInventoryPos(uint8 bag, uint8 slot)
     {
-        uint8 bag = ALE::CHECKVAL<uint8>(L, 1);
-        uint8 slot = ALE::CHECKVAL<uint8>(L, 2);
-
-        ALE::Push(L, Player::IsInventoryPos(bag, slot));
-        return 1;
+        return Player::IsInventoryPos(bag, slot);
     }
 
     /**
@@ -2466,13 +2176,9 @@ namespace LuaGlobalFunctions
      * @param uint8 slot : the slot the [Item] is in within the bag, you can get this with [Item:GetSlot]
      * @return bool isEquipmentPosition
      */
-    int IsEquipmentPos(lua_State* L)
+    bool IsEquipmentPos(uint8 bag, uint8 slot)
     {
-        uint8 bag = ALE::CHECKVAL<uint8>(L, 1);
-        uint8 slot = ALE::CHECKVAL<uint8>(L, 2);
-
-        ALE::Push(L, Player::IsEquipmentPos(bag, slot));
-        return 1;
+        return Player::IsEquipmentPos(bag, slot);
     }
 
     /**
@@ -2484,13 +2190,9 @@ namespace LuaGlobalFunctions
      * @param uint8 slot : the slot the [Item] is in within the bag, you can get this with [Item:GetSlot]
      * @return bool isBankPosition
      */
-    int IsBankPos(lua_State* L)
+    bool IsBankPos(uint8 bag, uint8 slot)
     {
-        uint8 bag = ALE::CHECKVAL<uint8>(L, 1);
-        uint8 slot = ALE::CHECKVAL<uint8>(L, 2);
-
-        ALE::Push(L, Player::IsBankPos(bag, slot));
-        return 1;
+        return Player::IsBankPos(bag, slot);
     }
 
     /**
@@ -2502,13 +2204,9 @@ namespace LuaGlobalFunctions
      * @param uint8 slot : the slot the [Item] is in within the bag, you can get this with [Item:GetSlot]
      * @return bool isBagPosition
      */
-    int IsBagPos(lua_State* L)
+    bool IsBagPos(uint8 bag, uint8 slot)
     {
-        uint8 bag = ALE::CHECKVAL<uint8>(L, 1);
-        uint8 slot = ALE::CHECKVAL<uint8>(L, 2);
-
-        ALE::Push(L, Player::IsBagPos((bag << 8) + slot));
-        return 1;
+        return Player::IsBagPos((bag << 8) + slot);
     }
 
     /**
@@ -2517,12 +2215,9 @@ namespace LuaGlobalFunctions
      * @param uint16 eventId : the event id to check.
      * @return bool isActive
      */
-    int IsGameEventActive(lua_State* L)
+    bool IsGameEventActive(uint16 eventId)
     {
-        uint16 eventId = ALE::CHECKVAL<uint16>(L, 1);
-
-        ALE::Push(L, eGameEventMgr->IsActiveEvent(eventId));
-        return 1;
+        return sGameEventMgr->IsActiveEvent(eventId);
     }
 
     /**
@@ -2530,10 +2225,9 @@ namespace LuaGlobalFunctions
      *
      * @return uint32 currTime : the current time, in milliseconds
      */
-    int GetCurrTime(lua_State* L)
+    uint32 GetCurrTime()
     {
-        ALE::Push(L, ALEUtil::GetCurrTime());
-        return 1;
+        return ALEUtil::GetCurrTime();
     }
 
     /**
@@ -2542,23 +2236,20 @@ namespace LuaGlobalFunctions
      * @param uint32 oldTime : an old timestamp, in milliseconds
      * @return uint32 timeDiff : the difference, in milliseconds
      */
-    int GetTimeDiff(lua_State* L)
+    uint32 GetTimeDiff(uint32 oldtimems)
     {
-        uint32 oldtimems = ALE::CHECKVAL<uint32>(L, 1);
-
-        ALE::Push(L, ALEUtil::GetTimeDiff(oldtimems));
-        return 1;
+        return ALEUtil::GetTimeDiff(oldtimems);
     }
 
-    static std::string GetStackAsString(lua_State* L)
+    static std::string BuildLogString(sol::variadic_args const& args)
     {
+        sol::state_view lua(args.lua_state());
+        sol::protected_function tostring = lua["tostring"];
+
         std::ostringstream oss;
-        int top = lua_gettop(L);
-        for (int i = 1; i <= top; ++i)
-        {
-            oss << luaL_tolstring(L, i, NULL);
-            lua_pop(L, 1);
-        }
+        for (sol::stack_proxy arg : args)
+            oss << tostring(arg).get<std::string>();
+
         return oss.str();
     }
 
@@ -2567,10 +2258,9 @@ namespace LuaGlobalFunctions
      *
      * @param ...
      */
-    int PrintInfo(lua_State* L)
+    void PrintInfo(sol::variadic_args args)
     {
-        ALE_LOG_INFO("{}", GetStackAsString(L));
-        return 0;
+        ALE_LOG_INFO("{}", BuildLogString(args));
     }
 
     /**
@@ -2578,10 +2268,9 @@ namespace LuaGlobalFunctions
      *
      * @param ...
      */
-    int PrintError(lua_State* L)
+    void PrintError(sol::variadic_args args)
     {
-        ALE_LOG_ERROR("{}", GetStackAsString(L));
-        return 0;
+        ALE_LOG_ERROR("{}", BuildLogString(args));
     }
 
     /**
@@ -2589,10 +2278,9 @@ namespace LuaGlobalFunctions
      *
      * @param ...
      */
-    int PrintDebug(lua_State* L)
+    void PrintDebug(sol::variadic_args args)
     {
-        ALE_LOG_DEBUG("{}", GetStackAsString(L));
-        return 0;
+        ALE_LOG_DEBUG("{}", BuildLogString(args));
     }
 
     /**
@@ -2601,13 +2289,11 @@ namespace LuaGlobalFunctions
     * @param uint16 eventId : the event id to start.
     * @param bool force = false : set `true` to force start the event.
     */
-    int StartGameEvent(lua_State* L)
+    void StartGameEvent(uint16 eventId, sol::optional<bool> forceArg)
     {
-        uint16 eventId = ALE::CHECKVAL<uint16>(L, 1);
-        bool force = ALE::CHECKVAL<bool>(L, 2, false);
+        bool force = forceArg.value_or(false);
 
-        eGameEventMgr->StartEvent(eventId, force);
-        return 0;
+        sGameEventMgr->StartEvent(eventId, force);
     }
 
     /**
@@ -2616,13 +2302,11 @@ namespace LuaGlobalFunctions
     * @param uint16 eventId : the event id to stop.
     * @param bool force = false : set `true` to force stop the event.
     */
-    int StopGameEvent(lua_State* L)
+    void StopGameEvent(uint16 eventId, sol::optional<bool> forceArg)
     {
-        uint16 eventId = ALE::CHECKVAL<uint16>(L, 1);
-        bool force = ALE::CHECKVAL<bool>(L, 2, false);
+        bool force = forceArg.value_or(false);
 
-        eGameEventMgr->StopEvent(eventId, force);
-        return 0;
+        sGameEventMgr->StopEvent(eventId, force);
     }
 
     /**
@@ -2657,56 +2341,42 @@ namespace LuaGlobalFunctions
      * @param string contentType : the body's content-type
      * @param function function : function that will be called when the request is executed
      */
-    int HttpRequest(lua_State* L)
+    void HttpRequest(std::string httpVerb, std::string url, sol::object arg3,
+        sol::optional<sol::object> arg4, sol::optional<sol::object> arg5, sol::optional<sol::object> arg6)
     {
-        std::string httpVerb = ALE::CHECKVAL<std::string>(L, 1);
-        std::string url = ALE::CHECKVAL<std::string>(L, 2);
         std::string body;
         std::string bodyContentType;
         httplib::Headers headers;
 
-        int headersIdx = 3;
-        int callbackIdx = 3;
+        sol::object headersOrCallback = arg3;
+        sol::object callbackAfterHeaders = arg4.value_or(sol::object());
 
-        if (!lua_istable(L, headersIdx) && lua_isstring(L, headersIdx) && lua_isstring(L, headersIdx + 1))
+        if (arg3.get_type() == sol::type::string && arg4 && arg4->get_type() == sol::type::string)
         {
-            body = ALE::CHECKVAL<std::string>(L, 3);
-            bodyContentType = ALE::CHECKVAL<std::string>(L, 4);
-            headersIdx = 5;
-            callbackIdx = 5;
+            body = arg3.as<std::string>();
+            bodyContentType = arg4->as<std::string>();
+            headersOrCallback = arg5.value_or(sol::object());
+            callbackAfterHeaders = arg6.value_or(sol::object());
         }
 
-        if (lua_istable(L, headersIdx))
+        sol::object callbackObject = headersOrCallback;
+        if (headersOrCallback.get_type() == sol::type::table)
         {
-            ++callbackIdx;
-
-            lua_pushnil(L); // First key
-            while (lua_next(L, headersIdx) != 0)
+            sol::table headerTable = headersOrCallback.as<sol::table>();
+            for (auto const& pair : headerTable)
             {
-                // Uses 'key' (at index -2) and 'value' (at index -1)
-                if (lua_isstring(L, -2))
-                {
-                    std::string key(lua_tostring(L, -2));
-                    std::string value(lua_tostring(L, -1));
-                    headers.insert(std::pair<std::string, std::string>(key, value));
-                }
-                // Removes 'value'; keeps 'key' for next iteration
-                lua_pop(L, 1);
+                if (pair.first.get_type() == sol::type::string
+                    && (pair.second.get_type() == sol::type::string || pair.second.get_type() == sol::type::number))
+                    headers.insert(std::pair<std::string, std::string>(pair.first.as<std::string>(), pair.second.as<std::string>()));
             }
+
+            callbackObject = callbackAfterHeaders;
         }
 
-        lua_pushvalue(L, callbackIdx);
-        int funcRef = luaL_ref(L, LUA_REGISTRYINDEX);
-        if (funcRef >= 0)
-        {
-            ALE::GALE->httpManager.PushRequest(new HttpWorkItem(funcRef, httpVerb, url, body, bodyContentType, headers));
-        }
-        else
-        {
-            luaL_argerror(L, callbackIdx, "unable to make a ref to function");
-        }
+        if (callbackObject.get_type() != sol::type::function)
+            throw std::invalid_argument("function expected for the HTTP request callback");
 
-        return 0;
+        sALE->httpManager.PushRequest(new HttpWorkItem(callbackObject.as<sol::protected_function>(), httpVerb, url, body, bodyContentType, headers));
     }
 
     /**
@@ -2723,22 +2393,21 @@ namespace LuaGlobalFunctions
      * @param string n_str
      * @return int64 value
      */
-    int CreateLongLong(lua_State* L)
+    int64 CreateLongLong(sol::optional<sol::object> value)
     {
         long long init = 0;
-        if (lua_isstring(L, 1))
+        if (value && value->get_type() == sol::type::string)
         {
-            std::string str = ALE::CHECKVAL<std::string>(L, 1);
+            std::string str = value->as<std::string>();
             std::istringstream iss(str);
             iss >> init;
             if (iss.bad())
-                return luaL_argerror(L, 1, "long long (as string) could not be converted");
+                throw std::invalid_argument("long long (as string) could not be converted");
         }
-        else if (!lua_isnoneornil(L, 1))
-            init = ALE::CHECKVAL<long long>(L, 1);
+        else if (value && value->get_type() != sol::type::lua_nil)
+            init = value->as<long long>();
 
-        ALE::Push(L, init);
-        return 1;
+        return init;
     }
 
     /**
@@ -2755,22 +2424,21 @@ namespace LuaGlobalFunctions
      * @param string n_str
      * @return uint64 value
      */
-    int CreateULongLong(lua_State* L)
+    uint64 CreateULongLong(sol::optional<sol::object> value)
     {
         unsigned long long init = 0;
-        if (lua_isstring(L, 1))
+        if (value && value->get_type() == sol::type::string)
         {
-            std::string str = ALE::CHECKVAL<std::string>(L, 1);
+            std::string str = value->as<std::string>();
             std::istringstream iss(str);
             iss >> init;
             if (iss.bad())
-                return luaL_argerror(L, 1, "unsigned long long (as string) could not be converted");
+                throw std::invalid_argument("unsigned long long (as string) could not be converted");
         }
-        else if (!lua_isnoneornil(L, 1))
-            init = ALE::CHECKVAL<unsigned long long>(L, 1);
+        else if (value && value->get_type() != sol::type::lua_nil)
+            init = value->as<unsigned long long>();
 
-        ALE::Push(L, init);
-        return 1;
+        return init;
     }
 
     /**
@@ -2784,20 +2452,19 @@ namespace LuaGlobalFunctions
      * @proto (event_type)
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterBGEvent]
      */
-    int ClearBattleGroundEvents(lua_State* L)
+    void ClearBattleGroundEvents(sol::optional<uint32> eventTypeArg)
     {
         typedef EventKey<Hooks::BGEvents> Key;
 
-        if (lua_isnoneornil(L, 1))
+        if (!eventTypeArg)
         {
-            ALE::GetALE(L)->BGEventBindings->Clear();
+            sALE->BGEventBindings->Clear();
         }
         else
         {
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 1);
-            ALE::GetALE(L)->BGEventBindings->Clear(Key((Hooks::BGEvents)event_type));
+            uint32 event_type = *eventTypeArg;
+            sALE->BGEventBindings->Clear(Key((Hooks::BGEvents)event_type));
         }
-        return 0;
     }
 
     /**
@@ -2815,25 +2482,20 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : the ID of one or more [Creature]s whose handlers will be cleared
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterCreatureEvent]
      */
-    int ClearCreatureEvents(lua_State* L)
+    void ClearCreatureEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::CreatureEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::CREATURE_EVENT_COUNT; ++i)
-                E->CreatureEventBindings->Clear(Key((Hooks::CreatureEvents)i, entry));
+                sALE->CreatureEventBindings->Clear(Key((Hooks::CreatureEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->CreatureEventBindings->Clear(Key((Hooks::CreatureEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->CreatureEventBindings->Clear(Key((Hooks::CreatureEvents)event_type, entry));
         }
-        return 0;
     }
 
     /**
@@ -2852,27 +2514,20 @@ namespace LuaGlobalFunctions
      * @param uint32 instance_id : the instance ID of a single [Creature] whose handlers will be cleared
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterCreatureEvent]
      */
-    int ClearUniqueCreatureEvents(lua_State* L)
+    void ClearUniqueCreatureEvents(ObjectGuid guid, uint32 instanceId, sol::optional<uint32> eventTypeArg)
     {
         typedef UniqueObjectKey<Hooks::CreatureEvents> Key;
 
-        if (lua_isnoneornil(L, 3))
+        if (!eventTypeArg)
         {
-            ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 1);
-            uint32 instanceId = ALE::CHECKVAL<uint32>(L, 2);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::CREATURE_EVENT_COUNT; ++i)
-                E->CreatureUniqueBindings->Clear(Key((Hooks::CreatureEvents)i, guid, instanceId));
+                sALE->CreatureUniqueBindings->Clear(Key((Hooks::CreatureEvents)i, guid, instanceId));
         }
         else
         {
-            ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 1);
-            uint32 instanceId = ALE::CHECKVAL<uint32>(L, 2);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 3);
-            ALE::GetALE(L)->CreatureUniqueBindings->Clear(Key((Hooks::CreatureEvents)event_type, guid, instanceId));
+            uint32 event_type = *eventTypeArg;
+            sALE->CreatureUniqueBindings->Clear(Key((Hooks::CreatureEvents)event_type, guid, instanceId));
         }
-        return 0;
     }
 
     /**
@@ -2890,25 +2545,20 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : the ID of a [Creature] whose handlers will be cleared
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterCreatureGossipEvent]
      */
-    int ClearCreatureGossipEvents(lua_State* L)
+    void ClearCreatureGossipEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::GossipEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::GOSSIP_EVENT_COUNT; ++i)
-                E->CreatureGossipBindings->Clear(Key((Hooks::GossipEvents)i, entry));
+                sALE->CreatureGossipBindings->Clear(Key((Hooks::GossipEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->CreatureGossipBindings->Clear(Key((Hooks::GossipEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->CreatureGossipBindings->Clear(Key((Hooks::GossipEvents)event_type, entry));
         }
-        return 0;
     }
 
     /**
@@ -2926,25 +2576,20 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : the ID of a [GameObject] whose handlers will be cleared
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterGameObjectEvent]
      */
-    int ClearGameObjectEvents(lua_State* L)
+    void ClearGameObjectEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::GameObjectEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::GAMEOBJECT_EVENT_COUNT; ++i)
-                E->GameObjectEventBindings->Clear(Key((Hooks::GameObjectEvents)i, entry));
+                sALE->GameObjectEventBindings->Clear(Key((Hooks::GameObjectEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->GameObjectEventBindings->Clear(Key((Hooks::GameObjectEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->GameObjectEventBindings->Clear(Key((Hooks::GameObjectEvents)event_type, entry));
         }
-        return 0;
     }
 
     /**
@@ -2962,25 +2607,20 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : the ID of a [GameObject] whose handlers will be cleared
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterGameObjectGossipEvent]
      */
-    int ClearGameObjectGossipEvents(lua_State* L)
+    void ClearGameObjectGossipEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::GossipEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::GOSSIP_EVENT_COUNT; ++i)
-                E->GameObjectGossipBindings->Clear(Key((Hooks::GossipEvents)i, entry));
+                sALE->GameObjectGossipBindings->Clear(Key((Hooks::GossipEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->GameObjectGossipBindings->Clear(Key((Hooks::GossipEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->GameObjectGossipBindings->Clear(Key((Hooks::GossipEvents)event_type, entry));
         }
-        return 0;
     }
 
     /**
@@ -2994,20 +2634,19 @@ namespace LuaGlobalFunctions
      * @proto (event_type)
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterGroupEvent]
      */
-    int ClearGroupEvents(lua_State* L)
+    void ClearGroupEvents(sol::optional<uint32> eventTypeArg)
     {
         typedef EventKey<Hooks::GroupEvents> Key;
 
-        if (lua_isnoneornil(L, 1))
+        if (!eventTypeArg)
         {
-            ALE::GetALE(L)->GroupEventBindings->Clear();
+            sALE->GroupEventBindings->Clear();
         }
         else
         {
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 1);
-            ALE::GetALE(L)->GroupEventBindings->Clear(Key((Hooks::GroupEvents)event_type));
+            uint32 event_type = *eventTypeArg;
+            sALE->GroupEventBindings->Clear(Key((Hooks::GroupEvents)event_type));
         }
-        return 0;
     }
 
     /**
@@ -3021,20 +2660,19 @@ namespace LuaGlobalFunctions
      * @proto (event_type)
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterGuildEvent]
      */
-    int ClearGuildEvents(lua_State* L)
+    void ClearGuildEvents(sol::optional<uint32> eventTypeArg)
     {
         typedef EventKey<Hooks::GuildEvents> Key;
 
-        if (lua_isnoneornil(L, 1))
+        if (!eventTypeArg)
         {
-            ALE::GetALE(L)->GuildEventBindings->Clear();
+            sALE->GuildEventBindings->Clear();
         }
         else
         {
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 1);
-            ALE::GetALE(L)->GuildEventBindings->Clear(Key((Hooks::GuildEvents)event_type));
+            uint32 event_type = *eventTypeArg;
+            sALE->GuildEventBindings->Clear(Key((Hooks::GuildEvents)event_type));
         }
-        return 0;
     }
 
     /**
@@ -3052,25 +2690,20 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : the ID of an [Item] whose handlers will be cleared
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterItemEvent]
      */
-    int ClearItemEvents(lua_State* L)
+    void ClearItemEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::ItemEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::ITEM_EVENT_COUNT; ++i)
-                E->ItemEventBindings->Clear(Key((Hooks::ItemEvents)i, entry));
+                sALE->ItemEventBindings->Clear(Key((Hooks::ItemEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->ItemEventBindings->Clear(Key((Hooks::ItemEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->ItemEventBindings->Clear(Key((Hooks::ItemEvents)event_type, entry));
         }
-        return 0;
     }
 
     /**
@@ -3088,25 +2721,20 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : the ID of an [Item] whose handlers will be cleared
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterItemGossipEvent]
      */
-    int ClearItemGossipEvents(lua_State* L)
+    void ClearItemGossipEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::GossipEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::GOSSIP_EVENT_COUNT; ++i)
-                E->ItemGossipBindings->Clear(Key((Hooks::GossipEvents)i, entry));
+                sALE->ItemGossipBindings->Clear(Key((Hooks::GossipEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->ItemGossipBindings->Clear(Key((Hooks::GossipEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->ItemGossipBindings->Clear(Key((Hooks::GossipEvents)event_type, entry));
         }
-        return 0;
     }
 
     /**
@@ -3121,25 +2749,20 @@ namespace LuaGlobalFunctions
      * @param uint32 opcode : the type of [WorldPacket] whose handlers will be cleared
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterPacketEvent]
      */
-    int ClearPacketEvents(lua_State* L)
+    void ClearPacketEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::PacketEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::PACKET_EVENT_COUNT; ++i)
-                E->PacketEventBindings->Clear(Key((Hooks::PacketEvents)i, entry));
+                sALE->PacketEventBindings->Clear(Key((Hooks::PacketEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->PacketEventBindings->Clear(Key((Hooks::PacketEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->PacketEventBindings->Clear(Key((Hooks::PacketEvents)event_type, entry));
         }
-        return 0;
     }
 
     /**
@@ -3153,20 +2776,19 @@ namespace LuaGlobalFunctions
      * @proto (event_type)
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterPlayerEvent]
      */
-    int ClearPlayerEvents(lua_State* L)
+    void ClearPlayerEvents(sol::optional<uint32> eventTypeArg)
     {
         typedef EventKey<Hooks::PlayerEvents> Key;
 
-        if (lua_isnoneornil(L, 1))
+        if (!eventTypeArg)
         {
-            ALE::GetALE(L)->PlayerEventBindings->Clear();
+            sALE->PlayerEventBindings->Clear();
         }
         else
         {
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 1);
-            ALE::GetALE(L)->PlayerEventBindings->Clear(Key((Hooks::PlayerEvents)event_type));
+            uint32 event_type = *eventTypeArg;
+            sALE->PlayerEventBindings->Clear(Key((Hooks::PlayerEvents)event_type));
         }
-        return 0;
     }
 
     /**
@@ -3181,25 +2803,20 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : the low GUID of a [Player] whose handlers will be cleared
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterPlayerGossipEvent]
      */
-    int ClearPlayerGossipEvents(lua_State* L)
+    void ClearPlayerGossipEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::GossipEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::GOSSIP_EVENT_COUNT; ++i)
-                E->PlayerGossipBindings->Clear(Key((Hooks::GossipEvents)i, entry));
+                sALE->PlayerGossipBindings->Clear(Key((Hooks::GossipEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->PlayerGossipBindings->Clear(Key((Hooks::GossipEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->PlayerGossipBindings->Clear(Key((Hooks::GossipEvents)event_type, entry));
         }
-        return 0;
     }
 
     /**
@@ -3213,20 +2830,19 @@ namespace LuaGlobalFunctions
      * @proto (event_type)
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterServerEvent]
      */
-    int ClearServerEvents(lua_State* L)
+    void ClearServerEvents(sol::optional<uint32> eventTypeArg)
     {
         typedef EventKey<Hooks::ServerEvents> Key;
 
-        if (lua_isnoneornil(L, 1))
+        if (!eventTypeArg)
         {
-            ALE::GetALE(L)->ServerEventBindings->Clear();
+            sALE->ServerEventBindings->Clear();
         }
         else
         {
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 1);
-            ALE::GetALE(L)->ServerEventBindings->Clear(Key((Hooks::ServerEvents)event_type));
+            uint32 event_type = *eventTypeArg;
+            sALE->ServerEventBindings->Clear(Key((Hooks::ServerEvents)event_type));
         }
-        return 0;
     }
 
     /**
@@ -3241,26 +2857,20 @@ namespace LuaGlobalFunctions
      * @param uint32 map_id : the ID of a [Map]
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterPlayerGossipEvent]
      */
-    int ClearMapEvents(lua_State* L)
+    void ClearMapEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::InstanceEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::INSTANCE_EVENT_COUNT; ++i)
-                E->MapEventBindings->Clear(Key((Hooks::InstanceEvents)i, entry));
+                sALE->MapEventBindings->Clear(Key((Hooks::InstanceEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->MapEventBindings->Clear(Key((Hooks::InstanceEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->MapEventBindings->Clear(Key((Hooks::InstanceEvents)event_type, entry));
         }
-
-        return 0;
     }
 
     /**
@@ -3275,26 +2885,20 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : the ID of an instance of a [Map]
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterInstanceEvent]
      */
-    int ClearInstanceEvents(lua_State* L)
+    void ClearInstanceEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::InstanceEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::INSTANCE_EVENT_COUNT; ++i)
-                E->InstanceEventBindings->Clear(Key((Hooks::InstanceEvents)i, entry));
+                sALE->InstanceEventBindings->Clear(Key((Hooks::InstanceEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->InstanceEventBindings->Clear(Key((Hooks::InstanceEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->InstanceEventBindings->Clear(Key((Hooks::InstanceEvents)event_type, entry));
         }
-
-        return 0;
     }
 
     /**
@@ -3308,20 +2912,19 @@ namespace LuaGlobalFunctions
      * @proto (event_type)
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterTicketEvent]
      */
-    int ClearTicketEvents(lua_State* L)
+    void ClearTicketEvents(sol::optional<uint32> eventTypeArg)
     {
         typedef EventKey<Hooks::TicketEvents> Key;
 
-        if (lua_isnoneornil(L, 1))
+        if (!eventTypeArg)
         {
-            ALE::GetALE(L)->TicketEventBindings->Clear();
+            sALE->TicketEventBindings->Clear();
         }
         else
         {
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 1);
-            ALE::GetALE(L)->TicketEventBindings->Clear(Key((Hooks::TicketEvents)event_type));
+            uint32 event_type = *eventTypeArg;
+            sALE->TicketEventBindings->Clear(Key((Hooks::TicketEvents)event_type));
         }
-        return 0;
     }
 
     /**
@@ -3337,25 +2940,20 @@ namespace LuaGlobalFunctions
      * @param uint32 entry : the ID of a [Spell]s
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterSpellEvent]
      */
-    int ClearSpellEvents(lua_State* L)
+    void ClearSpellEvents(uint32 entry, sol::optional<uint32> eventTypeArg)
     {
         typedef EntryKey<Hooks::SpellEvents> Key;
 
-        if (lua_isnoneornil(L, 2))
+        if (!eventTypeArg)
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-
-            ALE* E = ALE::GetALE(L);
             for (uint32 i = 1; i < Hooks::SPELL_EVENT_COUNT; ++i)
-                E->SpellEventBindings->Clear(Key((Hooks::SpellEvents)i, entry));
+                sALE->SpellEventBindings->Clear(Key((Hooks::SpellEvents)i, entry));
         }
         else
         {
-            uint32 entry = ALE::CHECKVAL<uint32>(L, 1);
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 2);
-            ALE::GetALE(L)->SpellEventBindings->Clear(Key((Hooks::SpellEvents)event_type, entry));
+            uint32 event_type = *eventTypeArg;
+            sALE->SpellEventBindings->Clear(Key((Hooks::SpellEvents)event_type, entry));
         }
-        return 0;
     }
 
     /**
@@ -3369,20 +2967,19 @@ namespace LuaGlobalFunctions
      * @proto (event_type)
      * @param uint32 event_type : the event whose handlers will be cleared, see [Global:RegisterAllCreatureEvent]
      */
-    int ClearAllCreatureEvents(lua_State* L)
+    void ClearAllCreatureEvents(sol::optional<uint32> eventTypeArg)
     {
         typedef EventKey<Hooks::AllCreatureEvents> Key;
 
-        if (lua_isnoneornil(L, 1))
+        if (!eventTypeArg)
         {
-            ALE::GetALE(L)->AllCreatureEventBindings->Clear();
+            sALE->AllCreatureEventBindings->Clear();
         }
         else
         {
-            uint32 event_type = ALE::CHECKVAL<uint32>(L, 1);
-            ALE::GetALE(L)->AllCreatureEventBindings->Clear(Key((Hooks::AllCreatureEvents)event_type));
+            uint32 event_type = *eventTypeArg;
+            sALE->AllCreatureEventBindings->Clear(Key((Hooks::AllCreatureEvents)event_type));
         }
-        return 0;
     }
 
     /**
@@ -3396,14 +2993,12 @@ namespace LuaGlobalFunctions
      * @return int16 the ID of the team to own Halaa
      * @return float the slider position.
      */
-    int GetOwnerHalaa(lua_State* L)
+    std::tuple<TeamId, float> GetOwnerHalaa()
     {
         OutdoorPvPNA* nagrandPvp = (OutdoorPvPNA*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(3518);
         OPvPCapturePointNA* halaa = nagrandPvp->GetCapturePoint();
-        ALE::Push(L, halaa->GetControllingFaction());
-        ALE::Push(L, halaa->GetSlider());
 
-        return 2;
+        return std::tuple<TeamId, float>(halaa->GetControllingFaction(), halaa->GetSlider());
     }
 
     /**
@@ -3413,10 +3008,8 @@ namespace LuaGlobalFunctions
      *
      * @param uint16 teamId : the ID of the team to own Halaa
      */
-    int SetOwnerHalaa(lua_State* L)
+    void SetOwnerHalaa(uint16 teamId)
     {
-        uint16 teamId = ALE::CHECKVAL<uint16>(L, 1);
-
         OutdoorPvPNA* nagrandPvp = (OutdoorPvPNA*)sOutdoorPvPMgr->GetOutdoorPvPToZoneId(3518);
         OPvPCapturePointNA* halaa = nagrandPvp->GetCapturePoint();
 
@@ -3430,10 +3023,8 @@ namespace LuaGlobalFunctions
         }
         else
         {
-            return luaL_argerror(L, 1, "0 for Alliance or 1 for Horde expected");
+            throw std::invalid_argument("0 for Alliance or 1 for Horde expected");
         }
-
-        return 0;
     }
 
     /**
@@ -3446,12 +3037,8 @@ namespace LuaGlobalFunctions
      *
      * @return string, string : The localized OptionText and BoxText for the gossip menu option, or the default text if no localization is found.
      */
-    int GetGossipMenuOptionLocale(lua_State* L)
+    std::tuple<std::string, std::string> GetGossipMenuOptionLocale(uint32 menuId, uint32 optionId, uint8 locale)
     {
-        uint32 menuId = ALE::CHECKVAL<uint32>(L, 1);
-        uint32 optionId = ALE::CHECKVAL<uint32>(L, 2);
-        uint8 locale = ALE::CHECKVAL<uint8>(L, 3);
-
         std::string strOptionText;
         std::string strBoxText;
 
@@ -3480,9 +3067,7 @@ namespace LuaGlobalFunctions
             }
         }
 
-        ALE::Push(L, strOptionText);
-        ALE::Push(L, strBoxText);
-        return 2;
+        return std::tuple<std::string, std::string>(strOptionText, strBoxText);
     }
 
     /**
@@ -3495,39 +3080,27 @@ namespace LuaGlobalFunctions
      * @return uint32 pos_z
      * @return uint32 pos_o
      */
-    int GetMapEntrance(lua_State* L)
+    sol::optional<std::tuple<float, float, float, float>> GetMapEntrance(uint32 mapId)
     {
-        uint32 mapId = ALE::CHECKVAL<uint32>(L, 1);
         AreaTriggerTeleport const* at = sObjectMgr->GetMapEntranceTrigger(mapId);
 
         if (!at)
-        {
-            lua_pushnil(L);
-            return 1;
-        }
+            return sol::nullopt;
 
-        ALE::Push(L, at->target_X);
-        ALE::Push(L, at->target_Y);
-        ALE::Push(L, at->target_Z);
-        ALE::Push(L, at->target_Orientation);
-
-        return 5;
+        return std::tuple<float, float, float, float>(at->target_X, at->target_Y, at->target_Z, at->target_Orientation);
     }
-      
-    /**  
+
+    /**
      * Get the [SpellInfo] for the specified [Spell] id
      *
      * @param uint32 spellId : the ID of the spell
      * @return [SpellInfo] spellInfo
      */
-    int GetSpellInfo(lua_State* L)
+    SpellInfo* GetSpellInfo(uint32 spellId)
     {
-        uint32 spellId = ALE::CHECKVAL<uint32>(L, 1);
-        ALE::Push(L, sSpellMgr->GetSpellInfo(spellId));
-        return 1;
-
+        return const_cast<SpellInfo*>(sSpellMgr->GetSpellInfo(spellId));
     }
-  
+
     /**
      * Returns an entry from the specified DBC (DatabaseClient) store.
      *
@@ -3538,10 +3111,9 @@ namespace LuaGlobalFunctions
      *
      * @return [DBCStore] store : The requested DBC store instance
      */
-    int LookupEntry(lua_State* L)
+    sol::object LookupEntry(std::string dbcName, uint32 id, sol::this_state s)
     {
-        const char* dbcName = ALE::CHECKVAL<const char*>(L, 1);
-        uint32 id = ALE::CHECKVAL<uint32>(L, 2);
+        sol::state_view lua(s);
 
         for (const auto& dbc : dbcRegistry)
         {
@@ -3549,14 +3121,137 @@ namespace LuaGlobalFunctions
             {
                 const void* entry = dbc.lookupFunction(id);
                 if (!entry)
-                    return 0;
+                    return sol::make_object(lua, sol::lua_nil);
 
-                dbc.pushFunction(L, entry);
-                return 1;
+                return dbc.makeObject(lua, entry);
             }
         }
 
-        return luaL_error(L, "Invalid DBC name: %s", dbcName);
+        throw std::runtime_error(Acore::StringFormat("Invalid DBC name: {}", dbcName));
     }
 }
-#endif
+
+void RegisterGlobalMethods(sol::state& lua)
+{
+    lua["GetLuaEngine"]                 = ALEBind::Function(&LuaGlobalFunctions::GetLuaEngine);
+    lua["GetCoreName"]                  = ALEBind::Function(&LuaGlobalFunctions::GetCoreName);
+    lua["GetConfigValue"]               = ALEBind::Function(&LuaGlobalFunctions::GetConfigValue);
+    lua["GetRealmID"]                   = ALEBind::Function(&LuaGlobalFunctions::GetRealmID);
+    lua["GetCoreVersion"]               = ALEBind::Function(&LuaGlobalFunctions::GetCoreVersion);
+    lua["GetCoreExpansion"]             = ALEBind::Function(&LuaGlobalFunctions::GetCoreExpansion);
+    lua["GetStateMap"]                  = ALEBind::Function(&LuaGlobalFunctions::GetStateMap);
+    lua["GetStateMapId"]                = ALEBind::Function(&LuaGlobalFunctions::GetStateMapId);
+    lua["GetStateInstanceId"]           = ALEBind::Function(&LuaGlobalFunctions::GetStateInstanceId);
+    lua["GetQuest"]                     = ALEBind::Function(&LuaGlobalFunctions::GetQuest);
+    lua["GetPlayerByGUID"]              = ALEBind::Function(&LuaGlobalFunctions::GetPlayerByGUID);
+    lua["GetPlayerByName"]              = ALEBind::Function(&LuaGlobalFunctions::GetPlayerByName);
+    lua["GetGameTime"]                  = ALEBind::Function(&LuaGlobalFunctions::GetGameTime);
+    lua["GetPlayersInWorld"]            = ALEBind::Function(&LuaGlobalFunctions::GetPlayersInWorld);
+    lua["GetGuildByName"]               = ALEBind::Function(&LuaGlobalFunctions::GetGuildByName);
+    lua["GetMapById"]                   = ALEBind::Function(&LuaGlobalFunctions::GetMapById);
+    lua["GetGuildByLeaderGUID"]         = ALEBind::Function(&LuaGlobalFunctions::GetGuildByLeaderGUID);
+    lua["GetPlayerCount"]               = ALEBind::Function(&LuaGlobalFunctions::GetPlayerCount);
+    lua["GetPlayerGUID"]                = ALEBind::Function(&LuaGlobalFunctions::GetPlayerGUID);
+    lua["GetItemGUID"]                  = ALEBind::Function(&LuaGlobalFunctions::GetItemGUID);
+    lua["GetItemTemplate"]              = ALEBind::Function(&LuaGlobalFunctions::GetItemTemplate);
+    lua["GetObjectGUID"]                = ALEBind::Function(&LuaGlobalFunctions::GetObjectGUID);
+    lua["GetUnitGUID"]                  = ALEBind::Function(&LuaGlobalFunctions::GetUnitGUID);
+    lua["GetGUIDLow"]                   = ALEBind::Function(&LuaGlobalFunctions::GetGUIDLow);
+    lua["GetItemLink"]                  = ALEBind::Function(&LuaGlobalFunctions::GetItemLink);
+    lua["GetGUIDType"]                  = ALEBind::Function(&LuaGlobalFunctions::GetGUIDType);
+    lua["GetGUIDEntry"]                 = ALEBind::Function(&LuaGlobalFunctions::GetGUIDEntry);
+    lua["GetPackedGUIDSize"]            = ALEBind::Function(&LuaGlobalFunctions::GetPackedGUIDSize);
+    lua["GetAreaName"]                  = ALEBind::Function(&LuaGlobalFunctions::GetAreaName);
+    lua["GetActiveGameEvents"]          = ALEBind::Function(&LuaGlobalFunctions::GetActiveGameEvents);
+    lua["RegisterServerEvent"]          = ALEBind::Function(&LuaGlobalFunctions::RegisterServerEvent);
+    lua["RegisterPlayerEvent"]          = ALEBind::Function(&LuaGlobalFunctions::RegisterPlayerEvent);
+    lua["RegisterGuildEvent"]           = ALEBind::Function(&LuaGlobalFunctions::RegisterGuildEvent);
+    lua["RegisterGroupEvent"]           = ALEBind::Function(&LuaGlobalFunctions::RegisterGroupEvent);
+    lua["RegisterBGEvent"]              = ALEBind::Function(&LuaGlobalFunctions::RegisterBGEvent);
+    lua["RegisterPacketEvent"]          = ALEBind::Function(&LuaGlobalFunctions::RegisterPacketEvent);
+    lua["RegisterCreatureGossipEvent"]  = ALEBind::Function(&LuaGlobalFunctions::RegisterCreatureGossipEvent);
+    lua["RegisterGameObjectGossipEvent"] = ALEBind::Function(&LuaGlobalFunctions::RegisterGameObjectGossipEvent);
+    lua["RegisterItemEvent"]            = ALEBind::Function(&LuaGlobalFunctions::RegisterItemEvent);
+    lua["RegisterItemGossipEvent"]      = ALEBind::Function(&LuaGlobalFunctions::RegisterItemGossipEvent);
+    lua["RegisterMapEvent"]             = ALEBind::Function(&LuaGlobalFunctions::RegisterMapEvent);
+    lua["RegisterInstanceEvent"]        = ALEBind::Function(&LuaGlobalFunctions::RegisterInstanceEvent);
+    lua["RegisterPlayerGossipEvent"]    = ALEBind::Function(&LuaGlobalFunctions::RegisterPlayerGossipEvent);
+    lua["RegisterCreatureEvent"]        = ALEBind::Function(&LuaGlobalFunctions::RegisterCreatureEvent);
+    lua["RegisterUniqueCreatureEvent"]  = ALEBind::Function(&LuaGlobalFunctions::RegisterUniqueCreatureEvent);
+    lua["RegisterGameObjectEvent"]      = ALEBind::Function(&LuaGlobalFunctions::RegisterGameObjectEvent);
+    lua["RegisterTicketEvent"]          = ALEBind::Function(&LuaGlobalFunctions::RegisterTicketEvent);
+    lua["RegisterSpellEvent"]           = ALEBind::Function(&LuaGlobalFunctions::RegisterSpellEvent);
+    lua["RegisterAllCreatureEvent"]     = ALEBind::Function(&LuaGlobalFunctions::RegisterAllCreatureEvent);
+    lua["ReloadALE"]                    = ALEBind::Function(&LuaGlobalFunctions::ReloadALE);
+    lua["RunCommand"]                   = ALEBind::Function(&LuaGlobalFunctions::RunCommand);
+    lua["SendWorldMessage"]             = ALEBind::Function(&LuaGlobalFunctions::SendWorldMessage);
+    lua["WorldDBQuery"]                 = ALEBind::Function(&LuaGlobalFunctions::WorldDBQuery);
+    lua["WorldDBQueryAsync"]            = ALEBind::Function(&LuaGlobalFunctions::WorldDBQueryAsync);
+    lua["WorldDBExecute"]               = ALEBind::Function(&LuaGlobalFunctions::WorldDBExecute);
+    lua["CharDBQuery"]                  = ALEBind::Function(&LuaGlobalFunctions::CharDBQuery);
+    lua["CharDBQueryAsync"]             = ALEBind::Function(&LuaGlobalFunctions::CharDBQueryAsync);
+    lua["CharDBExecute"]                = ALEBind::Function(&LuaGlobalFunctions::CharDBExecute);
+    lua["AuthDBQuery"]                  = ALEBind::Function(&LuaGlobalFunctions::AuthDBQuery);
+    lua["AuthDBQueryAsync"]             = ALEBind::Function(&LuaGlobalFunctions::AuthDBQueryAsync);
+    lua["AuthDBExecute"]                = ALEBind::Function(&LuaGlobalFunctions::AuthDBExecute);
+    lua["CreateLuaEvent"]               = ALEBind::Function(&LuaGlobalFunctions::CreateLuaEvent);
+    lua["RemoveEventById"]              = ALEBind::Function(&LuaGlobalFunctions::RemoveEventById);
+    lua["RemoveEvents"]                 = ALEBind::Function(&LuaGlobalFunctions::RemoveEvents);
+    lua["PerformIngameSpawn"]           = ALEBind::Function(&LuaGlobalFunctions::PerformIngameSpawn);
+    lua["CreatePacket"]                 = ALEBind::Function(&LuaGlobalFunctions::CreatePacket);
+    lua["AddVendorItem"]                = ALEBind::Function(&LuaGlobalFunctions::AddVendorItem);
+    lua["VendorRemoveItem"]             = ALEBind::Function(&LuaGlobalFunctions::VendorRemoveItem);
+    lua["VendorRemoveAllItems"]         = ALEBind::Function(&LuaGlobalFunctions::VendorRemoveAllItems);
+    lua["Kick"]                         = ALEBind::Function(&LuaGlobalFunctions::Kick);
+    lua["Ban"]                          = ALEBind::Function(&LuaGlobalFunctions::Ban);
+    lua["SaveAllPlayers"]               = ALEBind::Function(&LuaGlobalFunctions::SaveAllPlayers);
+    lua["SendMail"]                     = ALEBind::Function(&LuaGlobalFunctions::SendMail);
+    lua["bit_and"]                      = ALEBind::Function(&LuaGlobalFunctions::bit_and);
+    lua["bit_or"]                       = ALEBind::Function(&LuaGlobalFunctions::bit_or);
+    lua["bit_lshift"]                   = ALEBind::Function(&LuaGlobalFunctions::bit_lshift);
+    lua["bit_rshift"]                   = ALEBind::Function(&LuaGlobalFunctions::bit_rshift);
+    lua["bit_xor"]                      = ALEBind::Function(&LuaGlobalFunctions::bit_xor);
+    lua["bit_not"]                      = ALEBind::Function(&LuaGlobalFunctions::bit_not);
+    lua["AddTaxiPath"]                  = ALEBind::Function(&LuaGlobalFunctions::AddTaxiPath);
+    lua["IsCompatibilityMode"]          = ALEBind::Function(&LuaGlobalFunctions::IsCompatibilityMode);
+    lua["IsInventoryPos"]               = ALEBind::Function(&LuaGlobalFunctions::IsInventoryPos);
+    lua["IsEquipmentPos"]               = ALEBind::Function(&LuaGlobalFunctions::IsEquipmentPos);
+    lua["IsBankPos"]                    = ALEBind::Function(&LuaGlobalFunctions::IsBankPos);
+    lua["IsBagPos"]                     = ALEBind::Function(&LuaGlobalFunctions::IsBagPos);
+    lua["IsGameEventActive"]            = ALEBind::Function(&LuaGlobalFunctions::IsGameEventActive);
+    lua["GetCurrTime"]                  = ALEBind::Function(&LuaGlobalFunctions::GetCurrTime);
+    lua["GetTimeDiff"]                  = ALEBind::Function(&LuaGlobalFunctions::GetTimeDiff);
+    lua["PrintInfo"]                    = ALEBind::Function(&LuaGlobalFunctions::PrintInfo);
+    lua["PrintError"]                   = ALEBind::Function(&LuaGlobalFunctions::PrintError);
+    lua["PrintDebug"]                   = ALEBind::Function(&LuaGlobalFunctions::PrintDebug);
+    lua["StartGameEvent"]               = ALEBind::Function(&LuaGlobalFunctions::StartGameEvent);
+    lua["StopGameEvent"]                = ALEBind::Function(&LuaGlobalFunctions::StopGameEvent);
+    lua["HttpRequest"]                  = ALEBind::Function(&LuaGlobalFunctions::HttpRequest);
+    lua["CreateLongLong"]               = ALEBind::Function(&LuaGlobalFunctions::CreateLongLong);
+    lua["CreateULongLong"]              = ALEBind::Function(&LuaGlobalFunctions::CreateULongLong);
+    lua["ClearBattleGroundEvents"]      = ALEBind::Function(&LuaGlobalFunctions::ClearBattleGroundEvents);
+    lua["ClearCreatureEvents"]          = ALEBind::Function(&LuaGlobalFunctions::ClearCreatureEvents);
+    lua["ClearUniqueCreatureEvents"]    = ALEBind::Function(&LuaGlobalFunctions::ClearUniqueCreatureEvents);
+    lua["ClearCreatureGossipEvents"]    = ALEBind::Function(&LuaGlobalFunctions::ClearCreatureGossipEvents);
+    lua["ClearGameObjectEvents"]        = ALEBind::Function(&LuaGlobalFunctions::ClearGameObjectEvents);
+    lua["ClearGameObjectGossipEvents"]  = ALEBind::Function(&LuaGlobalFunctions::ClearGameObjectGossipEvents);
+    lua["ClearGroupEvents"]             = ALEBind::Function(&LuaGlobalFunctions::ClearGroupEvents);
+    lua["ClearGuildEvents"]             = ALEBind::Function(&LuaGlobalFunctions::ClearGuildEvents);
+    lua["ClearItemEvents"]              = ALEBind::Function(&LuaGlobalFunctions::ClearItemEvents);
+    lua["ClearItemGossipEvents"]        = ALEBind::Function(&LuaGlobalFunctions::ClearItemGossipEvents);
+    lua["ClearPacketEvents"]            = ALEBind::Function(&LuaGlobalFunctions::ClearPacketEvents);
+    lua["ClearPlayerEvents"]            = ALEBind::Function(&LuaGlobalFunctions::ClearPlayerEvents);
+    lua["ClearPlayerGossipEvents"]      = ALEBind::Function(&LuaGlobalFunctions::ClearPlayerGossipEvents);
+    lua["ClearServerEvents"]            = ALEBind::Function(&LuaGlobalFunctions::ClearServerEvents);
+    lua["ClearMapEvents"]               = ALEBind::Function(&LuaGlobalFunctions::ClearMapEvents);
+    lua["ClearInstanceEvents"]          = ALEBind::Function(&LuaGlobalFunctions::ClearInstanceEvents);
+    lua["ClearTicketEvents"]            = ALEBind::Function(&LuaGlobalFunctions::ClearTicketEvents);
+    lua["ClearSpellEvents"]             = ALEBind::Function(&LuaGlobalFunctions::ClearSpellEvents);
+    lua["ClearAllCreatureEvents"]       = ALEBind::Function(&LuaGlobalFunctions::ClearAllCreatureEvents);
+    lua["GetOwnerHalaa"]                = ALEBind::Function(&LuaGlobalFunctions::GetOwnerHalaa);
+    lua["SetOwnerHalaa"]                = ALEBind::Function(&LuaGlobalFunctions::SetOwnerHalaa);
+    lua["GetGossipMenuOptionLocale"]    = ALEBind::Function(&LuaGlobalFunctions::GetGossipMenuOptionLocale);
+    lua["GetMapEntrance"]               = ALEBind::Function(&LuaGlobalFunctions::GetMapEntrance);
+    lua["GetSpellInfo"]                 = ALEBind::Function(&LuaGlobalFunctions::GetSpellInfo);
+    lua["LookupEntry"]                  = ALEBind::Function(&LuaGlobalFunctions::LookupEntry);
+}

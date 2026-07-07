@@ -4,10 +4,19 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef MAPMETHODS_H
-#define MAPMETHODS_H
-
+#include "ALEBind.h"
 #include "ALEInstanceAI.h"
+
+#include "Corpse.h"
+#include "Creature.h"
+#include "DynamicObject.h"
+#include "GameObject.h"
+#include "Map.h"
+#include "ObjectAccessor.h"
+#include "Pet.h"
+#include "Player.h"
+#include "SharedDefines.h"
+#include "Weather.h"
 
 /***
  * A game map, e.g. Azeroth, Eastern Kingdoms, the Molten Core, etc.
@@ -22,10 +31,9 @@ namespace LuaMap
      *
      * @return bool isArena
      */
-    int IsArena(lua_State* L, Map* map)
+    bool IsArena(Map* map)
     {
-        ALE::Push(L, map->IsBattleArena());
-        return 1;
+        return map->IsBattleArena();
     }
 
     /**
@@ -33,10 +41,9 @@ namespace LuaMap
      *
      * @return bool isBattleGround
      */
-    int IsBattleground(lua_State* L, Map* map)
+    bool IsBattleground(Map* map)
     {
-        ALE::Push(L, map->IsBattleground());
-        return 1;
+        return map->IsBattleground();
     }
 
     /**
@@ -44,10 +51,9 @@ namespace LuaMap
      *
      * @return bool isDungeon
      */
-    int IsDungeon(lua_State* L, Map* map)
+    bool IsDungeon(Map* map)
     {
-        ALE::Push(L, map->IsDungeon());
-        return 1;
+        return map->IsDungeon();
     }
 
     /**
@@ -55,10 +61,9 @@ namespace LuaMap
      *
      * @return bool IsEmpty
      */
-    int IsEmpty(lua_State* L, Map* map)
+    bool IsEmpty(Map* map)
     {
-        ALE::Push(L, map->IsEmpty());
-        return 1;
+        return map->IsEmpty();
     }
 
     /**
@@ -66,10 +71,9 @@ namespace LuaMap
      *
      * @return bool isHeroic
      */
-    int IsHeroic(lua_State* L, Map* map)
+    bool IsHeroic(Map* map)
     {
-        ALE::Push(L, map->IsHeroic());
-        return 1;
+        return map->IsHeroic();
     }
 
     /**
@@ -77,10 +81,9 @@ namespace LuaMap
      *
      * @return bool isRaid
      */
-    int IsRaid(lua_State* L, Map* map)
+    bool IsRaid(Map* map)
     {
-        ALE::Push(L, map->IsRaid());
-        return 1;
+        return map->IsRaid();
     }
 
     /**
@@ -88,10 +91,9 @@ namespace LuaMap
      *
      * @return string mapName
      */
-    int GetName(lua_State* L, Map* map)
+    char const* GetName(Map* map)
     {
-        ALE::Push(L, map->GetMapName());
-        return 1;
+        return map->GetMapName();
     }
 
     /**
@@ -103,15 +105,13 @@ namespace LuaMap
      * @param float y
      * @return float z
      */
-    int GetHeight(lua_State* L, Map* map)
+    sol::optional<float> GetHeight(Map* map, float x, float y, sol::optional<uint32> phasemask)
     {
-        float x = ALE::CHECKVAL<float>(L, 2);
-        float y = ALE::CHECKVAL<float>(L, 3);
-        uint32 phasemask = ALE::CHECKVAL<uint32>(L, 4, 1);
-        float z = map->GetHeight(phasemask, x, y, MAX_HEIGHT);
+        float z = map->GetHeight(phasemask.value_or(1), x, y, MAX_HEIGHT);
         if (z != INVALID_HEIGHT)
-            ALE::Push(L, z);
-        return 1;
+            return z;
+
+        return sol::nullopt;
     }
 
     /**
@@ -121,10 +121,9 @@ namespace LuaMap
      *
      * @return int32 difficulty
      */
-    int GetDifficulty(lua_State* L, Map* map)
+    Difficulty GetDifficulty(Map* map)
     {
-        ALE::Push(L, map->GetDifficulty());
-        return 1;
+        return map->GetDifficulty();
     }
 
     /**
@@ -132,10 +131,9 @@ namespace LuaMap
      *
      * @return uint32 instanceId
      */
-    int GetInstanceId(lua_State* L, Map* map)
+    uint32 GetInstanceId(Map* map)
     {
-        ALE::Push(L, map->GetInstanceId());
-        return 1;
+        return map->GetInstanceId();
     }
 
     /**
@@ -143,10 +141,9 @@ namespace LuaMap
      *
      * @return uint32 playerCount
      */
-    int GetPlayerCount(lua_State* L, Map* map)
+    uint32 GetPlayerCount(Map* map)
     {
-        ALE::Push(L, map->GetPlayersCountExceptGMs());
-        return 1;
+        return map->GetPlayersCountExceptGMs();
     }
 
     /**
@@ -154,10 +151,9 @@ namespace LuaMap
      *
      * @return uint32 mapId
      */
-    int GetMapId(lua_State* L, Map* map)
+    uint32 GetMapId(Map* map)
     {
-        ALE::Push(L, map->GetId());
-        return 1;
+        return map->GetId();
     }
 
     /**
@@ -169,15 +165,9 @@ namespace LuaMap
      * @param uint32 phasemask = PHASEMASK_NORMAL
      * @return uint32 areaId
      */
-    int GetAreaId(lua_State* L, Map* map)
+    uint32 GetAreaId(Map* map, float x, float y, float z, sol::optional<uint32> phasemask)
     {
-        float x = ALE::CHECKVAL<float>(L, 2);
-        float y = ALE::CHECKVAL<float>(L, 3);
-        float z = ALE::CHECKVAL<float>(L, 4);
-        float phasemask = ALE::CHECKVAL<uint32>(L, 5, PHASEMASK_NORMAL);
-
-        ALE::Push(L, map->GetAreaId(phasemask, x, y, z));
-        return 1;
+        return map->GetAreaId(phasemask.value_or(PHASEMASK_NORMAL), x, y, z);
     }
 
     /**
@@ -186,37 +176,38 @@ namespace LuaMap
      * @param ObjectGuid guid
      * @return [WorldObject] object
      */
-    int GetWorldObject(lua_State* L, Map* map)
+    sol::object GetWorldObject(Map* map, ObjectGuid guid, sol::this_state s)
     {
-        ObjectGuid guid = ALE::CHECKVAL<ObjectGuid>(L, 2);
+        WorldObject* obj = nullptr;
 
         switch (guid.GetHigh())
         {
-            case HIGHGUID_PLAYER:
-                ALE::Push(L, eObjectAccessor()GetPlayer(map, guid));
+            case HighGuid::Player:
+                obj = ObjectAccessor::GetPlayer(map, guid);
                 break;
-            case HIGHGUID_TRANSPORT:
-            case HIGHGUID_MO_TRANSPORT:
-            case HIGHGUID_GAMEOBJECT:
-                ALE::Push(L, map->GetGameObject(guid));
+            case HighGuid::Transport:
+            case HighGuid::Mo_Transport:
+            case HighGuid::GameObject:
+                obj = map->GetGameObject(guid);
                 break;
-            case HIGHGUID_VEHICLE:
-            case HIGHGUID_UNIT:
-                ALE::Push(L, map->GetCreature(guid));
+            case HighGuid::Vehicle:
+            case HighGuid::Unit:
+                obj = map->GetCreature(guid);
                 break;
-            case HIGHGUID_PET:
-                ALE::Push(L, map->GetPet(guid));
+            case HighGuid::Pet:
+                obj = map->GetPet(guid);
                 break;
-            case HIGHGUID_DYNAMICOBJECT:
-                ALE::Push(L, map->GetDynamicObject(guid));
+            case HighGuid::DynamicObject:
+                obj = map->GetDynamicObject(guid);
                 break;
-            case HIGHGUID_CORPSE:
-                ALE::Push(L, map->GetCorpse(guid));
+            case HighGuid::Corpse:
+                obj = map->GetCorpse(guid);
                 break;
             default:
                 break;
         }
-        return 1;
+
+        return ALEBind::ToLuaDynamic(sol::state_view(s), obj);
     }
 
     /**
@@ -236,16 +227,11 @@ namespace LuaMap
      * @param [WeatherType] type : the [WeatherType], see above available weather types
      * @param float grade : the intensity/grade of the [Weather], ranges from 0 to 1
      */
-    int SetWeather(lua_State* L, Map* map)
+    void SetWeather(Map* map, uint32 zoneId, uint32 weatherType, float grade)
     {
-        uint32 zoneId = ALE::CHECKVAL<uint32>(L, 2);
-        uint32 weatherType = ALE::CHECKVAL<uint32>(L, 3);
-        float grade = ALE::CHECKVAL<float>(L, 4);
-
         Weather* weather = map->GetOrGenerateZoneDefaultWeather(zoneId);
         if (weather)
             weather->SetWeather((WeatherType)weatherType, grade);
-        return 0;
     }
 
     /**
@@ -256,33 +242,30 @@ namespace LuaMap
      *
      * @return table instance_data : instance data table, or `nil`
      */
-    int GetInstanceData(lua_State* L, Map* map)
+    sol::object GetInstanceData(Map* map, sol::this_state s)
     {
-        ALEInstanceAI* iAI = NULL;
+        ALEInstanceAI* iAI = nullptr;
         if (InstanceMap* inst = map->ToInstanceMap())
             iAI = dynamic_cast<ALEInstanceAI*>(inst->GetInstanceScript());
 
+        sol::state_view lua(s);
         if (iAI)
-            ALE::GetALE(L)->PushInstanceData(L, iAI, false);
-        else
-            ALE::Push(L); // nil
+            return sol::make_object(lua, sALE->GetInstanceData(iAI));
 
-        return 1;
+        return sol::make_object(lua, sol::lua_nil);
     }
 
     /**
      * Saves the [Map]'s instance data to the database.
      */
-    int SaveInstanceData(lua_State* /*L*/, Map* map)
+    void SaveInstanceData(Map* map)
     {
-        ALEInstanceAI* iAI = NULL;
+        ALEInstanceAI* iAI = nullptr;
         if (InstanceMap* inst = map->ToInstanceMap())
             iAI = dynamic_cast<ALEInstanceAI*>(inst->GetInstanceScript());
 
         if (iAI)
             iAI->SaveToDB();
-
-        return 0;
     }
 
     /**
@@ -298,12 +281,11 @@ namespace LuaMap
     * @param [TeamId] team : optional check team of the [Player], Alliance, Horde or Neutral (All)
     * @return table mapPlayers
     */
-    int GetPlayers(lua_State* L, Map* map)
+    sol::table GetPlayers(Map* map, sol::optional<uint32> teamArg, sol::this_state s)
     {
-        uint32 team = ALE::CHECKVAL<uint32>(L, 2, TEAM_NEUTRAL);
+        uint32 team = teamArg.value_or(TEAM_NEUTRAL);
 
-        lua_newtable(L);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
         uint32 i = 0;
 
         Map::PlayerList const& players = map->GetPlayers();
@@ -313,90 +295,100 @@ namespace LuaMap
             if (!player)
                 continue;
             if (player->GetSession() && (team >= TEAM_NEUTRAL || player->GetTeamId() == team))
-            {
-                ALE::Push(L, player);
-                lua_rawseti(L, tbl, ++i);
-            }
+                tbl[++i] = PlayerRef(player);
         }
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
     /**
      * Returns a table with all the current [Creature]s in the map
-     * 
+     *
      * @return table mapCreatures
      */
-    int GetCreatures(lua_State* L, Map* map)
+    sol::table GetCreatures(Map* map, sol::this_state s)
     {
-        const auto& creatures = map->GetCreatureBySpawnIdStore();
+        auto const& creatures = map->GetCreatureBySpawnIdStore();
 
-        lua_createtable(L, creatures.size(), 0);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
 
-        for (const auto& pair : creatures)
+        for (auto const& pair : creatures)
         {
             Creature* creature = pair.second;
-
-            ALE::Push(L, creature);
-            lua_rawseti(L, tbl, creature->GetSpawnId());
+            tbl[creature->GetSpawnId()] = CreatureRef(creature);
         }
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
     /**
      * Returns a table with all the current [Creature]s in the specific area id
-     * 
+     *
      * @param number areaId : specific area id
      * @return table mapCreatures
      */
-    int GetCreaturesByAreaId(lua_State* L, Map* map)
+    sol::table GetCreaturesByAreaId(Map* map, sol::optional<int32> areaIdArg, sol::this_state s)
     {
-        int32 areaId = ALE::CHECKVAL<int32>(L, 2, -1);
+        int32 areaId = areaIdArg.value_or(-1);
         std::vector<Creature*> filteredCreatures;
 
-        for (const auto& pair : map->GetCreatureBySpawnIdStore())
+        for (auto const& pair : map->GetCreatureBySpawnIdStore())
         {
             Creature* creature = pair.second;
             if (areaId == -1 || creature->GetAreaId() == (uint32)areaId)
-            {
                 filteredCreatures.push_back(creature);
-            }
         }
 
-        lua_createtable(L, filteredCreatures.size(), 0);
-        int tbl = lua_gettop(L);
+        sol::table tbl = sol::state_view(s).create_table();
 
         for (Creature* creature : filteredCreatures)
-        {
-            ALE::Push(L, creature);
-            lua_rawseti(L, tbl, creature->GetSpawnId());
-        }
+            tbl[creature->GetSpawnId()] = CreatureRef(creature);
 
-        lua_settop(L, tbl);
-        return 1;
+        return tbl;
     }
 
-    
     /**
      * Returns a table of all [Transport]s on the [Map]
      *
      * @return table transports
      */
-    int GetTransports(lua_State* L, Map* map)
+    sol::table GetTransports(Map* map, sol::this_state s)
     {
         TransportsContainer const& transports = map->GetAllTransports();
-        lua_createtable(L, transports.size(), 0);
+
+        sol::table tbl = sol::state_view(s).create_table();
         int i = 1;
+
         for (Transport* transport : transports)
-        {
-            ALE::Push(L, transport);
-            lua_rawseti(L, -2, i++);
-        }
-        return 1;
+            tbl[i++] = TransportRef(transport);
+
+        return tbl;
     }
-};
-#endif
+}
+
+void RegisterMapMethods(sol::state& lua)
+{
+    sol::usertype<MapRef> type = ALEBind::NewHandleType<MapRef>(lua, "Map");
+
+    type["IsArena"]              = ALEBind::Method(&LuaMap::IsArena);
+    type["IsBattleground"]       = ALEBind::Method(&LuaMap::IsBattleground);
+    type["IsDungeon"]            = ALEBind::Method(&LuaMap::IsDungeon);
+    type["IsEmpty"]              = ALEBind::Method(&LuaMap::IsEmpty);
+    type["IsHeroic"]             = ALEBind::Method(&LuaMap::IsHeroic);
+    type["IsRaid"]               = ALEBind::Method(&LuaMap::IsRaid);
+    type["GetName"]              = ALEBind::Method(&LuaMap::GetName);
+    type["GetHeight"]            = ALEBind::Method(&LuaMap::GetHeight);
+    type["GetDifficulty"]        = ALEBind::Method(&LuaMap::GetDifficulty);
+    type["GetInstanceId"]        = ALEBind::Method(&LuaMap::GetInstanceId);
+    type["GetPlayerCount"]       = ALEBind::Method(&LuaMap::GetPlayerCount);
+    type["GetMapId"]             = ALEBind::Method(&LuaMap::GetMapId);
+    type["GetAreaId"]            = ALEBind::Method(&LuaMap::GetAreaId);
+    type["GetWorldObject"]       = ALEBind::Method(&LuaMap::GetWorldObject);
+    type["SetWeather"]           = ALEBind::Method(&LuaMap::SetWeather);
+    type["GetInstanceData"]      = ALEBind::Method(&LuaMap::GetInstanceData);
+    type["SaveInstanceData"]     = ALEBind::Method(&LuaMap::SaveInstanceData);
+    type["GetPlayers"]           = ALEBind::Method(&LuaMap::GetPlayers);
+    type["GetCreatures"]         = ALEBind::Method(&LuaMap::GetCreatures);
+    type["GetCreaturesByAreaId"] = ALEBind::Method(&LuaMap::GetCreaturesByAreaId);
+    type["GetTransports"]        = ALEBind::Method(&LuaMap::GetTransports);
+}

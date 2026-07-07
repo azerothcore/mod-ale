@@ -4,8 +4,19 @@
 * Please see the included DOCS/LICENSE.md for more information
 */
 
-#ifndef ITEMMETHODS_H
-#define ITEMMETHODS_H
+#include "ALEBind.h"
+
+#include "Bag.h"
+#include "Common.h"
+#include "DBCStores.h"
+#include "DatabaseEnv.h"
+#include "Item.h"
+#include "ItemTemplate.h"
+#include "ObjectMgr.h"
+#include "Player.h"
+#include "SharedDefines.h"
+
+#include <sstream>
 
 /***
  * Represents an instance of an item in the game world.
@@ -19,10 +30,9 @@ namespace LuaItem
      *
      * @return bool isSoulBound
      */
-    int IsSoulBound(lua_State* L, Item* item)
+    bool IsSoulBound(Item* item)
     {
-        ALE::Push(L, item->IsSoulBound());
-        return 1;
+        return item->IsSoulBound();
     }
 
     /**
@@ -30,10 +40,9 @@ namespace LuaItem
      *
      * @return bool isAccountBound
      */
-    int IsBoundAccountWide(lua_State* L, Item* item)
+    bool IsBoundAccountWide(Item* item)
     {
-        ALE::Push(L, item->IsBoundAccountWide());
-        return 1;
+        return item->IsBoundAccountWide();
     }
 
     /**
@@ -41,10 +50,9 @@ namespace LuaItem
      *
      * @return bool isBoundByEnchant
      */
-    int IsBoundByEnchant(lua_State* L, Item* item)
+    bool IsBoundByEnchant(Item* item)
     {
-        ALE::Push(L, item->IsBoundByEnchant());
-        return 1;
+        return item->IsBoundByEnchant();
     }
 
     /**
@@ -53,12 +61,9 @@ namespace LuaItem
      * @param [Player] player : the [Player] object to check the item against
      * @return bool isNotBound
      */
-    int IsNotBoundToPlayer(lua_State* L, Item* item)
+    bool IsNotBoundToPlayer(Item* item, Player* player)
     {
-        Player* player = ALE::CHECKOBJ<Player>(L, 2);
-
-        ALE::Push(L, item->IsBindedNotWith(player));
-        return 1;
+        return item->IsBindedNotWith(player);
     }
 
     /**
@@ -66,10 +71,9 @@ namespace LuaItem
      *
      * @return bool isLocked
      */
-    int IsLocked(lua_State* L, Item* item)
+    bool IsLocked(Item* item)
     {
-        ALE::Push(L, item->IsLocked());
-        return 1;
+        return item->IsLocked();
     }
 
     /**
@@ -77,10 +81,9 @@ namespace LuaItem
      *
      * @return bool isBag
      */
-    int IsBag(lua_State* L, Item* item)
+    bool IsBag(Item* item)
     {
-        ALE::Push(L, item->IsBag());
-        return 1;
+        return item->IsBag();
     }
 
     /**
@@ -88,10 +91,9 @@ namespace LuaItem
      *
      * @return bool isCurrencyToken
      */
-    int IsCurrencyToken(lua_State* L, Item* item)
+    bool IsCurrencyToken(Item* item)
     {
-        ALE::Push(L, item->IsCurrencyToken());
-        return 1;
+        return item->IsCurrencyToken();
     }
 
     /**
@@ -99,10 +101,9 @@ namespace LuaItem
      *
      * @return bool isNotEmptyBag
      */
-    int IsNotEmptyBag(lua_State* L, Item* item)
+    bool IsNotEmptyBag(Item* item)
     {
-        ALE::Push(L, item->IsNotEmptyBag());
-        return 1;
+        return item->IsNotEmptyBag();
     }
 
     /**
@@ -110,10 +111,9 @@ namespace LuaItem
      *
      * @return bool isBroken
      */
-    int IsBroken(lua_State* L, Item* item)
+    bool IsBroken(Item* item)
     {
-        ALE::Push(L, item->IsBroken());
-        return 1;
+        return item->IsBroken();
     }
 
     /**
@@ -121,11 +121,9 @@ namespace LuaItem
      *
      * @return bool isTradeable
      */
-    int CanBeTraded(lua_State* L, Item* item)
+    bool CanBeTraded(Item* item, sol::optional<bool> mail)
     {
-        bool mail = ALE::CHECKVAL<bool>(L, 2, false);
-        ALE::Push(L, item->CanBeTraded(mail));
-        return 1;
+        return item->CanBeTraded(mail.value_or(false));
     }
 
     /**
@@ -133,10 +131,9 @@ namespace LuaItem
      *
      * @return bool isInTrade
      */
-    int IsInTrade(lua_State* L, Item* item)
+    bool IsInTrade(Item* item)
     {
-        ALE::Push(L, item->IsInTrade());
-        return 1;
+        return item->IsInTrade();
     }
 
     /**
@@ -144,10 +141,9 @@ namespace LuaItem
      *
      * @return bool isInBag
      */
-    int IsInBag(lua_State* L, Item* item)
+    bool IsInBag(Item* item)
     {
-        ALE::Push(L, item->IsInBag());
-        return 1;
+        return item->IsInBag();
     }
 
     /**
@@ -155,10 +151,9 @@ namespace LuaItem
      *
      * @return bool isEquipped
      */
-    int IsEquipped(lua_State* L, Item* item)
+    bool IsEquipped(Item* item)
     {
-        ALE::Push(L, item->IsEquipped());
-        return 1;
+        return item->IsEquipped();
     }
 
     /**
@@ -167,11 +162,9 @@ namespace LuaItem
      * @param uint32 questId : the [Quest] id to be checked
      * @return bool hasQuest
      */
-    int HasQuest(lua_State* L, Item* item)
+    bool HasQuest(Item* item, uint32 quest)
     {
-        uint32 quest = ALE::CHECKVAL<uint32>(L, 2);
-        ALE::Push(L, item->hasQuest(quest));
-        return 1;
+        return item->hasQuest(quest);
     }
 
     /**
@@ -179,10 +172,9 @@ namespace LuaItem
      *
      * @return bool isPotion
      */
-    int IsPotion(lua_State* L, Item* item)
+    bool IsPotion(Item* item)
     {
-        ALE::Push(L, item->IsPotion());
-        return 1;
+        return item->IsPotion();
     }
 
     /**
@@ -190,10 +182,9 @@ namespace LuaItem
      *
      * @return bool isWeaponVellum
      */
-    int IsWeaponVellum(lua_State* L, Item* item)
+    bool IsWeaponVellum(Item* item)
     {
-        ALE::Push(L, item->IsWeaponVellum());
-        return 1;
+        return item->IsWeaponVellum();
     }
 
     /**
@@ -201,10 +192,9 @@ namespace LuaItem
      *
      * @return bool isArmorVellum
      */
-    int IsArmorVellum(lua_State* L, Item* item)
+    bool IsArmorVellum(Item* item)
     {
-        ALE::Push(L, item->IsArmorVellum());
-        return 1;
+        return item->IsArmorVellum();
     }
 
     /**
@@ -212,16 +202,14 @@ namespace LuaItem
      *
      * @return bool isConjuredConsumable
      */
-    int IsConjuredConsumable(lua_State* L, Item* item)
+    bool IsConjuredConsumable(Item* item)
     {
-        ALE::Push(L, item->IsConjuredConsumable());
-        return 1;
+        return item->IsConjuredConsumable();
     }
 
-    /*int IsRefundExpired(lua_State* L, Item* item)// TODO: Implement core support
+    /*bool IsRefundExpired(Item* item)// TODO: Implement core support
     {
-        ALE::Push(L, item->IsRefundExpired());
-        return 1;
+        return item->IsRefundExpired();
     }*/
 
     /**
@@ -245,15 +233,15 @@ namespace LuaItem
      * @param [LocaleConstant] locale = DEFAULT_LOCALE : locale to return the [Item]'s name in
      * @return string itemLink
      */
-    int GetItemLink(lua_State* L, Item* item)
+    std::string GetItemLink(Item* item, sol::optional<uint8> localeArg)
     {
-        uint8 locale = ALE::CHECKVAL<uint8>(L, 2, DEFAULT_LOCALE);
+        uint8 locale = localeArg.value_or(DEFAULT_LOCALE);
         if (locale >= TOTAL_LOCALES)
-            return luaL_argerror(L, 2, "valid LocaleConstant expected");
+            throw std::invalid_argument("valid LocaleConstant expected");
 
-        const ItemTemplate* temp = item->GetTemplate();
+        ItemTemplate const* temp = item->GetTemplate();
         std::string name = temp->Name1;
-        if (ItemLocale const* il = eObjectMgr->GetItemLocale(temp->ItemId))
+        if (ItemLocale const* il = sObjectMgr->GetItemLocale(temp->ItemId))
         {
             ObjectMgr::GetLocaleString(il->Name, static_cast<LocaleConstant>(locale), name);
         }
@@ -263,19 +251,19 @@ namespace LuaItem
             std::array<char const*, 16> const* suffix = NULL;
             if (itemRandPropId < 0)
             {
-                const ItemRandomSuffixEntry* itemRandEntry = sItemRandomSuffixStore.LookupEntry(-item->GetItemRandomPropertyId());
+                ItemRandomSuffixEntry const* itemRandEntry = sItemRandomSuffixStore.LookupEntry(-item->GetItemRandomPropertyId());
                 if (itemRandEntry)
                     suffix = &itemRandEntry->Name;
             }
             else
             {
-                const ItemRandomPropertiesEntry* itemRandEntry = sItemRandomPropertiesStore.LookupEntry(item->GetItemRandomPropertyId());
+                ItemRandomPropertiesEntry const* itemRandEntry = sItemRandomPropertiesStore.LookupEntry(item->GetItemRandomPropertyId());
                 if (itemRandEntry)
                     suffix = &itemRandEntry->Name;
             }
             if (suffix)
             {
-                const char* suffixName = (*suffix)[(name != temp->Name1) ? locale : uint8(DEFAULT_LOCALE)];
+                char const* suffixName = (*suffix)[(name != temp->Name1) ? locale : uint8(DEFAULT_LOCALE)];
                 if (strcmp(suffixName, "") != 0)
                 {
                     name += ' ';
@@ -296,8 +284,7 @@ namespace LuaItem
             item->GetItemRandomPropertyId() << ":" << item->GetItemSuffixFactor() << ":" <<
             (uint32)(owner ? owner->GetLevel() : 0) << "|h[" << name << "]|h|r";
 
-        ALE::Push(L, oss.str());
-        return 1;
+        return oss.str();
     }
 
     /**
@@ -306,10 +293,9 @@ namespace LuaItem
      * @param [Item] item
      * @return uint64 ownerGUID
      */
-    int GetOwnerGUID(lua_State* L, Item* item)
+    ObjectGuid GetOwnerGUID(Item* item)
     {
-        ALE::Push(L, item->GetOwnerGUID());
-        return 1;
+        return item->GetOwnerGUID();
     }
 
     /**
@@ -317,10 +303,9 @@ namespace LuaItem
      *
      * @return [Player] player : the [Player] who owns the [Item]
      */
-    int GetOwner(lua_State* L, Item* item)
+    Player* GetOwner(Item* item)
     {
-        ALE::Push(L, item->GetOwner());
-        return 1;
+        return item->GetOwner();
     }
 
     /**
@@ -328,10 +313,9 @@ namespace LuaItem
      *
      * @return uint32 count
      */
-    int GetCount(lua_State* L, Item* item)
+    uint32 GetCount(Item* item)
     {
-        ALE::Push(L, item->GetCount());
-        return 1;
+        return item->GetCount();
     }
 
     /**
@@ -339,10 +323,9 @@ namespace LuaItem
      *
      * @return uint32 maxCount
      */
-    int GetMaxStackCount(lua_State* L, Item* item)
+    uint32 GetMaxStackCount(Item* item)
     {
-        ALE::Push(L, item->GetMaxStackCount());
-        return 1;
+        return item->GetMaxStackCount();
     }
 
     /**
@@ -350,10 +333,9 @@ namespace LuaItem
      *
      * @return uint8 slot
      */
-    int GetSlot(lua_State* L, Item* item)
+    uint8 GetSlot(Item* item)
     {
-        ALE::Push(L, item->GetSlot());
-        return 1;
+        return item->GetSlot();
     }
 
     /**
@@ -361,10 +343,9 @@ namespace LuaItem
      *
      * @return uint8 bagSlot
      */
-    int GetBagSlot(lua_State* L, Item* item)
+    uint8 GetBagSlot(Item* item)
     {
-        ALE::Push(L, item->GetBagSlot());
-        return 1;
+        return item->GetBagSlot();
     }
 
     /**
@@ -373,15 +354,12 @@ namespace LuaItem
      * @param [EnchantmentSlot] enchantSlot : the enchant slot specified
      * @return uint32 enchantId : the id of the enchant slot specified
      */
-    int GetEnchantmentId(lua_State* L, Item* item)
+    uint32 GetEnchantmentId(Item* item, uint32 enchant_slot)
     {
-        uint32 enchant_slot = ALE::CHECKVAL<uint32>(L, 2);
-
         if (enchant_slot >= MAX_INSPECTED_ENCHANTMENT_SLOT)
-            return luaL_argerror(L, 2, "valid EnchantmentSlot expected");
+            throw std::invalid_argument("valid EnchantmentSlot expected");
 
-        ALE::Push(L, item->GetEnchantmentId(EnchantmentSlot(enchant_slot)));
-        return 1;
+        return item->GetEnchantmentId(EnchantmentSlot(enchant_slot));
     }
 
     /**
@@ -390,14 +368,12 @@ namespace LuaItem
      * @param uint32 spellIndex : the spell index specified
      * @return uint32 spellId : the id of the spell
      */
-    int GetSpellId(lua_State* L, Item* item)
+    int32 GetSpellId(Item* item, uint32 index)
     {
-        uint32 index = ALE::CHECKVAL<uint32>(L, 2);
         if (index >= MAX_ITEM_PROTO_SPELLS)
-            return luaL_argerror(L, 2, "valid SpellIndex expected");
+            throw std::invalid_argument("valid SpellIndex expected");
 
-        ALE::Push(L, item->GetTemplate()->Spells[index].SpellId);
-        return 1;
+        return item->GetTemplate()->Spells[index].SpellId;
     }
 
     /**
@@ -406,14 +382,12 @@ namespace LuaItem
      * @param uint32 spellIndex : the spell index specified
      * @return uint32 spellTrigger : the spell trigger of the specified index
      */
-    int GetSpellTrigger(lua_State* L, Item* item)
+    uint32 GetSpellTrigger(Item* item, uint32 index)
     {
-        uint32 index = ALE::CHECKVAL<uint32>(L, 2);
         if (index >= MAX_ITEM_PROTO_SPELLS)
-            return luaL_argerror(L, 2, "valid SpellIndex expected");
+            throw std::invalid_argument("valid SpellIndex expected");
 
-        ALE::Push(L, item->GetTemplate()->Spells[index].SpellTrigger);
-        return 1;
+        return item->GetTemplate()->Spells[index].SpellTrigger;
     }
 
     /**
@@ -421,10 +395,9 @@ namespace LuaItem
      *
      * @return uint32 class
      */
-    int GetClass(lua_State* L, Item* item)
+    uint32 GetClass(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->Class);
-        return 1;
+        return item->GetTemplate()->Class;
     }
 
     /**
@@ -432,10 +405,9 @@ namespace LuaItem
      *
      * @return uint32 subClass
      */
-    int GetSubClass(lua_State* L, Item* item)
+    uint32 GetSubClass(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->SubClass);
-        return 1;
+        return item->GetTemplate()->SubClass;
     }
 
     /**
@@ -443,10 +415,9 @@ namespace LuaItem
      *
      * @return string name
      */
-    int GetName(lua_State* L, Item* item)
+    std::string GetName(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->Name1);
-        return 1;
+        return item->GetTemplate()->Name1;
     }
 
     /**
@@ -454,10 +425,9 @@ namespace LuaItem
      *
      * @return uint32 displayId
      */
-    int GetDisplayId(lua_State* L, Item* item)
+    uint32 GetDisplayId(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->DisplayInfoID);
-        return 1;
+        return item->GetTemplate()->DisplayInfoID;
     }
 
     /**
@@ -465,10 +435,9 @@ namespace LuaItem
      *
      * @return uint32 quality
      */
-    int GetQuality(lua_State* L, Item* item)
+    uint32 GetQuality(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->Quality);
-        return 1;
+        return item->GetTemplate()->Quality;
     }
 
     /**
@@ -476,10 +445,9 @@ namespace LuaItem
      *
      * @return uint32 count
      */
-    int GetBuyCount(lua_State* L, Item* item)
+    uint32 GetBuyCount(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->BuyCount);
-        return 1;
+        return item->GetTemplate()->BuyCount;
     }
 
     /**
@@ -487,10 +455,9 @@ namespace LuaItem
      *
      * @return uint32 price
      */
-    int GetBuyPrice(lua_State* L, Item* item)
+    uint32 GetBuyPrice(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->BuyPrice);
-        return 1;
+        return item->GetTemplate()->BuyPrice;
     }
 
     /**
@@ -498,10 +465,9 @@ namespace LuaItem
      *
      * @return uint32 price
      */
-    int GetSellPrice(lua_State* L, Item* item)
+    uint32 GetSellPrice(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->SellPrice);
-        return 1;
+        return item->GetTemplate()->SellPrice;
     }
 
     /**
@@ -509,10 +475,9 @@ namespace LuaItem
      *
      * @return uint32 inventoryType
      */
-    int GetInventoryType(lua_State* L, Item* item)
+    uint32 GetInventoryType(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->InventoryType);
-        return 1;
+        return item->GetTemplate()->InventoryType;
     }
 
     /**
@@ -520,10 +485,9 @@ namespace LuaItem
      *
      * @return uint32 allowableClass
      */
-    int GetAllowableClass(lua_State* L, Item* item)
+    uint32 GetAllowableClass(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->AllowableClass);
-        return 1;
+        return item->GetTemplate()->AllowableClass;
     }
 
     /**
@@ -531,10 +495,9 @@ namespace LuaItem
      *
      * @return uint32 allowableRace
      */
-    int GetAllowableRace(lua_State* L, Item* item)
+    uint32 GetAllowableRace(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->AllowableRace);
-        return 1;
+        return item->GetTemplate()->AllowableRace;
     }
 
     /**
@@ -542,10 +505,9 @@ namespace LuaItem
      *
      * @return uint32 itemLevel
      */
-    int GetItemLevel(lua_State* L, Item* item)
+    uint32 GetItemLevel(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->ItemLevel);
-        return 1;
+        return item->GetTemplate()->ItemLevel;
     }
 
     /**
@@ -553,10 +515,9 @@ namespace LuaItem
      *
      * @return uint32 requiredLevel
      */
-    int GetRequiredLevel(lua_State* L, Item* item)
+    uint32 GetRequiredLevel(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->RequiredLevel);
-        return 1;
+        return item->GetTemplate()->RequiredLevel;
     }
 
     /**
@@ -565,10 +526,9 @@ namespace LuaItem
      * @param [Item] item
      * @return uint32 statsCount
      */
-    int GetStatsCount(lua_State* L, Item* item)
+    uint32 GetStatsCount(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->StatsCount);
-        return 1;
+        return item->GetTemplate()->StatsCount;
     }
 
     /**
@@ -576,10 +536,9 @@ namespace LuaItem
      *
      * @return uint32 randomPropertyId
      */
-    int GetRandomProperty(lua_State* L, Item* item)
+    uint32 GetRandomProperty(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->RandomProperty);
-        return 1;
+        return item->GetTemplate()->RandomProperty;
     }
 
     /**
@@ -588,10 +547,9 @@ namespace LuaItem
      * @param [Item] item
      * @return uint32 randomSuffixId
      */
-    int GetRandomSuffix(lua_State* L, Item* item)
+    uint32 GetRandomSuffix(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->RandomSuffix);
-        return 1;
+        return item->GetTemplate()->RandomSuffix;
     }
 
     /**
@@ -599,10 +557,9 @@ namespace LuaItem
      *
      * @return uint32 itemSetId
      */
-    int GetItemSet(lua_State* L, Item* item)
+    uint32 GetItemSet(Item* item)
     {
-        ALE::Push(L, item->GetTemplate()->ItemSet);
-        return 1;
+        return item->GetTemplate()->ItemSet;
     }
 
     /**
@@ -610,13 +567,12 @@ namespace LuaItem
      *
      * @return uint32 bagSize
      */
-    int GetBagSize(lua_State* L, Item* item)
+    uint32 GetBagSize(Item* item)
     {
         if (Bag* bag = item->ToBag())
-            ALE::Push(L, bag->GetBagSize());
-        else
-            ALE::Push(L, 0);
-        return 1;
+            return bag->GetBagSize();
+
+        return 0;
     }
 
     /**
@@ -624,10 +580,9 @@ namespace LuaItem
      *
      * @return [ItemTemplate] itemTemplate
      */
-    int GetItemTemplate(lua_State* L, Item* item)
+    ItemTemplate const* GetItemTemplate(Item* item)
     {
-        ALE::Push(L, item->GetTemplate());
-        return 1;
+        return item->GetTemplate();
     }
 
     /**
@@ -635,11 +590,9 @@ namespace LuaItem
      *
      * @param [Player] player : the [Player] specified
      */
-    int SetOwner(lua_State* L, Item* item)
+    void SetOwner(Item* item, Player* player)
     {
-        Player* player = ALE::CHECKOBJ<Player>(L, 2);
-        item->SetOwnerGUID(player->GET_GUID());
-        return 0;
+        item->SetOwnerGUID(player->GetGUID());
     }
 
     /**
@@ -647,14 +600,10 @@ namespace LuaItem
      *
      * @param bool setBinding
      */
-    int SetBinding(lua_State* L, Item* item)
+    void SetBinding(Item* item, bool soulbound)
     {
-        bool soulbound = ALE::CHECKVAL<bool>(L, 2);
-
         item->SetBinding(soulbound);
         item->SetState(ITEM_CHANGED, item->GetOwner());
-
-        return 0;
     }
 
     /**
@@ -662,11 +611,9 @@ namespace LuaItem
      *
      * @param uint32 count
      */
-    int SetCount(lua_State* L, Item* item)
+    void SetCount(Item* item, uint32 count)
     {
-        uint32 count = ALE::CHECKVAL<uint32>(L, 2);
         item->SetCount(count);
-        return 0;
     }
 
     /**
@@ -676,31 +623,27 @@ namespace LuaItem
      * @param uint32 enchantSlot : the slot for the enchant to be applied to
      * @return bool enchantmentSuccess : if enchantment is successfully set to specified slot, returns 'true', otherwise 'false'
      */
-    int SetEnchantment(lua_State* L, Item* item)
+    bool SetEnchantment(Item* item, uint32 enchant, uint32 enchantSlot)
     {
         Player* owner = item->GetOwner();
         if (!owner)
         {
-            ALE::Push(L, false);
-            return 1;
+            return false;
         }
 
-        uint32 enchant = ALE::CHECKVAL<uint32>(L, 2);
         if (!sSpellItemEnchantmentStore.LookupEntry(enchant))
         {
-            ALE::Push(L, false);
-            return 1;
+            return false;
         }
 
-        EnchantmentSlot slot = (EnchantmentSlot)ALE::CHECKVAL<uint32>(L, 3);
+        EnchantmentSlot slot = (EnchantmentSlot)enchantSlot;
         if (slot >= MAX_INSPECTED_ENCHANTMENT_SLOT)
-            return luaL_argerror(L, 2, "valid EnchantmentSlot expected");
+            throw std::invalid_argument("valid EnchantmentSlot expected");
 
         owner->ApplyEnchantment(item, slot, false);
         item->SetEnchantment(slot, enchant, 0, 0);
         owner->ApplyEnchantment(item, slot, true);
-        ALE::Push(L, true);
-        return 1;
+        return true;
     }
 
 
@@ -709,11 +652,9 @@ namespace LuaItem
      *
      * @param uint32 randomPropId : The ID of the random property to be applied.
      */
-    int SetRandomProperty(lua_State* L, Item* item)
+    void SetRandomProperty(Item* item, uint32 randomPropId)
     {
-        uint32 randomPropId = ALE::CHECKVAL<uint32>(L, 2);
         item->SetItemRandomProperties(randomPropId);
-        return 0;
     }
 
     /**
@@ -721,11 +662,9 @@ namespace LuaItem
      *
      * @param uint32 randomSuffixId : The ID of the random suffix to be applied.
      */
-    int SetRandomSuffix(lua_State* L, Item* item)
+    void SetRandomSuffix(Item* item, uint32 randomPropId)
     {
-        uint32 randomPropId = ALE::CHECKVAL<uint32>(L, 2);
         item->SetItemRandomProperties(-randomPropId);
-        return 0;
     }
 
 
@@ -736,39 +675,95 @@ namespace LuaItem
      * @param uint32 enchantSlot : the slot for the enchant to be removed from
      * @return bool enchantmentRemoved : if enchantment is successfully removed from specified slot, returns 'true', otherwise 'false'
      */
-    int ClearEnchantment(lua_State* L, Item* item)
+    bool ClearEnchantment(Item* item, uint32 enchantSlot)
     {
         Player* owner = item->GetOwner();
         if (!owner)
         {
-            ALE::Push(L, false);
-            return 1;
+            return false;
         }
 
-        EnchantmentSlot slot = (EnchantmentSlot)ALE::CHECKVAL<uint32>(L, 2);
+        EnchantmentSlot slot = (EnchantmentSlot)enchantSlot;
         if (slot >= MAX_INSPECTED_ENCHANTMENT_SLOT)
-            return luaL_argerror(L, 2, "valid EnchantmentSlot expected");
+            throw std::invalid_argument("valid EnchantmentSlot expected");
 
         if (!item->GetEnchantmentId(slot))
         {
-            ALE::Push(L, false);
-            return 1;
+            return false;
         }
 
         owner->ApplyEnchantment(item, slot, false);
         item->ClearEnchantment(slot);
-        ALE::Push(L, true);
-        return 1;
+        return true;
     }
 
     /**
      * Saves the [Item] to the database
      */
-    int SaveToDB(lua_State* /*L*/, Item* item)
+    void SaveToDB(Item* item)
     {
         CharacterDatabaseTransaction trans = CharacterDatabaseTransaction(nullptr);
         item->SaveToDB(trans);
-        return 0;
     }
-};
-#endif
+}
+
+void RegisterItemMethods(sol::state& lua)
+{
+    sol::usertype<ItemRef> type = ALEBind::NewHandleType<ItemRef, ObjectRef>(lua, "Item");
+
+    type["IsSoulBound"]          = ALEBind::Method(&LuaItem::IsSoulBound);
+    type["IsBoundAccountWide"]   = ALEBind::Method(&LuaItem::IsBoundAccountWide);
+    type["IsBoundByEnchant"]     = ALEBind::Method(&LuaItem::IsBoundByEnchant);
+    type["IsNotBoundToPlayer"]   = ALEBind::Method(&LuaItem::IsNotBoundToPlayer);
+    type["IsLocked"]             = ALEBind::Method(&LuaItem::IsLocked);
+    type["IsBag"]                = ALEBind::Method(&LuaItem::IsBag);
+    type["IsCurrencyToken"]      = ALEBind::Method(&LuaItem::IsCurrencyToken);
+    type["IsNotEmptyBag"]        = ALEBind::Method(&LuaItem::IsNotEmptyBag);
+    type["IsBroken"]             = ALEBind::Method(&LuaItem::IsBroken);
+    type["CanBeTraded"]          = ALEBind::Method(&LuaItem::CanBeTraded);
+    type["IsInTrade"]            = ALEBind::Method(&LuaItem::IsInTrade);
+    type["IsInBag"]              = ALEBind::Method(&LuaItem::IsInBag);
+    type["IsEquipped"]           = ALEBind::Method(&LuaItem::IsEquipped);
+    type["HasQuest"]             = ALEBind::Method(&LuaItem::HasQuest);
+    type["IsPotion"]             = ALEBind::Method(&LuaItem::IsPotion);
+    type["IsWeaponVellum"]       = ALEBind::Method(&LuaItem::IsWeaponVellum);
+    type["IsArmorVellum"]        = ALEBind::Method(&LuaItem::IsArmorVellum);
+    type["IsConjuredConsumable"] = ALEBind::Method(&LuaItem::IsConjuredConsumable);
+    type["GetItemLink"]          = ALEBind::Method(&LuaItem::GetItemLink);
+    type["GetOwnerGUID"]         = ALEBind::Method(&LuaItem::GetOwnerGUID);
+    type["GetOwner"]             = ALEBind::Method(&LuaItem::GetOwner);
+    type["GetCount"]             = ALEBind::Method(&LuaItem::GetCount);
+    type["GetMaxStackCount"]     = ALEBind::Method(&LuaItem::GetMaxStackCount);
+    type["GetSlot"]              = ALEBind::Method(&LuaItem::GetSlot);
+    type["GetBagSlot"]           = ALEBind::Method(&LuaItem::GetBagSlot);
+    type["GetEnchantmentId"]     = ALEBind::Method(&LuaItem::GetEnchantmentId);
+    type["GetSpellId"]           = ALEBind::Method(&LuaItem::GetSpellId);
+    type["GetSpellTrigger"]      = ALEBind::Method(&LuaItem::GetSpellTrigger);
+    type["GetClass"]             = ALEBind::Method(&LuaItem::GetClass);
+    type["GetSubClass"]          = ALEBind::Method(&LuaItem::GetSubClass);
+    type["GetName"]              = ALEBind::Method(&LuaItem::GetName);
+    type["GetDisplayId"]         = ALEBind::Method(&LuaItem::GetDisplayId);
+    type["GetQuality"]           = ALEBind::Method(&LuaItem::GetQuality);
+    type["GetBuyCount"]          = ALEBind::Method(&LuaItem::GetBuyCount);
+    type["GetBuyPrice"]          = ALEBind::Method(&LuaItem::GetBuyPrice);
+    type["GetSellPrice"]         = ALEBind::Method(&LuaItem::GetSellPrice);
+    type["GetInventoryType"]     = ALEBind::Method(&LuaItem::GetInventoryType);
+    type["GetAllowableClass"]    = ALEBind::Method(&LuaItem::GetAllowableClass);
+    type["GetAllowableRace"]     = ALEBind::Method(&LuaItem::GetAllowableRace);
+    type["GetItemLevel"]         = ALEBind::Method(&LuaItem::GetItemLevel);
+    type["GetRequiredLevel"]     = ALEBind::Method(&LuaItem::GetRequiredLevel);
+    type["GetStatsCount"]        = ALEBind::Method(&LuaItem::GetStatsCount);
+    type["GetRandomProperty"]    = ALEBind::Method(&LuaItem::GetRandomProperty);
+    type["GetRandomSuffix"]      = ALEBind::Method(&LuaItem::GetRandomSuffix);
+    type["GetItemSet"]           = ALEBind::Method(&LuaItem::GetItemSet);
+    type["GetBagSize"]           = ALEBind::Method(&LuaItem::GetBagSize);
+    type["GetItemTemplate"]      = ALEBind::Method(&LuaItem::GetItemTemplate);
+    type["SetOwner"]             = ALEBind::Method(&LuaItem::SetOwner);
+    type["SetBinding"]           = ALEBind::Method(&LuaItem::SetBinding);
+    type["SetCount"]             = ALEBind::Method(&LuaItem::SetCount);
+    type["SetEnchantment"]       = ALEBind::Method(&LuaItem::SetEnchantment);
+    type["SetRandomProperty"]    = ALEBind::Method(&LuaItem::SetRandomProperty);
+    type["SetRandomSuffix"]      = ALEBind::Method(&LuaItem::SetRandomSuffix);
+    type["ClearEnchantment"]     = ALEBind::Method(&LuaItem::ClearEnchantment);
+    type["SaveToDB"]             = ALEBind::Method(&LuaItem::SaveToDB);
+}

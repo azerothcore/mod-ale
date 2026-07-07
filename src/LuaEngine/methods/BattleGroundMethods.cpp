@@ -146,7 +146,7 @@ namespace LuaBattleGround
      */
     uint32 GetMinPlayers(Battleground* bg)
     {
-        return bg->GetMaxPlayersPerTeam() * 2;
+        return bg->GetMinPlayersPerTeam() * 2;
     }
 
     /**

@@ -48,9 +48,12 @@ namespace LuaAura
      *
      * @return uint32 caster_level
      */
-    uint8 GetCasterLevel(Aura* aura)
+    sol::optional<uint8> GetCasterLevel(Aura* aura)
     {
-        return aura->GetCaster()->GetLevel();
+        if (Unit const* caster = aura->GetCaster())
+            return caster->GetLevel();
+
+        return sol::nullopt;
     }
 
     /**

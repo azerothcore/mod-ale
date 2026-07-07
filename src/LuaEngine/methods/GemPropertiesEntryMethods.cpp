@@ -22,9 +22,6 @@ namespace LuaGemPropertiesEntry
     /**
      * Returns the ID of a [GemPropertiesEntry].
      *
-     * This method retrieves the ID from a given GemPropertiesEntry instance
-     * and pushes it onto the Lua stack.
-     *
      * @return uint32 id : The ID of the specified GemPropertiesEntry.
      */
     uint32 GetId(GemPropertiesEntry* gempropertiesentry)

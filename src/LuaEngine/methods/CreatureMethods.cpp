@@ -1060,7 +1060,8 @@ namespace LuaCreature
      */
     void AttackStart(Creature* creature, Unit* target)
     {
-        creature->AI()->AttackStart(target);
+        if (creature->IsAIEnabled)
+            creature->AI()->AttackStart(target);
     }
 
     /**

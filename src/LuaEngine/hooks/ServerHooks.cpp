@@ -58,7 +58,14 @@ bool ALE::OnAddonMessage(Player* sender, uint32 type, std::string& msg, Player* 
     else if (group)
         target = sol::make_object(lua, GroupRef(group));
     else if (channel)
-        target = sol::make_object(lua, channel->GetChannelId());
+    {
+        // Same contract as the channel chat hook: built-in channels by id,
+        // custom channels by negated DB id.
+        int32 channelId = channel->IsConstant()
+            ? static_cast<int32>(channel->GetChannelId())
+            : -static_cast<int32>(channel->GetChannelDBId());
+        target = sol::make_object(lua, channelId);
+    }
 
     return CallAllBool(*ServerEventBindings, key, true, sender, type, prefix, content, target);
 }

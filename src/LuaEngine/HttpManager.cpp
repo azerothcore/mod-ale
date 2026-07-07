@@ -167,6 +167,14 @@ void HttpManager::HttpWorkerThread()
                 cli2.set_read_timeout(5, 0); // 5 seconds
                 cli2.set_write_timeout(5, 0); // 5 seconds
                 res = DoRequest(cli2, req, redirectPath);
+
+                if (res.error() != httplib::Error::Success)
+                {
+                    ALE_LOG_ERROR("[ALE]: HTTP request error after redirect: {}", httplib::to_string(res.error()));
+                    FinishRequest(req, -1, "", {});
+                    delete req;
+                    continue;
+                }
             }
 
             FinishRequest(req, res->status, res->body, res->headers);
@@ -235,8 +243,9 @@ void HttpManager::HandleHttpResponses()
 
         LOCK_ALE;
 
-        // Failed requests only come back here to release their callback.
-        if (res->statusCode >= 0 && sALE->HasLuaState())
+        // Failures are delivered too (statusCode -1, empty body), so Lua
+        // callers can tell their request never completed.
+        if (sALE->HasLuaState())
         {
             // The handler receives the headers as a table.
             sol::table headerTable = sALE->lua.create_table();

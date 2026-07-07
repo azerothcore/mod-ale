@@ -223,12 +223,14 @@ namespace LuaGameObject
         sol::state_view lua(s);
         sol::variadic_results results;
 
-        CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
-
-        for (std::size_t i = 0; i + 1 < args.size(); i += 2)
+        // Validate every (entry, amount) pair before touching the DB or the
+        // loot, so an invalid pair cannot abort the call halfway through.
+        std::vector<std::pair<uint32, uint32>> lootItems;
+        for (std::size_t i = 0; i < args.size(); i += 2)
         {
             uint32 entry = args[i].as<uint32>();
-            uint32 amount = args[i + 1].as<uint32>();
+            // A trailing entry without amount gets the documented default (1).
+            uint32 amount = i + 1 < args.size() ? args[i + 1].as<uint32>() : 1;
 
             ItemTemplate const* item_proto = sObjectMgr->GetItemTemplate(entry);
             if (!item_proto)
@@ -237,6 +239,13 @@ namespace LuaGameObject
             if (amount < 1 || (item_proto->MaxCount > 0 && amount > uint32(item_proto->MaxCount)))
                 throw std::runtime_error(Acore::StringFormat("Item entry {} has invalid amount {}", entry, amount));
 
+            lootItems.emplace_back(entry, amount);
+        }
+
+        CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
+
+        for (auto const& [entry, amount] : lootItems)
+        {
             if (Item* item = Item::CreateItem(entry, amount))
             {
                 item->SaveToDB(trans);

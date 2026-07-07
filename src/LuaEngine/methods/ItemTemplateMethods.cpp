@@ -61,6 +61,8 @@ namespace LuaItemTemplate
     std::string GetName(ItemTemplate* itemTemplate, sol::optional<uint32> locale)
     {
         uint32 loc_idx = locale.value_or(LocaleConstant::LOCALE_enUS);
+        if (loc_idx >= TOTAL_LOCALES)
+            throw std::invalid_argument("locale index out of range");
 
         ItemLocale const* itemLocale = sObjectMgr->GetItemLocale(itemTemplate->ItemId);
         std::string name = itemTemplate->Name1;
@@ -196,14 +198,16 @@ namespace LuaItemTemplate
      *
      * @return string itemIcon
      */
-    char const* GetIcon(ItemTemplate* itemTemplate)
+    sol::optional<std::string> GetIcon(ItemTemplate* itemTemplate)
     {
         uint32 display_id = itemTemplate->DisplayInfoID;
 
+        // Custom or broken items can carry a display id with no DBC entry.
         ItemDisplayInfoEntry const* displayInfo = sItemDisplayInfoStore.LookupEntry(display_id);
-        char const* icon = displayInfo->inventoryIcon;
+        if (!displayInfo)
+            return sol::nullopt;
 
-        return icon;
+        return std::string(displayInfo->inventoryIcon);
     }
 }
 

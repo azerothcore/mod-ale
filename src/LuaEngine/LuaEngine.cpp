@@ -97,8 +97,8 @@ void ALE::LoadScriptPaths()
     lua_extensions.clear();
 
     lua_folderpath = ALEConfig::GetInstance().GetScriptPath();
-    std::string const& lua_path_extra = ALEConfig::GetInstance().GetRequirePath();
-    std::string const& lua_cpath_extra = ALEConfig::GetInstance().GetRequireCPath();
+    std::string lua_path_extra(ALEConfig::GetInstance().GetRequirePath());
+    std::string lua_cpath_extra(ALEConfig::GetInstance().GetRequireCPath());
 
 #ifndef ALE_WINDOWS
     if (lua_folderpath[0] == '~')

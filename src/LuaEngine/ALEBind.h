@@ -86,6 +86,7 @@ namespace ALEBind
     template<> struct HandleFor<Unit>        { using type = UnitRef; };
     template<> struct HandleFor<Player>      { using type = PlayerRef; };
     template<> struct HandleFor<Creature>    { using type = CreatureRef; };
+    template<> struct HandleFor<Pet>         { using type = PetRef; };
     template<> struct HandleFor<GameObject>  { using type = GameObjectRef; };
     template<> struct HandleFor<Transport>   { using type = TransportRef; };
     template<> struct HandleFor<Corpse>      { using type = CorpseRef; };

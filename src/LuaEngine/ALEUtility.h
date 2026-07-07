@@ -18,37 +18,10 @@
 #include "Log.h"
 
 typedef QueryResult ALEQuery;
-#define GET_GUID                GetGUID
-#define HIGHGUID_PLAYER         HighGuid::Player
-#define HIGHGUID_UNIT           HighGuid::Unit
-#define HIGHGUID_ITEM           HighGuid::Item
-#define HIGHGUID_GAMEOBJECT     HighGuid::GameObject
-#define HIGHGUID_PET            HighGuid::Pet
-#define HIGHGUID_TRANSPORT      HighGuid::Transport
-#define HIGHGUID_VEHICLE        HighGuid::Vehicle
-#define HIGHGUID_CONTAINER      HighGuid::Container
-#define HIGHGUID_DYNAMICOBJECT  HighGuid::DynamicObject
-#define HIGHGUID_CORPSE         HighGuid::Corpse
-#define HIGHGUID_MO_TRANSPORT   HighGuid::Mo_Transport
-#define HIGHGUID_INSTANCE       HighGuid::Instance
-#define HIGHGUID_GROUP          HighGuid::Group
 
 #define ALE_LOG_INFO(...)     LOG_INFO("ALE", __VA_ARGS__);
 #define ALE_LOG_ERROR(...)    LOG_ERROR("ALE", __VA_ARGS__);
 #define ALE_LOG_DEBUG(...)    LOG_DEBUG("ALE", __VA_ARGS__);
-
-#ifndef MAKE_NEW_GUID
-#define MAKE_NEW_GUID(l, e, h)  ObjectGuid(h, e, l)
-#endif
-#ifndef GUID_ENPART
-#define GUID_ENPART(guid)       ObjectGuid(guid).GetEntry()
-#endif
-#ifndef GUID_LOPART
-#define GUID_LOPART(guid)       ObjectGuid(guid).GetCounter()
-#endif
-#ifndef GUID_HIPART
-#define GUID_HIPART(guid)       ObjectGuid(guid).GetHigh()
-#endif
 
 class Unit;
 class WorldObject;

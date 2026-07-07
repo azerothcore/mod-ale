@@ -10,7 +10,9 @@
 #include "GameObject.h"
 #include "Item.h"
 #include "Object.h"
+#include "Pet.h"
 #include "Player.h"
+#include "Transport.h"
 
 namespace ALEBind
 {
@@ -22,11 +24,21 @@ namespace ALEBind
         if (Player const* player = obj->ToPlayer())
             return sol::make_object(lua, PlayerRef(player));
 
-        if (Creature const* creature = obj->ToCreature())
-            return sol::make_object(lua, CreatureRef(creature));
+        if (Creature* creature = const_cast<Object*>(obj)->ToCreature())
+        {
+            if (Pet const* pet = creature->ToPet())
+                return sol::make_object(lua, PetRef(pet));
 
-        if (GameObject const* go = obj->ToGameObject())
+            return sol::make_object(lua, CreatureRef(creature));
+        }
+
+        if (GameObject* go = const_cast<Object*>(obj)->ToGameObject())
+        {
+            if (Transport const* transport = go->ToTransport())
+                return sol::make_object(lua, TransportRef(transport));
+
             return sol::make_object(lua, GameObjectRef(go));
+        }
 
         if (Corpse const* corpse = obj->ToCorpse())
             return sol::make_object(lua, CorpseRef(corpse));

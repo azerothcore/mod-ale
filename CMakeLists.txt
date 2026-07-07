@@ -27,4 +27,7 @@ target_include_directories(lualib INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/src/lua
 
 # Keep sol runtime safety checks enabled in every build type: script errors must
 # surface as catchable Lua errors, never as undefined behaviour in the server.
-target_compile_definitions(lualib INTERFACE SOL_ALL_SAFETIES_ON=1)
+# SOL_EXCEPTIONS_SAFE_PROPAGATION=0 makes sol catch C++ exceptions at the
+# binding boundary and convert them into regular Lua errors carrying their
+# message; without it LuaJIT swallows them into a generic "C++ exception".
+target_compile_definitions(lualib INTERFACE SOL_ALL_SAFETIES_ON=1 SOL_EXCEPTIONS_SAFE_PROPAGATION=0)

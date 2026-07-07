@@ -55,7 +55,7 @@ public:
 
         uint64 id = ++maxBindingID;
         bindings[key].push_back({ id, shots, std::move(callback) });
-        keysById[id] = key;
+        keysById.emplace(id, key);
         return id;
     }
 

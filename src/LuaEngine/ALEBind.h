@@ -171,8 +171,10 @@ namespace ALEBind
 
     // Converts a native return value to what Lua receives.
     // Game object pointers become handles, nullptr becomes nil.
+    // Always returns by value: the native value is a temporary that dies
+    // before sol converts the result, so a reference here would dangle.
     template<typename R>
-    decltype(auto) ToLua(sol::state_view lua, R&& value)
+    auto ToLua(sol::state_view lua, R&& value)
     {
         using Bare = std::remove_cvref_t<R>;
 
@@ -184,7 +186,7 @@ namespace ALEBind
             return value ? sol::optional<Ref>(Ref(value)) : sol::optional<Ref>(sol::nullopt);
         }
         else
-            return std::forward<R>(value);
+            return Bare(std::forward<R>(value));
     }
 
     // ---------------------------------------------------------------------
@@ -195,7 +197,7 @@ namespace ALEBind
     template<typename R, typename T, typename... Args, typename F>
     auto MakeMethod(F&& fn)
     {
-        return [fn = std::forward<F>(fn)](sol::this_state state, HandleForT<T> const& self, LuaParamT<Args>... args) -> decltype(auto)
+        return [fn = std::forward<F>(fn)](sol::this_state state, HandleForT<T> const& self, LuaParamT<Args>... args)
         {
             T* obj = self.Require();
 
@@ -210,7 +212,7 @@ namespace ALEBind
     template<typename R, typename... Args, typename F>
     auto MakeFunction(F&& fn)
     {
-        return [fn = std::forward<F>(fn)](sol::this_state state, LuaParamT<Args>... args) -> decltype(auto)
+        return [fn = std::forward<F>(fn)](sol::this_state state, LuaParamT<Args>... args)
         {
             if constexpr (std::is_void_v<R>)
                 fn(FromLua<Args>(args)...);

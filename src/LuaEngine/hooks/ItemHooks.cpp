@@ -7,6 +7,7 @@
 #include "Hooks.h"
 #include "LuaEngine.h"
 #include "BindingMap.h"
+#include "Spell.h"
 
 using namespace Hooks;
 

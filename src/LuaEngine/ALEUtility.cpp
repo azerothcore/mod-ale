@@ -27,7 +27,7 @@ ALEUtil::ObjectGUIDCheck::ObjectGUIDCheck(ObjectGuid guid) : _guid(guid)
 
 bool ALEUtil::ObjectGUIDCheck::operator()(WorldObject* object)
 {
-    return object->GET_GUID() == _guid;
+    return object->GetGUID() == _guid;
 }
 
 ALEUtil::ObjectDistanceOrderPred::ObjectDistanceOrderPred(WorldObject const* pRefObj, bool ascending) : m_refObj(pRefObj), m_ascending(ascending)
@@ -59,7 +59,7 @@ bool ALEUtil::WorldObjectInRangeCheck::operator()(WorldObject* u)
         return false;
     if (i_entry && u->GetEntry() != i_entry)
         return false;
-    if (i_obj->GET_GUID() == u->GET_GUID())
+    if (i_obj->GetGUID() == u->GetGUID())
         return false;
     if (!i_obj->IsWithinDistInMap(u, i_range))
         return false;

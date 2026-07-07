@@ -8,8 +8,7 @@
 #define _ALE_CREATURE_AI_H
 
 #include "LuaEngine.h"
-
-struct ScriptedAI;
+#include "ScriptedCreature.h"
 
 struct ALECreatureAI : ScriptedAI
 {

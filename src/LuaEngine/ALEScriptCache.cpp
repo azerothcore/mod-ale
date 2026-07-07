@@ -8,44 +8,65 @@
 #include "ALEConfig.h"
 #include "ALEUtility.h"
 
+#include <filesystem>
 #include <fstream>
 #include <mutex>
-#include <sys/stat.h>
 #include <unordered_map>
 #include <vector>
 
 namespace
 {
+    /*
+     * Identity of a script file's content: sub-second modification time plus
+     * size. Second-level mtime alone would let a script edited twice within
+     * the same second serve stale bytecode.
+     */
+    struct FileStamp
+    {
+        std::filesystem::file_time_type mtime{};
+        uintmax_t size = 0;
+
+        bool operator==(FileStamp const&) const = default;
+        bool IsValid() const { return *this != FileStamp{}; }
+    };
+
     struct CacheEntry
     {
         std::vector<char> bytecode;
-        std::time_t lastModified = 0;
+        FileStamp stamp;
     };
 
     std::unordered_map<std::string, CacheEntry> bytecodeCache;
-    std::unordered_map<std::string, std::time_t> timestampCache;
+    std::unordered_map<std::string, FileStamp> stampCache;
     std::mutex cacheMutex;
 
-    std::time_t GetFileModTime(std::string const& filepath)
+    FileStamp GetFileStamp(std::string const& filepath)
     {
-        struct stat fileInfo;
-        if (stat(filepath.c_str(), &fileInfo) == 0)
-            return fileInfo.st_mtime;
+        std::error_code ec;
+        FileStamp stamp;
 
-        return 0;
+        stamp.mtime = std::filesystem::last_write_time(filepath, ec);
+        if (ec)
+            return {};
+
+        stamp.size = std::filesystem::file_size(filepath, ec);
+        if (ec)
+            return {};
+
+        return stamp;
     }
 
     // Same, but remembers the answer until the next reload so a directory of
     // scripts doesn't stat the same files twice.
-    std::time_t GetFileModTimeCached(std::string const& filepath)
+    FileStamp GetFileStampCached(std::string const& filepath)
     {
-        auto iter = timestampCache.find(filepath);
-        if (iter != timestampCache.end())
+        auto iter = stampCache.find(filepath);
+        if (iter != stampCache.end())
             return iter->second;
 
-        std::time_t modTime = GetFileModTime(filepath);
-        timestampCache[filepath] = modTime;
-        return modTime;
+        FileStamp stamp = GetFileStamp(filepath);
+        stampCache[filepath] = stamp;
+        return stamp;
     }
 
     // Loads `filepath` as a chunk in `lua` without caching:
@@ -94,7 +115,7 @@ namespace
 
         std::lock_guard<std::mutex> guard(cacheMutex);
         CacheEntry& entry = bytecodeCache[filepath];
-        entry.lastModified = GetFileModTime(filepath);
+        entry.stamp = GetFileStamp(filepath);
         entry.bytecode.assign(dumped.as_string_view().begin(), dumped.as_string_view().end());
         return true;
     }
@@ -108,8 +129,8 @@ namespace
         if (iter == bytecodeCache.end() || iter->second.bytecode.empty())
             return sol::protected_function();
 
-        std::time_t modTime = GetFileModTimeCached(filepath);
-        if (modTime == 0 || iter->second.lastModified != modTime)
+        FileStamp stamp = GetFileStampCached(filepath);
+        if (!stamp.IsValid() || iter->second.stamp != stamp)
             return sol::protected_function();
 
         sol::load_result loaded = lua.load(
@@ -176,13 +197,13 @@ namespace ALEScriptCache
     {
         std::lock_guard<std::mutex> guard(cacheMutex);
         bytecodeCache.clear();
-        timestampCache.clear();
+        stampCache.clear();
         ALE_LOG_INFO("[ALE]: Global bytecode cache cleared");
     }
 
     void ClearTimestamps()
     {
         std::lock_guard<std::mutex> guard(cacheMutex);
-        timestampCache.clear();
+        stampCache.clear();
     }
 }

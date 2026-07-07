@@ -195,6 +195,28 @@ Creature* CreatureRef::Require() const
     throw ALEStaleObjectError("Creature");
 }
 
+PetRef::PetRef(Pet const* pet) :
+    CreatureRef(pet)
+{
+}
+
+Pet* PetRef::Resolve() const
+{
+    if (Object* obj = ResolveRaw())
+        if (Unit* unit = obj->ToUnit())
+            return unit->ToPet();
+
+    return nullptr;
+}
+
+Pet* PetRef::Require() const
+{
+    if (Pet* pet = Resolve())
+        return pet;
+
+    throw ALEStaleObjectError("Pet");
+}
+
 GameObjectRef::GameObjectRef(GameObject const* go) :
     WorldObjectRef(go)
 {

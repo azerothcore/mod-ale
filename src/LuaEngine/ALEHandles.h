@@ -19,6 +19,7 @@ class Guild;
 class Item;
 class Map;
 class Object;
+class Pet;
 class Player;
 class Transport;
 class Unit;
@@ -163,6 +164,16 @@ public:
 
     Creature* Resolve() const;
     Creature* Require() const;
+};
+
+class PetRef : public CreatureRef
+{
+public:
+    PetRef() = default;
+    explicit PetRef(Pet const* pet);
+
+    Pet* Resolve() const;
+    Pet* Require() const;
 };
 
 class GameObjectRef : public WorldObjectRef

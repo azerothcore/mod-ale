@@ -2820,74 +2820,113 @@ namespace LuaPlayer
 
         Quest const* quest = eObjectMgr->GetQuestTemplate(entry);
 
-        // If player doesn't have the quest
-        if (!quest || player->GetQuestStatus(entry) == QUEST_STATUS_NONE)
+        // 只处理任务日志中尚未完成的任务，避免重复补物品、金钱和重复完成。
+        // 已完成、失败或不存在直接返回，防止复活过期任务或重复触发完成钩子。
+        if (!quest || player->GetQuestStatus(entry) != QUEST_STATUS_INCOMPLETE)
             return 0;
 
-        // Add quest items for quests that require items
-        for (uint8 x = 0; x < QUEST_ITEM_OBJECTIVES_COUNT; ++x)
+        // 按背包中的缺口补任务物品。领奖校验只查背包，不接受银行中的任务物品。
+        for (uint8 i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
         {
-            uint32 id = quest->RequiredItemId[x];
-            uint32 count = quest->RequiredItemCount[x];
-
-            if (!id || !count)
+            uint32 itemId = quest->RequiredItemId[i];
+            uint32 requiredCount = quest->RequiredItemCount[i];
+            if (!itemId || !requiredCount)
                 continue;
 
-            uint32 curItemCount = player->GetItemCount(id, true);
+            uint32 currentCount = player->GetItemCount(itemId);
+            if (currentCount >= requiredCount)
+                continue;
 
+            uint32 missingCount = requiredCount - currentCount;
             ItemPosCountVec dest;
-            uint8 msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, id, count - curItemCount);
+            uint8 msg = player->CanStoreNewItem(NULL_BAG, NULL_SLOT, dest, itemId, missingCount);
             if (msg == EQUIP_ERR_OK)
             {
-                Item* item = player->StoreNewItem(dest, id, true);
-                player->SendNewItem(item, count - curItemCount, true, false);
+                Item* item = player->StoreNewItem(dest, itemId, true);
+                player->SendNewItem(item, missingCount, true, false);
             }
         }
 
-        // All creature/GO slain/cast (not required, but otherwise it will display "Creature slain 0/10")
+        // 物品补齐过程不会改变任务状态，但保持防御性检查，避免未来扩展时被遗漏。
+        if (player->GetQuestStatus(entry) != QUEST_STATUS_INCOMPLETE)
+            return 0;
+
+        // 按剩余数量补生物和 GO 目标，避免重复调用带来的成就及脚本副作用。
         for (uint8 i = 0; i < QUEST_OBJECTIVES_COUNT; ++i)
         {
-            int32 creature = quest->RequiredNpcOrGo[i];
-            uint32 creatureCount = quest->RequiredNpcOrGoCount[i];
+            int32 objective = quest->RequiredNpcOrGo[i];
+            uint32 requiredCount = quest->RequiredNpcOrGoCount[i];
+            if (!objective || !requiredCount)
+                continue;
 
-            if (creature > 0)
+            uint32 currentCount = player->GetReqKillOrCastCurrentCount(entry, objective);
+            uint32 missingCount = currentCount < requiredCount ? requiredCount - currentCount : 0;
+
+            if (objective > 0)
             {
-                if (CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(creature))
-                    for (uint16 z = 0; z < creatureCount; ++z)
+                if (CreatureTemplate const* creatureInfo = sObjectMgr->GetCreatureTemplate(objective))
+                    for (uint32 count = 0; count < missingCount; ++count)
                         player->KilledMonster(creatureInfo, ObjectGuid::Empty);
             }
-            else if (creature < 0)
-                for (uint16 z = 0; z < creatureCount; ++z)
-                    player->KillCreditGO(creature);
+            else
+            {
+                // RequiredNpcOrGo 以负数表示 GO，原生 KillCreditGO 期望正数 entry。
+                // 通过 int64 中间值取绝对值，消除 INT32_MIN 一元取负的理论未定义行为。
+                uint32 goEntry = static_cast<uint32>(-static_cast<int64>(objective));
+                for (uint32 count = 0; count < missingCount; ++count)
+                    player->KillCreditGO(goEntry);
+            }
         }
 
+        // 补玩家击杀目标；该接口内部会把数量裁剪为实际缺口。
+        if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_PLAYER_KILL))
+            if (uint32 requiredPlayers = quest->GetPlayersSlain())
+                player->KilledPlayerCreditForQuest(requiredPlayers, quest);
 
-        // If the quest requires reputation to complete
-        if (uint32 repFaction = quest->GetRepObjectiveFaction())
+        // 补探索/事件目标。接口内部有状态守卫，任务非 INCOMPLETE 时会自动跳过。
+        if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_EXPLORATION_OR_EVENT))
+            player->AreaExploredOrEventHappens(entry);
+
+        // 补声望目标。
+        // GetRepObjectiveValue() 本身返回 int32，ReputationMgr::GetReputation(uint32) 也返回 int32，比较无符号问题。
+        // SetReputation 的公开重载接受 float，因此显式 static_cast<float>，避免隐式转换警告。
+        // 写法对齐 cs_quest.cpp 的官方实现：先 lookup，再比较，再 set。
+        if (uint32 factionId = quest->GetRepObjectiveFaction())
         {
-            uint32 repValue = quest->GetRepObjectiveValue();
-            uint32 curRep = player->GetReputationMgr().GetReputation(repFaction);
-            if (curRep < repValue)
-                if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(repFaction))
-                    player->GetReputationMgr().SetReputation(factionEntry, repValue);
+            int32 requiredValue = quest->GetRepObjectiveValue();
+            if (player->GetReputationMgr().GetReputation(factionId) < requiredValue)
+            {
+                if (FactionEntry const* faction = sFactionStore.LookupEntry(factionId))
+                    player->GetReputationMgr().SetReputation(faction, static_cast<float>(requiredValue));
+            }
         }
 
-        // If the quest requires a SECOND reputation to complete
-        if (uint32 repFaction = quest->GetRepObjectiveFaction2())
+        if (uint32 factionId = quest->GetRepObjectiveFaction2())
         {
-            uint32 repValue2 = quest->GetRepObjectiveValue2();
-            uint32 curRep = player->GetReputationMgr().GetReputation(repFaction);
-            if (curRep < repValue2)
-                if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(repFaction))
-                    player->GetReputationMgr().SetReputation(factionEntry, repValue2);
+            int32 requiredValue = quest->GetRepObjectiveValue2();
+            if (player->GetReputationMgr().GetReputation(factionId) < requiredValue)
+            {
+                if (FactionEntry const* faction = sFactionStore.LookupEntry(factionId))
+                    player->GetReputationMgr().SetReputation(faction, static_cast<float>(requiredValue));
+            }
         }
 
-        // If the quest requires money
-        int32 ReqOrRewMoney = quest->GetRewOrReqMoney();
-        if (ReqOrRewMoney < 0)
-            player->ModifyMoney(-ReqOrRewMoney);
+        // 按差额补金钱。RewardMoney < 0 表示需要玩家支付的金额。
+        // 通过 int64 中间值取绝对值，消除 INT32_MIN 一元取负的理论未定义行为。
+        int32 requiredMoney = quest->GetRewOrReqMoney(player->GetLevel());
+        if (requiredMoney < 0)
+        {
+            uint32 money = static_cast<uint32>(-static_cast<int64>(requiredMoney));
+            if (player->GetMoney() < money)
+                player->ModifyMoney(money - player->GetMoney());
+        }
 
-        player->CompleteQuest(entry);
+        // 生物/GO、玩家击杀、探索/事件 credit API 都可能在最后一个目标满足时自动调用 CompleteQuest。
+        // 原生 Player::CompleteQuest 并非严格幂等：会触发脚本钩子、Aura 更新、Quest Tracker 写入。
+        // 因此仅在仍未完成时调用一次，避免重复副作用。
+        if (player->GetQuestStatus(entry) == QUEST_STATUS_INCOMPLETE)
+            player->CompleteQuest(entry);
+
         return 0;
     }
 

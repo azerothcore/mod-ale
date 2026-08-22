@@ -2820,12 +2820,12 @@ namespace LuaPlayer
 
         Quest const* quest = eObjectMgr->GetQuestTemplate(entry);
 
-        // 只处理任务日志中尚未完成的任务，避免重复补物品、金钱和重复完成。
-        // 已完成、失败或不存在直接返回，防止复活过期任务或重复触发完成钩子。
+        // Only handle quests that are still incomplete; this also prevents
+        // reviving failed quests and re-triggering completion side effects.
         if (!quest || player->GetQuestStatus(entry) != QUEST_STATUS_INCOMPLETE)
             return 0;
 
-        // 按背包中的缺口补任务物品。领奖校验只查背包，不接受银行中的任务物品。
+        // Fill quest items by the inventory gap; reward validation ignores bank items.
         for (uint8 i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; ++i)
         {
             uint32 itemId = quest->RequiredItemId[i];
@@ -2847,11 +2847,12 @@ namespace LuaPlayer
             }
         }
 
-        // 物品补齐过程不会改变任务状态，但保持防御性检查，避免未来扩展时被遗漏。
+        // Items cannot change quest status, but re-check defensively in case of future changes.
         if (player->GetQuestStatus(entry) != QUEST_STATUS_INCOMPLETE)
             return 0;
 
-        // 按剩余数量补生物和 GO 目标，避免重复调用带来的成就及脚本副作用。
+        // Credit creature/GO objectives by the missing count to avoid duplicate
+        // achievement updates and script hooks on repeated calls.
         for (uint8 i = 0; i < QUEST_OBJECTIVES_COUNT; ++i)
         {
             int32 objective = quest->RequiredNpcOrGo[i];
@@ -2870,27 +2871,25 @@ namespace LuaPlayer
             }
             else
             {
-                // RequiredNpcOrGo 以负数表示 GO，原生 KillCreditGO 期望正数 entry。
-                // 通过 int64 中间值取绝对值，消除 INT32_MIN 一元取负的理论未定义行为。
+                // RequiredNpcOrGo stores GO entries as negative values; KillCreditGO
+                // expects a positive entry. Negate via int64 to avoid UB on INT32_MIN.
                 uint32 goEntry = static_cast<uint32>(-static_cast<int64>(objective));
                 for (uint32 count = 0; count < missingCount; ++count)
                     player->KillCreditGO(goEntry);
             }
         }
 
-        // 补玩家击杀目标；该接口内部会把数量裁剪为实际缺口。
+        // Player kill objective; the API itself clamps to the actual missing count.
         if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_PLAYER_KILL))
             if (uint32 requiredPlayers = quest->GetPlayersSlain())
                 player->KilledPlayerCreditForQuest(requiredPlayers, quest);
 
-        // 补探索/事件目标。接口内部有状态守卫，任务非 INCOMPLETE 时会自动跳过。
+        // Exploration/event objective; the API skips it unless the quest is incomplete.
         if (quest->HasSpecialFlag(QUEST_SPECIAL_FLAGS_EXPLORATION_OR_EVENT))
             player->AreaExploredOrEventHappens(entry);
 
-        // 补声望目标。
-        // GetRepObjectiveValue() 本身返回 int32，ReputationMgr::GetReputation(uint32) 也返回 int32，比较无符号问题。
-        // SetReputation 的公开重载接受 float，因此显式 static_cast<float>，避免隐式转换警告。
-        // 写法对齐 cs_quest.cpp 的官方实现：先 lookup，再比较，再 set。
+        // Reputation objectives (mirrors cs_quest.cpp): compare as int32 and
+        // cast to float for SetReputation.
         if (uint32 factionId = quest->GetRepObjectiveFaction())
         {
             int32 requiredValue = quest->GetRepObjectiveValue();
@@ -2911,8 +2910,8 @@ namespace LuaPlayer
             }
         }
 
-        // 按差额补金钱。RewardMoney < 0 表示需要玩家支付的金额。
-        // 通过 int64 中间值取绝对值，消除 INT32_MIN 一元取负的理论未定义行为。
+        // Fill the money requirement by the gap; a negative value means money the
+        // player must pay. Negate via int64 to avoid UB on INT32_MIN.
         int32 requiredMoney = quest->GetRewOrReqMoney(player->GetLevel());
         if (requiredMoney < 0)
         {
@@ -2921,9 +2920,9 @@ namespace LuaPlayer
                 player->ModifyMoney(money - player->GetMoney());
         }
 
-        // 生物/GO、玩家击杀、探索/事件 credit API 都可能在最后一个目标满足时自动调用 CompleteQuest。
-        // 原生 Player::CompleteQuest 并非严格幂等：会触发脚本钩子、Aura 更新、Quest Tracker 写入。
-        // 因此仅在仍未完成时调用一次，避免重复副作用。
+        // Credit APIs may auto-complete the quest when the last objective is satisfied,
+        // and Player::CompleteQuest is not idempotent (script hooks, aura updates,
+        // quest tracker). Call it only once while the quest is still incomplete.
         if (player->GetQuestStatus(entry) == QUEST_STATUS_INCOMPLETE)
             player->CompleteQuest(entry);
 

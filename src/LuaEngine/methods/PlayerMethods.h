@@ -3561,8 +3561,19 @@ namespace LuaPlayer
         uint32 glyphId = ALE::CHECKVAL<uint32>(L, 2);
         uint32 slotIndex = ALE::CHECKVAL<uint32>(L, 3);
 
+        // Remove the effect of the old glyph if it exists
+        uint32 oldGlyphId = player->GetGlyph(slotIndex);
+        if (oldGlyphId)
+            if (GlyphPropertiesEntry const* oldEntry = sGlyphPropertiesStore.LookupEntry(oldGlyphId))
+                player->RemoveAurasDueToSpell(oldEntry->SpellId);
+
         player->SetGlyph(slotIndex, glyphId, true);
         player->SendTalentsInfoData(false); // Also handles GlyphData
+
+        // Apply the effect of the new glyph if it exists
+        if (glyphId)
+            if (GlyphPropertiesEntry const* glyphEntry = sGlyphPropertiesStore.LookupEntry(glyphId))
+                player->CastSpell(player, glyphEntry->SpellId, TriggerCastFlags(TRIGGERED_FULL_MASK & ~(TRIGGERED_IGNORE_SHAPESHIFT | TRIGGERED_IGNORE_CASTER_AURASTATE)));
 
         return 0;
     }
@@ -3601,6 +3612,17 @@ namespace LuaPlayer
         bool sickness = ALE::CHECKVAL<bool>(L, 3, false);
         player->ResurrectPlayer(percent, sickness);
         player->SpawnCorpseBones();
+        return 0;
+    }
+
+    /**
+     * Teleports the [Player] to the most appropriate graveyard.
+     *
+     * The graveyard is selected using the [Player]'s corpse location.
+     */
+    int RepopAtGraveyard(lua_State* /*L*/, Player* player)
+    {
+        player->RepopAtGraveyard();
         return 0;
     }
 

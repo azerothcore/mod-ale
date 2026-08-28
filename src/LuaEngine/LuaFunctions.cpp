@@ -1086,9 +1086,6 @@ ALERegister<RandomPlayerbotMgr> RandomPlayerbotMgrMethods[] =
     { "CheckBgQueue", &LuaRandomPlayerBotMgr::CheckBgQueue },
     { "CheckLfgQueue", &LuaRandomPlayerBotMgr::CheckLfgQueue },
     { "CheckPlayers", &LuaRandomPlayerBotMgr::CheckPlayers },
-    { "PrintStats", &LuaRandomPlayerBotMgr::PrintStats },
-    { "LogBattlegroundInfo", &LuaRandomPlayerBotMgr::LogBattlegroundInfo },
-    { "LogPlayerLocation", &LuaRandomPlayerBotMgr::LogPlayerLocation },
 
     { NULL, NULL }
 };

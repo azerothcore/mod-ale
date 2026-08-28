@@ -667,33 +667,6 @@ namespace LuaRandomPlayerBotMgr
         mgr->CheckPlayers();
         return 0;
     }
-
-    /**
-     * Writes the random bot statistics to the server log.
-     */
-    int PrintStats(lua_State* /*L*/, RandomPlayerbotMgr* mgr)
-    {
-        mgr->PrintStats();
-        return 0;
-    }
-
-    /**
-     * Writes the battleground statistics to the server log.
-     */
-    int LogBattlegroundInfo(lua_State* /*L*/, RandomPlayerbotMgr* mgr)
-    {
-        mgr->LogBattlegroundInfo();
-        return 0;
-    }
-
-    /**
-     * Writes the location of every random bot to the server log.
-     */
-    int LogPlayerLocation(lua_State* /*L*/, RandomPlayerbotMgr* mgr)
-    {
-        mgr->LogPlayerLocation();
-        return 0;
-    }
 };
 
 namespace LuaRandomPlayerBotMgrGlobal

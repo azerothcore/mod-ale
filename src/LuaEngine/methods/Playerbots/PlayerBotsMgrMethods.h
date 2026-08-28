@@ -27,6 +27,19 @@ namespace LuaPlayerBotsMgr
     }
 
     /**
+     * Returns the [PlayerbotMgr] of the given [Player], or `nil` when it owns no bots.
+     *
+     * @param [Player] player
+     * @return [PlayerbotMgr] playerbotMgr
+     */
+    int GetPlayerbotMgr(lua_State* L, PlayerbotsMgr* mgr)
+    {
+        Player* player = ALE::CHECKOBJ<Player>(L, 2);
+        ALE::Push(L, mgr->GetPlayerbotMgr(player));
+        return 1;
+    }
+
+    /**
      * Attaches playerbot data to the given [Player].
      *
      * This is bot lifetime management normally driven by the module itself. Calling

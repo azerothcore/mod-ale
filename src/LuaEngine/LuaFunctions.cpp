@@ -26,6 +26,9 @@ extern "C"
 #include "Playerbots/PlayerBotAIMethods.h"
 #include "Playerbots/PlayerBotsMgrMethods.h"
 #include "Playerbots/RandomPlayerBotMgrMethods.h"
+#include "Playerbots/PlayerBotHolderMethods.h"
+#include "Playerbots/PlayerBotMgrMethods.h"
+#include "Playerbots/PlayerBotFactoryMethods.h"
 #include "CreatureMethods.h"
 #include "GroupMethods.h"
 #include "GuildMethods.h"
@@ -59,6 +62,7 @@ luaL_Reg GlobalMethods[] =
 #ifdef MOD_PLAYERBOTS
     { "GetPlayerbotsMgr", &LuaPlayerBotsMgrGlobal::GetPlayerbotsMgr },
     { "GetRandomPlayerbotMgr", &LuaRandomPlayerBotMgrGlobal::GetRandomPlayerbotMgr },
+    { "CreatePlayerbotFactory", &LuaPlayerBotFactoryGlobal::CreatePlayerbotFactory },
 #endif
 
     // Hooks
@@ -1084,6 +1088,81 @@ ALERegister<RandomPlayerbotMgr> RandomPlayerbotMgrMethods[] =
     { "PrintStats", &LuaRandomPlayerBotMgr::PrintStats },
     { "LogBattlegroundInfo", &LuaRandomPlayerBotMgr::LogBattlegroundInfo },
     { "LogPlayerLocation", &LuaRandomPlayerBotMgr::LogPlayerLocation },
+
+    { NULL, NULL }
+};
+
+ALERegister<PlayerbotHolder> PlayerbotHolderMethods[] =
+{
+    { "GetPlayerbotsCount", &LuaPlayerBotHolder::GetPlayerbotsCount },
+    { "GetPlayerbotsCountByClass", &LuaPlayerBotHolder::GetPlayerbotsCountByClass },
+    { "GetPlayerBots", &LuaPlayerBotHolder::GetPlayerBots },
+    { "GetPlayerBot", &LuaPlayerBotHolder::GetPlayerBot },
+    { "AddPlayerBot", &LuaPlayerBotHolder::AddPlayerBot },
+    { "LogoutPlayerBot", &LuaPlayerBotHolder::LogoutPlayerBot },
+    { "LogoutAllBots", &LuaPlayerBotHolder::LogoutAllBots },
+    { "DisablePlayerBot", &LuaPlayerBotHolder::DisablePlayerBot },
+    { "RemoveFromPlayerbotsMap", &LuaPlayerBotHolder::RemoveFromPlayerbotsMap },
+    { "IsAccountLinked", &LuaPlayerBotHolder::IsAccountLinked },
+    { "ListBots", &LuaPlayerBotHolder::ListBots },
+    { "LookupBots", &LuaPlayerBotHolder::LookupBots },
+
+    { NULL, NULL }
+};
+
+ALERegister<PlayerbotMgr> PlayerbotMgrMethods[] =
+{
+    { "GetMaster", &LuaPlayerBotMgr::GetMaster },
+    { "HandleCommand", &LuaPlayerBotMgr::HandleCommand },
+    { "CancelLogout", &LuaPlayerBotMgr::CancelLogout },
+    { "TellError", &LuaPlayerBotMgr::TellError },
+    { "SaveToDB", &LuaPlayerBotMgr::SaveToDB },
+    { "HandleSetSecurityKeyCommand", &LuaPlayerBotMgr::HandleSetSecurityKeyCommand },
+    { "HandleLinkAccountCommand", &LuaPlayerBotMgr::HandleLinkAccountCommand },
+    { "HandleUnlinkAccountCommand", &LuaPlayerBotMgr::HandleUnlinkAccountCommand },
+    { "HandleViewLinkedAccountsCommand", &LuaPlayerBotMgr::HandleViewLinkedAccountsCommand },
+    { "HandlePlayerbotMgrCommand", &LuaPlayerBotMgr::HandlePlayerbotMgrCommand },
+
+    { NULL, NULL }
+};
+
+ALERegister<PlayerbotFactory> PlayerbotFactoryMethods[] =
+{
+    { "Randomize", &LuaPlayerBotFactory::Randomize },
+    { "Refresh", &LuaPlayerBotFactory::Refresh },
+    { "ClearEverything", &LuaPlayerBotFactory::ClearEverything },
+    { "InitSkills", &LuaPlayerBotFactory::InitSkills },
+    { "InitTalentsTree", &LuaPlayerBotFactory::InitTalentsTree },
+    { "InitAvailableSpells", &LuaPlayerBotFactory::InitAvailableSpells },
+    { "InitClassSpells", &LuaPlayerBotFactory::InitClassSpells },
+    { "InitSpecialSpells", &LuaPlayerBotFactory::InitSpecialSpells },
+    { "InitEquipment", &LuaPlayerBotFactory::InitEquipment },
+    { "ApplyEnchantAndGems", &LuaPlayerBotFactory::ApplyEnchantAndGems },
+    { "InitBags", &LuaPlayerBotFactory::InitBags },
+    { "InitPet", &LuaPlayerBotFactory::InitPet },
+    { "InitPetTalents", &LuaPlayerBotFactory::InitPetTalents },
+    { "InitAmmo", &LuaPlayerBotFactory::InitAmmo },
+    { "InitGlyphs", &LuaPlayerBotFactory::InitGlyphs },
+    { "CleanupConsumables", &LuaPlayerBotFactory::CleanupConsumables },
+    { "InitReagents", &LuaPlayerBotFactory::InitReagents },
+    { "InitConsumables", &LuaPlayerBotFactory::InitConsumables },
+    { "InitPotions", &LuaPlayerBotFactory::InitPotions },
+    { "InitFood", &LuaPlayerBotFactory::InitFood },
+    { "InitMounts", &LuaPlayerBotFactory::InitMounts },
+    { "InitKeyring", &LuaPlayerBotFactory::InitKeyring },
+    { "InitReputation", &LuaPlayerBotFactory::InitReputation },
+    { "InitInstanceQuests", &LuaPlayerBotFactory::InitInstanceQuests },
+    { "InitAttunementQuests", &LuaPlayerBotFactory::InitAttunementQuests },
+    { "InitGuild", &LuaPlayerBotFactory::InitGuild },
+    { "UnbindInstance", &LuaPlayerBotFactory::UnbindInstance },
+    { "GetRandomBot", &LuaPlayerBotFactory::GetRandomBot },
+    { "Init", &LuaPlayerBotFactory::Init },
+    { "CalculateEnchantScore", &LuaPlayerBotFactory::CalculateEnchantScore },
+    { "CalcMixedGearScore", &LuaPlayerBotFactory::CalcMixedGearScore },
+    { "InitTalentsBySpecNo", &LuaPlayerBotFactory::InitTalentsBySpecNo },
+    { "InitTalentsByParsedSpecLink", &LuaPlayerBotFactory::InitTalentsByParsedSpecLink },
+    { "DestroyEquippedGear", &LuaPlayerBotFactory::DestroyEquippedGear },
+    { "AutoGear", &LuaPlayerBotFactory::AutoGear },
 
     { NULL, NULL }
 };
@@ -2155,7 +2234,15 @@ void RegisterFunctions(ALE* E)
     ALETemplate<PlayerbotsMgr>::SetMethods(E, PlayerbotsMgrMethods);
 
     ALETemplate<RandomPlayerbotMgr>::Register(E, "RandomPlayerbotMgr");
+    ALETemplate<RandomPlayerbotMgr>::SetMethods(E, PlayerbotHolderMethods);
     ALETemplate<RandomPlayerbotMgr>::SetMethods(E, RandomPlayerbotMgrMethods);
+
+    ALETemplate<PlayerbotMgr>::Register(E, "PlayerbotMgr");
+    ALETemplate<PlayerbotMgr>::SetMethods(E, PlayerbotHolderMethods);
+    ALETemplate<PlayerbotMgr>::SetMethods(E, PlayerbotMgrMethods);
+
+    ALETemplate<PlayerbotFactory>::Register(E, "PlayerbotFactory", true);
+    ALETemplate<PlayerbotFactory>::SetMethods(E, PlayerbotFactoryMethods);
 #endif
 
     ALETemplate<Creature>::Register(E, "Creature");

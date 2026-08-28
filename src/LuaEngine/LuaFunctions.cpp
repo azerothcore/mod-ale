@@ -22,6 +22,10 @@ extern "C"
 #include "WorldObjectMethods.h"
 #include "UnitMethods.h"
 #include "PlayerMethods.h"
+#include "Playerbots/PlayerBotMethods.h"
+#include "Playerbots/PlayerBotAIMethods.h"
+#include "Playerbots/PlayerBotsMgrMethods.h"
+#include "Playerbots/RandomPlayerBotMgrMethods.h"
 #include "CreatureMethods.h"
 #include "GroupMethods.h"
 #include "GuildMethods.h"
@@ -52,6 +56,11 @@ extern "C"
 
 luaL_Reg GlobalMethods[] =
 {
+#ifdef MOD_PLAYERBOTS
+    { "GetPlayerbotsMgr", &LuaPlayerBotsMgrGlobal::GetPlayerbotsMgr },
+    { "GetRandomPlayerbotMgr", &LuaRandomPlayerBotMgrGlobal::GetRandomPlayerbotMgr },
+#endif
+
     // Hooks
     { "RegisterPacketEvent", &LuaGlobalFunctions::RegisterPacketEvent },
     { "RegisterServerEvent", &LuaGlobalFunctions::RegisterServerEvent },
@@ -848,8 +857,237 @@ ALERegister<Player> PlayerMethods[] =
     { "SetCreationTime", &LuaPlayer::SetCreationTime },
     { "ApplyRatingMod", &LuaPlayer::ApplyRatingMod },
 
+#ifdef MOD_PLAYERBOTS
+    { "IsPlayerbot", &LuaPlayerBot::IsPlayerbot },
+    { "GetBotAI", &LuaPlayerBot::GetBotAI },
+    { "IsRealPlayer", &LuaPlayerBot::IsRealPlayer },
+    { "IsSelfBot", &LuaPlayerBot::IsSelfBot },
+    { "IsRandomBot", &LuaPlayerBot::IsRandomBot },
+    { "IsAddclassBot", &LuaPlayerBot::IsAddclassBot },
+    { "IsAltBot", &LuaPlayerBot::IsAltBot },
+
+    { "IsTank", &LuaPlayerBot::IsTank },
+    { "IsHealer", &LuaPlayerBot::IsHealer },
+    { "IsDps", &LuaPlayerBot::IsDps },
+    { "IsRanged", &LuaPlayerBot::IsRanged },
+    { "IsMelee", &LuaPlayerBot::IsMelee },
+    { "IsCaster", &LuaPlayerBot::IsCaster },
+    { "IsRangedDps", &LuaPlayerBot::IsRangedDps },
+    { "IsCombo", &LuaPlayerBot::IsCombo },
+
+    { "IsMainTank", &LuaPlayerBot::IsMainTank },
+    { "IsExplicitMainTank", &LuaPlayerBot::IsExplicitMainTank },
+    { "IsAssistTank", &LuaPlayerBot::IsAssistTank },
+    { "GetAssistTankIndex", &LuaPlayerBot::GetAssistTankIndex },
+    { "GetGroupTankCount", &LuaPlayerBot::GetGroupTankCount },
+    { "GetGroupMainTankGUID", &LuaPlayerBot::GetGroupMainTankGUID },
+
+    { "GetMixedGearScore", &LuaPlayerBot::GetMixedGearScore },
+#endif
+
     { NULL, NULL }
 };
+
+#ifdef MOD_PLAYERBOTS
+ALERegister<PlayerbotAI> PlayerbotAIMethods[] =
+{
+    { "GetBot", &LuaPlayerBotAI::GetBot },
+    { "GetMaster", &LuaPlayerBotAI::GetMaster },
+    { "SetMaster", &LuaPlayerBotAI::SetMaster },
+    { "FindNewMaster", &LuaPlayerBotAI::FindNewMaster },
+    { "GetGroupLeader", &LuaPlayerBotAI::GetGroupLeader },
+    { "HasGameClientMaster", &LuaPlayerBotAI::HasGameClientMaster },
+    { "GetFixedBotNumber", &LuaPlayerBotAI::GetFixedBotNumber },
+    { "GetGrouperType", &LuaPlayerBotAI::GetGrouperType },
+    { "GetGuilderType", &LuaPlayerBotAI::GetGuilderType },
+    { "GetState", &LuaPlayerBotAI::GetState },
+    { "ChangeEngine", &LuaPlayerBotAI::ChangeEngine },
+    { "ChangeEngineOnCombat", &LuaPlayerBotAI::ChangeEngineOnCombat },
+    { "ChangeEngineOnNonCombat", &LuaPlayerBotAI::ChangeEngineOnNonCombat },
+    { "ReInitCurrentEngine", &LuaPlayerBotAI::ReInitCurrentEngine },
+    { "Reset", &LuaPlayerBotAI::Reset },
+    { "DoNextAction", &LuaPlayerBotAI::DoNextAction },
+    { "DoSpecificAction", &LuaPlayerBotAI::DoSpecificAction },
+    { "HandleRemoteCommand", &LuaPlayerBotAI::HandleRemoteCommand },
+    { "HandleCommand", &LuaPlayerBotAI::HandleCommand },
+    { "IsAllowedCommand", &LuaPlayerBotAI::IsAllowedCommand },
+    { "GetReactDelay", &LuaPlayerBotAI::GetReactDelay },
+    { "GetStrategies", &LuaPlayerBotAI::GetStrategies },
+    { "HasStrategy", &LuaPlayerBotAI::HasStrategy },
+    { "ChangeStrategy", &LuaPlayerBotAI::ChangeStrategy },
+    { "ClearStrategies", &LuaPlayerBotAI::ClearStrategies },
+    { "SelectiveResetStrategies", &LuaPlayerBotAI::SelectiveResetStrategies },
+    { "ResetStrategies", &LuaPlayerBotAI::ResetStrategies },
+    { "ApplyInstanceStrategies", &LuaPlayerBotAI::ApplyInstanceStrategies },
+    { "ContainsStrategy", &LuaPlayerBotAI::ContainsStrategy },
+    { "EvaluateHealerDpsStrategy", &LuaPlayerBotAI::EvaluateHealerDpsStrategy },
+    { "LeaveOrDisbandGroup", &LuaPlayerBotAI::LeaveOrDisbandGroup },
+    { "GetAllPlayersInGroup", &LuaPlayerBotAI::GetAllPlayersInGroup },
+    { "GetRealPlayersInGroup", &LuaPlayerBotAI::GetRealPlayersInGroup },
+    { "GetNearGroupMemberCount", &LuaPlayerBotAI::GetNearGroupMemberCount },
+    { "HasPlayerNearby", &LuaPlayerBotAI::HasPlayerNearby },
+    { "GetGroupSlotIndex", &LuaPlayerBotAI::GetGroupSlotIndex },
+    { "GetMeleeIndex", &LuaPlayerBotAI::GetMeleeIndex },
+    { "GetRangedIndex", &LuaPlayerBotAI::GetRangedIndex },
+    { "GetRangedDpsIndex", &LuaPlayerBotAI::GetRangedDpsIndex },
+    { "GetClassIndex", &LuaPlayerBotAI::GetClassIndex },
+    { "TellMaster", &LuaPlayerBotAI::TellMaster },
+    { "TellMasterNoFacing", &LuaPlayerBotAI::TellMasterNoFacing },
+    { "TellError", &LuaPlayerBotAI::TellError },
+    { "Say", &LuaPlayerBotAI::Say },
+    { "Yell", &LuaPlayerBotAI::Yell },
+    { "Whisper", &LuaPlayerBotAI::Whisper },
+    { "SayToGuild", &LuaPlayerBotAI::SayToGuild },
+    { "SayToParty", &LuaPlayerBotAI::SayToParty },
+    { "SayToRaid", &LuaPlayerBotAI::SayToRaid },
+    { "SayToWorld", &LuaPlayerBotAI::SayToWorld },
+    { "PlaySound", &LuaPlayerBotAI::PlaySound },
+    { "PlayEmote", &LuaPlayerBotAI::PlayEmote },
+    { "Ping", &LuaPlayerBotAI::Ping },
+    { "CanCastSpell", &LuaPlayerBotAI::CanCastSpell },
+    { "CastSpell", &LuaPlayerBotAI::CastSpell },
+    { "InterruptSpell", &LuaPlayerBotAI::InterruptSpell },
+    { "RequestSpellInterrupt", &LuaPlayerBotAI::RequestSpellInterrupt },
+    { "SpellInterrupted", &LuaPlayerBotAI::SpellInterrupted },
+    { "GetGlobalCooldown", &LuaPlayerBotAI::GetGlobalCooldown },
+    { "HasAura", &LuaPlayerBotAI::HasAura },
+    { "HasAuraToDispel", &LuaPlayerBotAI::HasAuraToDispel },
+    { "IsInterruptableSpellCasting", &LuaPlayerBotAI::IsInterruptableSpellCasting },
+    { "RemoveShapeshift", &LuaPlayerBotAI::RemoveShapeshift },
+    { "HasAggro", &LuaPlayerBotAI::HasAggro },
+    { "IsMovementImpaired", &LuaPlayerBotAI::IsMovementImpaired },
+    { "GetRange", &LuaPlayerBotAI::GetRange },
+    { "HasTargetExclusions", &LuaPlayerBotAI::HasTargetExclusions },
+    { "GetEquipGearScore", &LuaPlayerBotAI::GetEquipGearScore },
+    { "GetInventoryItems", &LuaPlayerBotAI::GetInventoryItems },
+    { "GetInventoryItemsCount", &LuaPlayerBotAI::GetInventoryItemsCount },
+    { "HasItemInInventory", &LuaPlayerBotAI::HasItemInInventory },
+    { "FindPoison", &LuaPlayerBotAI::FindPoison },
+    { "FindAmmo", &LuaPlayerBotAI::FindAmmo },
+    { "FindBandage", &LuaPlayerBotAI::FindBandage },
+    { "FindOpenableItem", &LuaPlayerBotAI::FindOpenableItem },
+    { "FindLockedItem", &LuaPlayerBotAI::FindLockedItem },
+    { "FindConsumable", &LuaPlayerBotAI::FindConsumable },
+    { "FindStoneFor", &LuaPlayerBotAI::FindStoneFor },
+    { "FindOilFor", &LuaPlayerBotAI::FindOilFor },
+    { "ImbueItem", &LuaPlayerBotAI::ImbueItem },
+    { "EnchantItemT", &LuaPlayerBotAI::EnchantItemT },
+    { "GetQuestIds", &LuaPlayerBotAI::GetQuestIds },
+    { "GetIncompleteQuestIds", &LuaPlayerBotAI::GetIncompleteQuestIds },
+    { "IsActivityAllowed", &LuaPlayerBotAI::IsActivityAllowed },
+    { "IsActive", &LuaPlayerBotAI::IsActive },
+    { "AutoScaleActivity", &LuaPlayerBotAI::AutoScaleActivity },
+    { "HasCheat", &LuaPlayerBotAI::HasCheat },
+    { "GetCheat", &LuaPlayerBotAI::GetCheat },
+    { "SetCheat", &LuaPlayerBotAI::SetCheat },
+    { "CanMove", &LuaPlayerBotAI::CanMove },
+    { "IsInNonRaidDungeon", &LuaPlayerBotAI::IsInNonRaidDungeon },
+    { "IsInRealGuild", &LuaPlayerBotAI::IsInRealGuild },
+    { "IsOpposing", &LuaPlayerBotAI::IsOpposing },
+    { "IsSafe", &LuaPlayerBotAI::IsSafe },
+    { "GetCurrentAreaName", &LuaPlayerBotAI::GetCurrentAreaName },
+    { "GetCurrentZoneName", &LuaPlayerBotAI::GetCurrentZoneName },
+    { "GetUnit", &LuaPlayerBotAI::GetUnit },
+    { "GetCreature", &LuaPlayerBotAI::GetCreature },
+    { "GetPlayer", &LuaPlayerBotAI::GetPlayer },
+    { "GetGameObject", &LuaPlayerBotAI::GetGameObject },
+    { "GetJumpDestination", &LuaPlayerBotAI::GetJumpDestination },
+    { "SetJumpDestination", &LuaPlayerBotAI::SetJumpDestination },
+    { "ResetJumpDestination", &LuaPlayerBotAI::ResetJumpDestination },
+    { "PetFollow", &LuaPlayerBotAI::PetFollow },
+    { "GetAura", &LuaPlayerBotAI::GetAura },
+    { "GetWorldObject", &LuaPlayerBotAI::GetWorldObject },
+    { "GetQuests", &LuaPlayerBotAI::GetQuests },
+    { "GetQuestsRequiringItem", &LuaPlayerBotAI::GetQuestsRequiringItem },
+    { "GetLocalizedCreatureName", &LuaPlayerBotAI::GetLocalizedCreatureName },
+    { "GetLocalizedGameObjectName", &LuaPlayerBotAI::GetLocalizedGameObjectName },
+    { "SayToChannel", &LuaPlayerBotAI::SayToChannel },
+    { "GetChatChannelSource", &LuaPlayerBotAI::GetChatChannelSource },
+    { "IsInVehicle", &LuaPlayerBotAI::IsInVehicle },
+    { "CanCastVehicleSpell", &LuaPlayerBotAI::CanCastVehicleSpell },
+    { "CastVehicleSpell", &LuaPlayerBotAI::CastVehicleSpell },
+    { "IsBotMainTank", &LuaPlayerBotAI::IsBotMainTank },
+    { "IsAssistTankOfIndex", &LuaPlayerBotAI::IsAssistTankOfIndex },
+    { "IsAssistHealOfIndex", &LuaPlayerBotAI::IsAssistHealOfIndex },
+    { "IsAssistRangedDpsOfIndex", &LuaPlayerBotAI::IsAssistRangedDpsOfIndex },
+    { "CanDispel", &LuaPlayerBotAI::CanDispel },
+    { "CanEquipItem", &LuaPlayerBotAI::CanEquipItem },
+    { "FindEquipSlot", &LuaPlayerBotAI::FindEquipSlot },
+    { "AllowActive", &LuaPlayerBotAI::AllowActive },
+    { "StarterLevelDistanceCheck", &LuaPlayerBotAI::StarterLevelDistanceCheck },
+    { "EqualLowercaseName", &LuaPlayerBotAI::EqualLowercaseName },
+    { "IsHealingSpell", &LuaPlayerBotAI::IsHealingSpell },
+    { "Class2SpellFamilyName", &LuaPlayerBotAI::Class2SpellFamilyName },
+    { "GetItemScoreMultiplier", &LuaPlayerBotAI::GetItemScoreMultiplier },
+
+    { NULL, NULL }
+};
+
+ALERegister<PlayerbotsMgr> PlayerbotsMgrMethods[] =
+{
+    { "GetPlayerbotAI", &LuaPlayerBotsMgr::GetPlayerbotAI },
+    { "AddPlayerbotData", &LuaPlayerBotsMgr::AddPlayerbotData },
+    { "RemovePlayerbotData", &LuaPlayerBotsMgr::RemovePlayerbotData },
+
+    { NULL, NULL }
+};
+
+ALERegister<RandomPlayerbotMgr> RandomPlayerbotMgrMethods[] =
+{
+    { "IsRandomBot", &LuaRandomPlayerBotMgr::IsRandomBot },
+    { "IsAddclassBot", &LuaRandomPlayerBotMgr::IsAddclassBot },
+    { "Randomize", &LuaRandomPlayerBotMgr::Randomize },
+    { "RandomizeFirst", &LuaRandomPlayerBotMgr::RandomizeFirst },
+    { "RandomizeMin", &LuaRandomPlayerBotMgr::RandomizeMin },
+    { "Clear", &LuaRandomPlayerBotMgr::Clear },
+    { "Refresh", &LuaRandomPlayerBotMgr::Refresh },
+    { "IncreaseLevel", &LuaRandomPlayerBotMgr::IncreaseLevel },
+    { "Revive", &LuaRandomPlayerBotMgr::Revive },
+    { "Remove", &LuaRandomPlayerBotMgr::Remove },
+    { "ProcessBot", &LuaRandomPlayerBotMgr::ProcessBot },
+    { "RandomTeleportForLevel", &LuaRandomPlayerBotMgr::RandomTeleportForLevel },
+    { "RandomTeleportGrindForLevel", &LuaRandomPlayerBotMgr::RandomTeleportGrindForLevel },
+    { "RandomTeleportForRpg", &LuaRandomPlayerBotMgr::RandomTeleportForRpg },
+    { "ScheduleTeleport", &LuaRandomPlayerBotMgr::ScheduleTeleport },
+    { "ScheduleChangeStrategy", &LuaRandomPlayerBotMgr::ScheduleChangeStrategy },
+    { "ChangeStrategy", &LuaRandomPlayerBotMgr::ChangeStrategy },
+    { "ChangeStrategyOnce", &LuaRandomPlayerBotMgr::ChangeStrategyOnce },
+    { "HandleCommand", &LuaRandomPlayerBotMgr::HandleCommand },
+    { "HandleRemoteCommand", &LuaRandomPlayerBotMgr::HandleRemoteCommand },
+    { "GetRandomPlayer", &LuaRandomPlayerBotMgr::GetRandomPlayer },
+    { "GetPlayers", &LuaRandomPlayerBotMgr::GetPlayers },
+    { "GetAllBots", &LuaRandomPlayerBotMgr::GetAllBots },
+    { "GetActiveBotsCount", &LuaRandomPlayerBotMgr::GetActiveBotsCount },
+    { "GetMaxAllowedBotCount", &LuaRandomPlayerBotMgr::GetMaxAllowedBotCount },
+    { "GetBuyMultiplier", &LuaRandomPlayerBotMgr::GetBuyMultiplier },
+    { "GetSellMultiplier", &LuaRandomPlayerBotMgr::GetSellMultiplier },
+    { "GetTradeDiscount", &LuaRandomPlayerBotMgr::GetTradeDiscount },
+    { "SetTradeDiscount", &LuaRandomPlayerBotMgr::SetTradeDiscount },
+    { "AddTradeDiscount", &LuaRandomPlayerBotMgr::AddTradeDiscount },
+    { "GetValue", &LuaRandomPlayerBotMgr::GetValue },
+    { "GetData", &LuaRandomPlayerBotMgr::GetData },
+    { "SetValue", &LuaRandomPlayerBotMgr::SetValue },
+    { "IsSpecPvp", &LuaRandomPlayerBotMgr::IsSpecPvp },
+    { "GetBattleMasterGUID", &LuaRandomPlayerBotMgr::GetBattleMasterGUID },
+    { "GetActivityMod", &LuaRandomPlayerBotMgr::GetActivityMod },
+    { "GetActivityPercentage", &LuaRandomPlayerBotMgr::GetActivityPercentage },
+    { "SetActivityPercentage", &LuaRandomPlayerBotMgr::SetActivityPercentage },
+    { "GetTeamClassIdx", &LuaRandomPlayerBotMgr::GetTeamClassIdx },
+    { "IsAccountType", &LuaRandomPlayerBotMgr::IsAccountType },
+    { "AssignAccountTypes", &LuaRandomPlayerBotMgr::AssignAccountTypes },
+    { "PrepareAddclassCache", &LuaRandomPlayerBotMgr::PrepareAddclassCache },
+    { "LoadBattleMastersCache", &LuaRandomPlayerBotMgr::LoadBattleMastersCache },
+    { "InitArenaTeams", &LuaRandomPlayerBotMgr::InitArenaTeams },
+    { "CheckBgQueue", &LuaRandomPlayerBotMgr::CheckBgQueue },
+    { "CheckLfgQueue", &LuaRandomPlayerBotMgr::CheckLfgQueue },
+    { "CheckPlayers", &LuaRandomPlayerBotMgr::CheckPlayers },
+    { "PrintStats", &LuaRandomPlayerBotMgr::PrintStats },
+    { "LogBattlegroundInfo", &LuaRandomPlayerBotMgr::LogBattlegroundInfo },
+    { "LogPlayerLocation", &LuaRandomPlayerBotMgr::LogPlayerLocation },
+
+    { NULL, NULL }
+};
+#endif
 
 ALERegister<Creature> CreatureMethods[] =
 {
@@ -1908,6 +2146,17 @@ void RegisterFunctions(ALE* E)
     ALETemplate<Player>::SetMethods(E, WorldObjectMethods);
     ALETemplate<Player>::SetMethods(E, UnitMethods);
     ALETemplate<Player>::SetMethods(E, PlayerMethods);
+
+#ifdef MOD_PLAYERBOTS
+    ALETemplate<PlayerbotAI>::Register(E, "PlayerbotAI");
+    ALETemplate<PlayerbotAI>::SetMethods(E, PlayerbotAIMethods);
+
+    ALETemplate<PlayerbotsMgr>::Register(E, "PlayerbotsMgr");
+    ALETemplate<PlayerbotsMgr>::SetMethods(E, PlayerbotsMgrMethods);
+
+    ALETemplate<RandomPlayerbotMgr>::Register(E, "RandomPlayerbotMgr");
+    ALETemplate<RandomPlayerbotMgr>::SetMethods(E, RandomPlayerbotMgrMethods);
+#endif
 
     ALETemplate<Creature>::Register(E, "Creature");
     ALETemplate<Creature>::SetMethods(E, ObjectMethods);

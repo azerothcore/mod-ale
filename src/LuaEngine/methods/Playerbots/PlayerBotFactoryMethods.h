@@ -304,22 +304,6 @@ namespace LuaPlayerBotFactory
     }
 
     /**
-     * Returns how much the given enchant is worth for the given [Player].
-     *
-     * @param uint32 enchantId
-     * @param [Player] bot
-     * @return float score
-     */
-    int CalculateEnchantScore(lua_State* L, PlayerbotFactory* /*factory*/)
-    {
-        uint32 enchantId = ALE::CHECKVAL<uint32>(L, 2);
-        Player* bot = ALE::CHECKOBJ<Player>(L, 3);
-
-        ALE::Push(L, PlayerbotFactory::CalculateEnchantScore(enchantId, bot));
-        return 1;
-    }
-
-    /**
      * Returns the gear score weighted by the given item quality.
      *
      * @param uint32 gearScore

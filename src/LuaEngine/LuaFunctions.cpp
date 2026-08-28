@@ -1159,7 +1159,6 @@ ALERegister<PlayerbotFactory> PlayerbotFactoryMethods[] =
     { "UnbindInstance", &LuaPlayerBotFactory::UnbindInstance },
     { "GetRandomBot", &LuaPlayerBotFactory::GetRandomBot },
     { "Init", &LuaPlayerBotFactory::Init },
-    { "CalculateEnchantScore", &LuaPlayerBotFactory::CalculateEnchantScore },
     { "CalcMixedGearScore", &LuaPlayerBotFactory::CalcMixedGearScore },
     { "InitTalentsBySpecNo", &LuaPlayerBotFactory::InitTalentsBySpecNo },
     { "InitTalentsByParsedSpecLink", &LuaPlayerBotFactory::InitTalentsByParsedSpecLink },

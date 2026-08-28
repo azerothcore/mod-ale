@@ -1030,6 +1030,7 @@ ALERegister<PlayerbotAI> PlayerbotAIMethods[] =
 ALERegister<PlayerbotsMgr> PlayerbotsMgrMethods[] =
 {
     { "GetPlayerbotAI", &LuaPlayerBotsMgr::GetPlayerbotAI },
+    { "GetPlayerbotMgr", &LuaPlayerBotsMgr::GetPlayerbotMgr },
     { "AddPlayerbotData", &LuaPlayerBotsMgr::AddPlayerbotData },
     { "RemovePlayerbotData", &LuaPlayerBotsMgr::RemovePlayerbotData },
 
@@ -1106,6 +1107,7 @@ ALERegister<PlayerbotHolder> PlayerbotHolderMethods[] =
     { "IsAccountLinked", &LuaPlayerBotHolder::IsAccountLinked },
     { "ListBots", &LuaPlayerBotHolder::ListBots },
     { "LookupBots", &LuaPlayerBotHolder::LookupBots },
+    { "HandlePlayerbotCommand", &LuaPlayerBotHolder::HandlePlayerbotCommand },
 
     { NULL, NULL }
 };

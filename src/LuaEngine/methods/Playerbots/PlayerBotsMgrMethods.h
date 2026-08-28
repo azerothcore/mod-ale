@@ -60,9 +60,6 @@ namespace LuaPlayerBotsMgr
     /**
      * Detaches the playerbot data of the given GUID.
      *
-     * This is bot lifetime management normally driven by the module itself. Any
-     * [PlayerbotAI] previously handed to Lua for that GUID must not be used afterwards.
-     *
      * @param ObjectGuid guid
      * @param bool isAI : true to drop the bot AI, false to drop the bot manager
      */

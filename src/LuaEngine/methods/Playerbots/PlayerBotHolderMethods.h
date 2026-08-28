@@ -181,6 +181,31 @@ namespace LuaPlayerBotHolder
         ALE::Push(L, holder->LookupBots(master));
         return 1;
     }
+    /**
+     * Runs a `.playerbot` command and returns the answer lines.
+     *
+     * @param string command : for example "add Botname" or "co +tank"
+     * @param [Player] master = nil
+     * @return table lines : a table of strings
+     */
+    int HandlePlayerbotCommand(lua_State* L, PlayerbotHolder* holder)
+    {
+        std::string command = ALE::CHECKVAL<std::string>(L, 2);
+        Player* master = ALE::CHECKOBJ<Player>(L, 3, false);
+
+        lua_newtable(L);
+        int tbl = lua_gettop(L);
+        uint32 i = 0;
+
+        for (std::string const& line : holder->HandlePlayerbotCommand(command.c_str(), master))
+        {
+            ALE::Push(L, line);
+            lua_rawseti(L, tbl, ++i);
+        }
+
+        lua_settop(L, tbl);
+        return 1;
+    }
 };
 #endif // MOD_PLAYERBOTS
 #endif // PLAYERBOTHOLDERMETHODS_H

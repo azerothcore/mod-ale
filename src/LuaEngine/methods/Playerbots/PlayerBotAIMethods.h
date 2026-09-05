@@ -890,15 +890,6 @@ namespace LuaPlayerBotAI
     }
 
     /**
-     * Interrupts every spell the bot is currently casting and notifies its client.
-     */
-    int InterruptSpell(lua_State* /*L*/, PlayerbotAI* botAI)
-    {
-        botAI->InterruptSpell();
-        return 0;
-    }
-
-    /**
      * Asks the bot AI to interrupt its current cast on the next update.
      */
     int RequestSpellInterrupt(lua_State* /*L*/, PlayerbotAI* botAI)

@@ -19,6 +19,8 @@ namespace LuaGuild
      *
      * Only the players that are online and on some map.
      *
+     * In multistate, this method is only available in the WORLD state
+     *
      * @return table guildPlayers : table of [Player]s
      */
     int GetMembers(lua_State* L, Guild* guild)
@@ -60,6 +62,8 @@ namespace LuaGuild
 
     /**
      * Finds and returns the [Guild] leader by their GUID if logged in
+     *
+     * In multistate, this method is only available in the WORLD state
      *
      * @return [Player] leader
      */
@@ -127,6 +131,8 @@ namespace LuaGuild
     /**
      * Sets the leader of this [Guild]
      *
+     * In multistate, this method is only available in the WORLD state
+     *
      * @param [Player] leader : the [Player] leader to change
      */
     int SetLeader(lua_State* L, Guild* guild)
@@ -139,6 +145,8 @@ namespace LuaGuild
 
     /**
      * Sets the information of the bank tab specified
+     *
+     * In multistate, this method is only available in the WORLD state
      *
      * @param uint8 tabId : the ID of the tab specified
      * @param string info : the information to be set to the bank tab
@@ -183,6 +191,8 @@ namespace LuaGuild
 
     /**
      * Disbands the [Guild]
+     *
+     * In multistate, this method is only available in the WORLD state
      */
     int Disband(lua_State* /*L*/, Guild* guild)
     {
@@ -194,6 +204,8 @@ namespace LuaGuild
      * Adds the specified [Player] to the [Guild] at the specified rank.
      *
      * If no rank is specified, defaults to none.
+     *
+     * In multistate, this method is only available in the WORLD state
      *
      * @param [Player] player : the [Player] to be added to the guild
      * @param uint8 rankId : the rank ID
@@ -210,6 +222,8 @@ namespace LuaGuild
     /**
      * Removes the specified [Player] from the [Guild].
      *
+     * In multistate, this method is only available in the WORLD state
+     *
      * @param [Player] player : the [Player] to be removed from the guild
      * @param bool isDisbanding : default 'false', should only be set to 'true' if the guild is triggered to disband
      */
@@ -225,6 +239,8 @@ namespace LuaGuild
     /**
      * Promotes/demotes the [Player] to the specified rank.
      *
+     * In multistate, this method is only available in the WORLD state
+     *
      * @param [Player] player : the [Player] to be promoted/demoted
      * @param uint8 rankId : the rank ID
      */
@@ -239,6 +255,8 @@ namespace LuaGuild
 
     /**
      * Sets the new name of the specified [Guild].
+     *
+     * In multistate, this method is only available in the WORLD state
      *
      * @param string name : new name of this guild
      */
@@ -258,6 +276,8 @@ namespace LuaGuild
      *         GUILD_MEMBER_DATA_ZONEID =  0
      *         GUILD_MEMBER_DATA_LEVEL  =  1
      *     };
+     *
+     * In multistate, this method is only available in the WORLD state
      * 
      *  @param [Player] player : plkayer you need to update data
      *  @param [GuildMemberData] dataid : data you need to update
@@ -294,6 +314,8 @@ namespace LuaGuild
 
     /**
      * Invites [Guild] members to events based on level and rank filters.
+     *
+     * In multistate, this method is only available in the WORLD state
      * 
      * @param [Player] player : who sends the invitation
      * @param uint32 minLevel : the required min level
@@ -313,6 +335,8 @@ namespace LuaGuild
 
     /**
      * Swap item from a specific tab and slot [Guild] bank to another one.
+     *
+     * In multistate, this method is only available in the WORLD state
      * 
      * @param [Player] player : who Swap the item
      * @param uint8 tabId : source tab id
@@ -336,6 +360,8 @@ namespace LuaGuild
 
     /**
      * Swap an item from a specific tab and location in the [guild] bank to the bags and locations in the inventory of a specific [player] and vice versa.
+     *
+     * In multistate, this method is only available in the WORLD state
      * 
      * @param [Player] player : who Swap the item
      * @param bool toChar : the item goes to the [Player]'s inventory or comes from the [Player]'s inventory
@@ -383,6 +409,8 @@ namespace LuaGuild
 
     /**
      * Resets the number of item withdraw in all tab's for all [Guild] members.
+     *
+     * In multistate, this method is only available in the WORLD state
      */
     int ResetTimes(lua_State* /*L*/, Guild* guild)
     { 
@@ -392,6 +420,8 @@ namespace LuaGuild
 
     /**
      * Modify the [Guild] bank money. You can deposit or withdraw.
+     *
+     * In multistate, this method is only available in the WORLD state
      * 
      * @param uint64 amount : amount to add or remove
      * @param bool add : true (add money) | false (withdraw money)

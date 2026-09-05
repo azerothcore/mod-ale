@@ -20,7 +20,7 @@ using namespace Hooks;
     auto key = EntryKey<GameObjectEvents>(EVENT, ENTRY);\
     if (!GameObjectEventBindings->HasBindingsFor(key))\
         return;\
-    LOCK_ALE
+    LOCK_ALE_STATE
 
 #define START_HOOK_WITH_RETVAL(EVENT, ENTRY, RETVAL) \
     if (!ALEConfig::GetInstance().IsALEEnabled())\
@@ -28,7 +28,7 @@ using namespace Hooks;
     auto key = EntryKey<GameObjectEvents>(EVENT, ENTRY);\
     if (!GameObjectEventBindings->HasBindingsFor(key))\
         return RETVAL;\
-    LOCK_ALE
+    LOCK_ALE_STATE
 
 void ALE::OnDummyEffect(WorldObject* pCaster, uint32 spellId, SpellEffIndex effIndex, GameObject* pTarget)
 {

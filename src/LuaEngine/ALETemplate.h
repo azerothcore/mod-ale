@@ -19,12 +19,32 @@ extern "C"
 #include "SharedDefines.h"
 #include <type_traits>
 
+enum MethodRegisterState
+{
+    METHOD_REG_MAP   = 0,
+    METHOD_REG_WORLD = 1,
+    METHOD_REG_ALL   = 2
+};
+
+struct ALEGlobalRegister
+{
+    const char* name;
+    int(*func)(lua_State*);
+    MethodRegisterState regState;
+
+    ALEGlobalRegister(const char* name, int(*f)(lua_State*), MethodRegisterState state = METHOD_REG_ALL)
+        : name(name), func(f), regState(state) {}
+
+    ALEGlobalRegister(const char* name, MethodRegisterState state = METHOD_REG_ALL)
+        : name(name), func(nullptr), regState(state) {}
+};
+
 class ALEGlobal
 {
 public:
     static int thunk(lua_State* L)
     {
-        luaL_Reg* l = static_cast<luaL_Reg*>(lua_touserdata(L, lua_upvalueindex(1)));
+        ALEGlobalRegister* l = static_cast<ALEGlobalRegister*>(lua_touserdata(L, lua_upvalueindex(1)));
         int top = lua_gettop(L);
         int expected = l->func(L);
         int args = lua_gettop(L) - top;
@@ -37,15 +57,38 @@ public:
         return expected;
     }
 
-    static void SetMethods(ALE* E, luaL_Reg* methodTable)
+    static int MethodWrongState(lua_State* L)
+    {
+        luaL_error(L, "attempt to call method '%s' that is not available in this state", lua_tostring(L, lua_upvalueindex(1)));
+        return 0;
+    }
+
+    static void SetMethods(ALE* E, ALEGlobalRegister* methodTable)
     {
         ASSERT(E);
         ASSERT(methodTable);
 
         lua_pushglobaltable(E->L);
 
-        for (; methodTable && methodTable->name && methodTable->func; ++methodTable)
+        for (; methodTable && methodTable->name; ++methodTable)
         {
+            if (methodTable->regState != METHOD_REG_ALL)
+            {
+                bool isMapState = (E->GetStateMapId() != ALE_GLOBAL_STATE);
+                if ((!isMapState && methodTable->regState == METHOD_REG_MAP) ||
+                    (isMapState && methodTable->regState == METHOD_REG_WORLD))
+                {
+                    lua_pushstring(E->L, methodTable->name);
+                    lua_pushstring(E->L, methodTable->name);
+                    lua_pushcclosure(E->L, MethodWrongState, 1);
+                    lua_rawset(E->L, -3);
+                    continue;
+                }
+            }
+
+            if (!methodTable->func)
+                continue;
+
             lua_pushstring(E->L, methodTable->name);
             lua_pushlightuserdata(E->L, (void*)methodTable);
             lua_pushcclosure(E->L, thunk, 1);
@@ -69,7 +112,7 @@ public:
     // Get wrapped object pointer
     void* GetObj() const { return object; }
     // Returns whether the object is valid or not
-    bool IsValid() const { return !callstackid || callstackid == sALE->GetCallstackId(); }
+    bool IsValid() const { return !callstackid || callstackid == ALE::GALE->GetCallstackId(); }
     // Returns whether the object can be invalidated or not
     bool CanInvalidate() const { return _invalidate; }
     // Returns pointer to the wrapped object's type name
@@ -88,7 +131,7 @@ public:
         ASSERT(!valid || (valid && object));
         if (valid)
             if (CanInvalidate())
-                callstackid = sALE->GetCallstackId();
+                callstackid = ALE::GALE->GetCallstackId();
             else
                 callstackid = 0;
         else
@@ -118,6 +161,13 @@ struct ALERegister
 {
     const char* name;
     int(*mfunc)(lua_State*, T*);
+    MethodRegisterState regState;
+
+    ALERegister(const char* name, int(*func)(lua_State*, T*), MethodRegisterState state = METHOD_REG_ALL)
+        : name(name), mfunc(func), regState(state) {}
+
+    ALERegister(const char* name, MethodRegisterState state = METHOD_REG_ALL)
+        : name(name), mfunc(nullptr), regState(state) {}
 };
 
 template<typename T>
@@ -242,8 +292,25 @@ public:
         lua_rawget(E->L, LUA_REGISTRYINDEX);
         ASSERT(lua_istable(E->L, -1));
 
-        for (; methodTable && methodTable->name && methodTable->mfunc; ++methodTable)
+        for (; methodTable && methodTable->name; ++methodTable)
         {
+            if (methodTable->regState != METHOD_REG_ALL)
+            {
+                bool isMapState = (E->GetStateMapId() != ALE_GLOBAL_STATE);
+                if ((!isMapState && methodTable->regState == METHOD_REG_MAP) ||
+                    (isMapState && methodTable->regState == METHOD_REG_WORLD))
+                {
+                    lua_pushstring(E->L, methodTable->name);
+                    lua_pushstring(E->L, methodTable->name);
+                    lua_pushcclosure(E->L, MethodWrongState, 1);
+                    lua_rawset(E->L, -3);
+                    continue;
+                }
+            }
+
+            if (!methodTable->mfunc)
+                continue;
+
             lua_pushstring(E->L, methodTable->name);
             lua_pushlightuserdata(E->L, (void*)methodTable);
             lua_pushcclosure(E->L, CallMethod, 1);
@@ -320,6 +387,12 @@ public:
         bool invalidate = ALE::CHECKVAL<bool>(L, 2);
 
         ALEObj->SetValidation(invalidate);
+        return 0;
+    }
+
+    static int MethodWrongState(lua_State* L)
+    {
+        luaL_error(L, "attempt to call method '%s' that is not available in this state", lua_tostring(L, lua_upvalueindex(1)));
         return 0;
     }
 

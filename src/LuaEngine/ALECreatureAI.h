@@ -17,8 +17,10 @@ struct ALECreatureAI : ScriptedAI
     bool justSpawned;
     // used to delay movementinform hook (WP hook)
     std::vector< std::pair<uint32, uint32> > movepoints;
+    ALE* sALE;
 
-    ALECreatureAI(Creature* creature) : ScriptedAI(creature), justSpawned(true)
+    ALECreatureAI(Creature* creature) : ScriptedAI(creature), justSpawned(true),
+        sALE(ALE::GetMapStateOrGlobal(creature->GetMapId()))
     {
     }
     ~ALECreatureAI() { }

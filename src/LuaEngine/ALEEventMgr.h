@@ -28,8 +28,8 @@ enum LuaEventState
 
 struct LuaEvent
 {
-    LuaEvent(int _funcRef, uint32 _min, uint32 _max, uint32 _repeats) :
-        min(_min), max(_max), delay(0), repeats(_repeats), funcRef(_funcRef), state(LUAEVENT_STATE_RUN)
+    LuaEvent(int _funcRef, uint32 _min, uint32 _max, uint32 _repeats, ALE** _stateSlot) :
+        min(_min), max(_max), delay(0), repeats(_repeats), funcRef(_funcRef), state(LUAEVENT_STATE_RUN), stateSlot(_stateSlot)
     {
     }
 
@@ -50,6 +50,7 @@ struct LuaEvent
     uint32 repeats; // Amount of repeats to make, 0 for infinite
     int funcRef;    // Lua function reference ID, also used as event ID
     LuaEventState state;    // State for next call
+    ALE** stateSlot;
 };
 
 class ALEEventProcessor
@@ -68,7 +69,7 @@ public:
     void SetStates(LuaEventState state);
     // set the event to be removed when executing
     void SetState(int eventId, LuaEventState state);
-    void AddEvent(int funcRef, uint32 min, uint32 max, uint32 repeats);
+    void AddEvent(int funcRef, uint32 min, uint32 max, uint32 repeats, ALE** stateSlot);
     EventMap eventMap;
 
 private:

@@ -28,6 +28,8 @@
 #include "ALEConfig.h"
 #include <mutex>
 #include <memory>
+#include <shared_mutex>
+#include <map>
 #include <vector>
 #include <ctime>
 #include <unordered_map>
@@ -104,6 +106,10 @@ struct LuaScript
 
 #define ALE_STATE_PTR "ALE State Ptr"
 #define LOCK_ALE ALE::Guard __guard(ALE::GetLock())
+#define LOCK_ALE_STATE \
+    ALE::Guard __ale_guard(ALEConfig::GetInstance().IsCompatibilityModeEnabled() ? ALE::GetLock() : ALE::GetNoopLock()); \
+    Guard __ale_state_guard(this->GetStateLock())
+#define ALE_GLOBAL_STATE (uint32)(-1)
 
 #define ALE_GAME_API AC_GAME_API
 
@@ -118,7 +124,24 @@ public:
     const std::string& GetRequirePath() const { return lua_requirepath; }
     const std::string& GetRequireCPath() const { return lua_requirecpath; }
 
+    LockType& GetStateLock() { return stateLock; }
+    static LockType& GetNoopLock() { thread_local LockType noop; return noop; }
+    uint32 GetStateMapId() const { return stateMapId; }
+    uint32 GetStateInstanceId() const { return stateInstanceId; }
+    ALE** GetSelfPtr() { return selfPtr ? selfPtr : &ALE::GALE; }
+    
+    static void RunScriptsOnAllMapStates()
+    {
+        std::shared_lock lock(g_states_mutex);
+        for (auto& [mapId, state] : g_states)
+            state->RunScripts();
+    }
+
 private:
+    LockType stateLock;
+    uint32 stateMapId;
+    uint32 stateInstanceId;
+
     static bool reload;
     static bool initialized;
     static LockType lock;
@@ -134,6 +157,10 @@ private:
     static std::string lua_requirepath;
     static std::string lua_requirecpath;
 
+    // Per-map states. std::map used for pointer stability on insert/erase.
+    static std::map<uint64, ALE*> g_states;
+    static std::shared_mutex g_states_mutex;
+    
     // A counter for lua event stacks that occur (see event_level).
     // This is used to determine whether an object belongs to the current call stack or not.
     // 0 is reserved for always belonging to the call stack
@@ -152,7 +179,9 @@ private:
     // Map from map ID -> Lua table ref
     std::unordered_map<uint32, int> continentDataRefs;
 
-    ALE();
+    ALE** selfPtr;
+
+    ALE(ALE** selfPtr = nullptr, uint32 mapId = ALE_GLOBAL_STATE, uint32 instanceId = 0);
     ~ALE();
 
     // Prevent copy
@@ -169,7 +198,7 @@ private:
     // This is called on world update to reload ALE
     static void _ReloadALE();
     static void LoadScriptPaths();
-    static void GetScripts(std::string path);
+    static void GetScripts(std::string path, uint32 mapId = 0);
     static void AddScriptPath(std::string filename, const std::string& fullpath);
     static int LoadCompiledScript(lua_State* L, const std::string& filepath);
     static std::time_t GetFileModTime(const std::string& filepath);
@@ -268,6 +297,39 @@ public:
     static void ReloadALE() { LOCK_ALE; reload = true; }
     static LockType& GetLock() { return lock; };
     static bool IsInitialized() { return initialized; }
+
+    static ALE* GetMapState(uint32 mapId, uint32 instanceId = 0)
+    {
+        std::shared_lock lock(g_states_mutex);
+        uint64 key = ((uint64)mapId << 32) | instanceId;
+        auto it = g_states.find(key);
+        return it != g_states.end() ? it->second : nullptr;
+    }
+
+    static ALE* GetMapStateOrGlobal(uint32 mapId, uint32 instanceId = 0)
+    {
+        std::shared_lock lock(g_states_mutex);
+        uint64 key = ((uint64)mapId << 32) | instanceId;
+        auto it = g_states.find(key);
+        return it != g_states.end() ? it->second : GALE;
+    }
+
+    static ALE** CreateMapState(uint32 mapId, uint32 instanceId = 0);
+    static void DestroyMapState(uint32 mapId, uint32 instanceId = 0);
+
+    // Returns a stable pointer-to-pointer for the map state slot, for use by ALEEventProcessor.
+    static ALE** GetMapStateSlot(uint32 mapId, uint32 instanceId = 0)
+    {
+        uint64 key = ((uint64)mapId << 32) | instanceId;
+        {
+            std::shared_lock lock(g_states_mutex);
+            auto it = g_states.find(key);
+            if (it != g_states.end())
+                return &it->second;
+        }
+        return CreateMapState(mapId, instanceId);
+    }
+
     // Never returns nullptr
     static ALE* GetALE(lua_State* L)
     {
@@ -623,5 +685,5 @@ template<> Object* ALE::CHECKOBJ<Object>(lua_State* L, int narg, bool error);
 template<> WorldObject* ALE::CHECKOBJ<WorldObject>(lua_State* L, int narg, bool error);
 template<> ALEObject* ALE::CHECKOBJ<ALEObject>(lua_State* L, int narg, bool error);
 
-#define sALE ALE::GALE
+#define gALE ALE::GALE
 #endif

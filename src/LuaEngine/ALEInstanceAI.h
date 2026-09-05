@@ -53,7 +53,7 @@ class ALEInstanceAI : public InstanceData
 private:
     // The last save data to pass through this class,
     //   either through `Load` or `Save`.
-    std::string lastSaveData;
+    mutable std::string lastSaveData;
 
 public:
     ALEInstanceAI(Map* map) : InstanceData(map)
@@ -72,8 +72,8 @@ public:
     {
         return Save();
     }
-    const char* Save() const;
 
+    const char* Save() const;
 
     /*
      * Calls `Load` with the last save data that was passed to
@@ -100,6 +100,8 @@ public:
      */
     void Update(uint32 diff) override
     {
+        ALE* sALE = ALE::GetMapStateOrGlobal(instance->GetId());
+
         // If ALE is reloaded, it will be missing our instance data.
         // Reload here instead of waiting for the next hook call (possibly never).
         // This avoids having to have an empty Update hook handler just to trigger the reload.
@@ -111,22 +113,22 @@ public:
 
     bool IsEncounterInProgress() const override
     {
-        return sALE->OnCheckEncounterInProgress(const_cast<ALEInstanceAI*>(this));
+        return ALE::GetMapStateOrGlobal(instance->GetId())->OnCheckEncounterInProgress(const_cast<ALEInstanceAI*>(this));
     }
 
     void OnPlayerEnter(Player* player) override
     {
-        sALE->OnPlayerEnterInstance(this, player);
+        ALE::GetMapStateOrGlobal(instance->GetId())->OnPlayerEnterInstance(this, player);
     }
 
     void OnGameObjectCreate(GameObject* gameobject) override
     {
-        sALE->OnGameObjectCreate(this, gameobject);
+        ALE::GetMapStateOrGlobal(instance->GetId())->OnGameObjectCreate(this, gameobject);
     }
 
     void OnCreatureCreate(Creature* creature) override
     {
-        sALE->OnCreatureCreate(this, creature);
+        ALE::GetMapStateOrGlobal(instance->GetId())->OnCreatureCreate(this, creature);
     }
 };
 

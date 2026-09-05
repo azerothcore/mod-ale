@@ -11,8 +11,9 @@ extern "C"
 #include "HttpManager.h"
 #include "LuaEngine.h"
 
-HttpWorkItem::HttpWorkItem(int funcRef, const std::string& httpVerb, const std::string& url, const std::string& body, const std::string& contentType, const httplib::Headers& headers)
+HttpWorkItem::HttpWorkItem(int funcRef, ALE* state, const std::string& httpVerb, const std::string& url, const std::string& body, const std::string& contentType, const httplib::Headers& headers)
     : funcRef(funcRef),
+    state(state),
     httpVerb(httpVerb),
     url(url),
     body(body),
@@ -20,8 +21,9 @@ HttpWorkItem::HttpWorkItem(int funcRef, const std::string& httpVerb, const std::
     headers(headers)
 { }
 
-HttpResponse::HttpResponse(int funcRef, int statusCode, const std::string& body, const httplib::Headers& headers)
+HttpResponse::HttpResponse(int funcRef, ALE* state, int statusCode, const std::string& body, const httplib::Headers& headers)
     : funcRef(funcRef),
+    state(state),
     statusCode(statusCode),
     body(body),
     headers(headers)
@@ -166,7 +168,7 @@ void HttpManager::HttpWorkerThread()
                 res = DoRequest(cli2, req, path);
             }
 
-            responseQueue.push(new HttpResponse(req->funcRef, res->status, res->body, res->headers));
+            responseQueue.push(new HttpResponse(req->funcRef, req->state, res->status, res->body, res->headers));
         }
         catch (const std::exception& ex)
         {
@@ -250,7 +252,7 @@ void HttpManager::HandleHttpResponses()
 
         LOCK_ALE;
 
-        lua_State* L = ALE::GALE->L;
+        lua_State* L = res->state->L;
 
         // Get function
         lua_rawgeti(L, LUA_REGISTRYINDEX, res->funcRef);
@@ -266,7 +268,7 @@ void HttpManager::HandleHttpResponses()
         }
 
         // Call function
-        ALE::GALE->ExecuteCall(3, 0);
+        res->state->ExecuteCall(3, 0);
 
         luaL_unref(L, LUA_REGISTRYINDEX, res->funcRef);
 

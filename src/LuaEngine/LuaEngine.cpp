@@ -52,6 +52,10 @@ bool ALE::initialized = false;
 ALE::LockType ALE::lock;
 std::unique_ptr<ALEFileWatcher> ALE::fileWatcher;
 
+// Multistate handling
+std::map<uint64, ALE*> ALE::g_states;
+std::shared_mutex ALE::g_states_mutex;
+
 // Global bytecode cache that survives ALE reloads
 static std::unordered_map<std::string, GlobalCacheEntry> globalBytecodeCache;
 static std::unordered_map<std::string, std::time_t> timestampCache;
@@ -75,7 +79,7 @@ void ALE::Initialize()
     initialized = true;
 
     // Create global ALE
-    GALE = new ALE();
+    GALE = new ALE(nullptr, ALE_GLOBAL_STATE);
 
     // Start file watcher if enabled
     if (ALEConfig::GetInstance().IsAutoReloadEnabled())
@@ -98,6 +102,15 @@ void ALE::Uninitialize()
         fileWatcher.reset();
     }
 
+    {
+        std::unique_lock lock(g_states_mutex);
+        for (auto& [mapId, state] : g_states)
+        {
+            delete state;
+        }
+        g_states.clear();
+    }
+    
     delete GALE;
     GALE = NULL;
 
@@ -108,6 +121,38 @@ void ALE::Uninitialize()
     ClearGlobalCache();
 
     initialized = false;
+}
+
+ALE** ALE::CreateMapState(uint32 mapId, uint32 instanceId)
+{
+    if (!ALEConfig::GetInstance().ShouldMapLoadALE(mapId))
+        return nullptr;
+
+    ALE** slotPtr;
+    uint64 key = ((uint64)mapId << 32) | instanceId;
+    {
+        std::unique_lock lock(g_states_mutex);
+        ASSERT(g_states.find(key) == g_states.end());
+        auto& slot = g_states[key];
+        slot = nullptr;
+        slotPtr = &slot;
+        slot = new ALE(slotPtr, mapId, instanceId);
+    }
+
+    (*slotPtr)->RunScripts();
+    return slotPtr;
+}
+
+void ALE::DestroyMapState(uint32 mapId, uint32 instanceId)
+{
+    std::unique_lock lock(g_states_mutex);
+    uint64 key = ((uint64)mapId << 32) | instanceId;
+    auto it = g_states.find(key);
+    if (it != g_states.end())
+    {
+        delete it->second;
+        g_states.erase(it);
+    }
 }
 
 void ALE::LoadScriptPaths()
@@ -132,7 +177,7 @@ void ALE::LoadScriptPaths()
     lua_requirepath.clear();
     lua_requirecpath.clear();
 
-    GetScripts(lua_folderpath);
+    GetScripts(lua_folderpath, 0);
 
     // append our custom require paths and cpaths if the config variables are not empty
     if (!lua_path_extra.empty())
@@ -162,26 +207,40 @@ void ALE::_ReloadALE()
         ChatHandler(nullptr).SendGMText(SERVER_MSG_STRING, "Reloading ALE...");
 
     // Remove all timed events
-    sALE->eventMgr->SetStates(LUAEVENT_STATE_ERASE);
+    ALE::GALE->eventMgr->SetStates(LUAEVENT_STATE_ERASE);
 
     // Close lua
-    sALE->CloseLua();
+    ALE::GALE->CloseLua();
 
     // Reload script paths
     LoadScriptPaths();
 
     // Open new lua and libaraies
-    sALE->OpenLua();
+    ALE::GALE->OpenLua();
 
     // Run scripts from laoded paths
-    sALE->RunScripts();
+    ALE::GALE->RunScripts();
 
+    {
+        std::shared_lock lock(g_states_mutex);
+        for (auto& [mapId, state] : g_states)
+        {
+            state->eventMgr->SetStates(LUAEVENT_STATE_ERASE);
+            state->CloseLua();
+            state->OpenLua();
+            state->RunScripts();
+        }
+    }
+    
     reload = false;
 }
 
-ALE::ALE() :
+ALE::ALE(ALE** _selfPtr, uint32 mapId, uint32 instanceId) :
+stateMapId(mapId),
+stateInstanceId(instanceId),
 event_level(0),
 push_counter(0),
+selfPtr(_selfPtr),
 
 L(NULL),
 eventMgr(NULL),
@@ -215,11 +274,8 @@ CreatureUniqueBindings(NULL)
 
     OpenLua();
 
-    // Replace this with map insert if making multithread version
-
-    // Set event manager. Must be after setting sALE
-    // on multithread have a map of state pointers and here insert this pointer to the map and then save a pointer of that pointer to the EventMgr
-    eventMgr = new EventMgr(&ALE::GALE);
+    ALE** evtPtr = selfPtr ? selfPtr : &ALE::GALE;
+    eventMgr = new EventMgr(evtPtr);
 }
 
 ALE::~ALE()
@@ -614,7 +670,7 @@ int ALE::LoadCompiledScript(lua_State* L, const std::string& filepath)
 }
 
 // Finds lua script files from given path (including subdirectories) and pushes them to scripts
-void ALE::GetScripts(std::string path)
+void ALE::GetScripts(std::string path, uint32 mapId)
 {
     ALE_LOG_DEBUG("[ALE]: GetScripts from path `{}`", path);
 
@@ -650,7 +706,10 @@ void ALE::GetScripts(std::string path)
             // load subfolder
             if (boost::filesystem::is_directory(dir_iter->status()))
             {
-                GetScripts(fullpath);
+                std::string folderName = dir_iter->path().filename().generic_string();
+                if (!ALEConfig::GetInstance().ShouldMapLoadALEByFolderName(folderName, mapId))
+                    continue;
+                GetScripts(fullpath, mapId);
                 continue;
             }
 
@@ -700,6 +759,11 @@ void ALE::RunScripts()
     int modules = lua_gettop(L);
     for (ScriptList::iterator it = scripts.begin(); it != scripts.end(); ++it)
     {
+        // Filter by map-prefixed subdirectory
+        std::string folderName = boost::filesystem::path(it->modulepath).filename().generic_string();
+        if (!ALEConfig::GetInstance().ShouldMapLoadALEByFolderName(folderName, stateMapId))
+            continue;
+
         // Check that no duplicate names exist
         if (loaded.find(it->filename) != loaded.end())
         {
@@ -837,7 +901,7 @@ int ALE::StackTrace(lua_State *_L)
 
     // dirty stack?
     // Stack: errmsg, debug, tracemsg
-    sALE->OnError(std::string(lua_tostring(_L, -1)));
+    ALE::GALE->OnError(std::string(lua_tostring(_L, -1)));
     return 1;
 }
 

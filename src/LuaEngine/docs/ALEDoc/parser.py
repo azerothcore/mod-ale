@@ -3,7 +3,11 @@ import re
 import typing
 import markdown
 from typedecorator import params, returns, Nullable
+from typing import Any, List, TypedDict
 
+class TableDict(TypedDict):
+    columns: List[str]
+    values: List[List[Any]]
 
 class ParameterDoc(object):
     """The documentation data of a parameter or return value for an ALE method."""
@@ -65,12 +69,23 @@ class ParameterDoc(object):
 
 class MethodDoc(object):
     """The documentation data of an ALE method."""
-    @params(self=object, name=str, description=str, prototypes=[str], parameters=[ParameterDoc], returned=[ParameterDoc])
-    def __init__(self, name, description, prototypes, parameters, returned):
+    @params(self=object, name=str, description=str, table=TableDict, prototypes=[str], parameters=[ParameterDoc], returned=[ParameterDoc])
+    def __init__(self, name, description, table, prototypes, parameters, returned):
         self.name = name
         self.prototypes = prototypes
+        self.table = table
         self.parameters = parameters
         self.returned = returned
+
+        if table:
+            # Generate Markdown Table
+            md_table = '| ' + ' | '.join(table['columns']) + ' |\n'  # Header
+            md_table += '| ' + ' | '.join(['---'] * len(table['columns'])) + ' |\n'  # Separator
+
+            for row in table['values']:
+                md_table += '| ' + ' | '.join(row) + ' |\n'  # Rows
+                
+            self.table = markdown.markdown(md_table, extensions=['tables'])
 
         # Parse the description as Markdown.
         self.description = markdown.markdown(description)
@@ -123,6 +138,11 @@ class ClassParser(object):
     body_regex = re.compile(r"\s*\s?\*\s?(.*)")  # The "body", i.e. a * and optionally some descriptive text.
     # An extra optional space (\s?) was thrown in to make it different from `class_body_regex`.
 
+    # Regular expressions for parsing a table.
+    table_regex = re.compile(r"\s*\*\s@table")
+    table_columns_regex = re.compile(r"\s*\*\s@columns\s*\[(.+)\]")
+    table_values_regex = re.compile(r"\s*\*\s@values\s*\[(.+)\]")
+
     param_regex = re.compile(r"""\s*\*\s@param\s    # The @param tag starts with opt. whitespace followed by "* @param ".
                                  ([^\s]+)\s(\w+)?   # The data type, a space, and the name of the param.
                                  (?:\s=\s(\w+))?    # The default value: a = surrounded by spaces, followed by text.
@@ -163,6 +183,7 @@ class ClassParser(object):
         self.returned = []
         self.method_name = None
         self.prototypes = []
+        self.table = {}
 
     def handle_class_body(self, match):
         text = match.group(1)
@@ -171,6 +192,21 @@ class ClassParser(object):
     def handle_body(self, match):
         text = match.group(1)
         self.description += text + '\n'
+        
+    def handle_table(self, line):
+        self.table = {
+            "columns": [],
+            "values": []
+        }
+
+    def handle_table_columns(self, match):
+        if self.table:
+            self.table["columns"] = match.group(1).split(", ")
+    
+    def handle_table_values(self, match):
+        if self.table:
+            values = re.findall(r'(?:[^,"]|"(?:\\.|[^"])*")+', match.group(1))
+            self.table["values"].append([v.strip(' "') for v in values])
 
     def handle_param(self, match):
         data_type, name, default, description = match.group(1), match.group(2), match.group(3), match.group(4)
@@ -247,7 +283,7 @@ class ClassParser(object):
             # Format the method name into each prototype.
             self.prototypes = [proto.format(self.method_name) for proto in self.prototypes]
 
-        self.methods.append(MethodDoc(self.method_name, self.description, self.prototypes, self.params, self.returned))
+        self.methods.append(MethodDoc(self.method_name, self.description, self.table, self.prototypes, self.params, self.returned))
 
     # Table of which handler is used to handle each regular expressions.
     regex_handlers = {
@@ -256,6 +292,9 @@ class ClassParser(object):
         class_end_regex: None,
         start_regex: None,
         body_regex: handle_body,
+        table_regex: handle_table,
+        table_columns_regex: handle_table_columns,
+        table_values_regex: handle_table_values,
         param_regex: handle_param,
         return_regex: handle_return,
         proto_regex: handle_proto,
@@ -270,10 +309,13 @@ class ClassParser(object):
         class_start_regex: [class_end_regex, class_body_regex],
         class_body_regex: [class_end_regex, class_body_regex],
         class_end_regex: [],
-        start_regex: [param_regex, return_regex, proto_regex, comment_end_regex, body_regex],
-        body_regex: [param_regex, return_regex, proto_regex, comment_end_regex, body_regex],
-        proto_regex: [param_regex, return_regex, proto_regex, comment_end_regex, body_regex],
-        param_regex: [param_regex, return_regex, comment_end_regex, body_regex],
+        start_regex: [table_regex, param_regex, return_regex, proto_regex, comment_end_regex, body_regex],
+        body_regex: [table_regex, param_regex, return_regex, proto_regex, comment_end_regex, body_regex],
+        proto_regex: [table_regex, param_regex, return_regex, proto_regex, comment_end_regex, body_regex],
+        table_regex: [table_regex, table_columns_regex, param_regex, return_regex, comment_end_regex, body_regex],
+        table_columns_regex: [table_values_regex, param_regex, return_regex, comment_end_regex, body_regex],
+        table_values_regex: [table_values_regex, param_regex, return_regex, comment_end_regex, body_regex],
+        param_regex: [table_regex, param_regex, return_regex, comment_end_regex, body_regex],
         return_regex: [return_regex, comment_end_regex],
         comment_end_regex: [end_regex],
         end_regex: [],

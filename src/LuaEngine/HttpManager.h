@@ -6,12 +6,15 @@
 #include "libs/httplib.h"
 #include "libs/rigtorp/SPSCQueue.h"
 
+class ALE;
+
 struct HttpWorkItem
 {
 public:
-    HttpWorkItem(int funcRef, const std::string& httpVerb, const std::string& url, const std::string& body, const std::string &contentType, const httplib::Headers& headers);
+    HttpWorkItem(int funcRef, ALE* state, const std::string& httpVerb, const std::string& url, const std::string& body, const std::string &contentType, const httplib::Headers& headers);
 
     int funcRef;
+    ALE* state;
     std::string httpVerb;
     std::string url;
     std::string body;
@@ -22,9 +25,10 @@ public:
 struct HttpResponse
 {
 public:
-    HttpResponse(int funcRef, int statusCode, const std::string& body, const httplib::Headers& headers);
+    HttpResponse(int funcRef, ALE* state, int statusCode, const std::string& body, const httplib::Headers& headers);
 
     int funcRef;
+    ALE* state;
     int statusCode;
     std::string body;
     httplib::Headers headers;

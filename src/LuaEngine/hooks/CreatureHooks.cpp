@@ -21,7 +21,7 @@ using namespace Hooks;
     if (!CreatureEventBindings->HasBindingsFor(entry_key))\
         if (!CreatureUniqueBindings->HasBindingsFor(unique_key))\
             return;\
-    LOCK_ALE
+    LOCK_ALE_STATE
 
 #define START_HOOK_WITH_RETVAL(EVENT, CREATURE, RETVAL) \
     if (!ALEConfig::GetInstance().IsALEEnabled())\
@@ -31,7 +31,7 @@ using namespace Hooks;
     if (!CreatureEventBindings->HasBindingsFor(entry_key))\
         if (!CreatureUniqueBindings->HasBindingsFor(unique_key))\
             return RETVAL;\
-    LOCK_ALE
+    LOCK_ALE_STATE
 
 void ALE::OnDummyEffect(WorldObject* pCaster, uint32 spellId, SpellEffIndex effIndex, Creature* pTarget)
 {

@@ -8,6 +8,12 @@
 #       Default:    true  - (enabled)
 #                   false - (disabled)
 #
+#   ALE.CompatibilityMode
+#       Description: Toggles ALE between compatibility mode (single-threaded) or multistate mode.
+#                    Compatibility mode limits the engine to a single global Lua state.
+#       Default:    true  - (enabled)
+#                   false - (disabled)
+#
 #   ALE.TraceBack
 #       Description: Sets whether to use debug.traceback function on a lua error or not.
 #                    Notice that you can redefine the function.
@@ -18,6 +24,12 @@
 #       Description: Sets the location of the script folder to load scripts from
 #                    The path can be relative or absolute.
 #       Default:    "lua_scripts"
+#
+#   ALE.OnlyOnMaps
+#       Description: When ALE is enabled, a state will only be created for a list of specified maps.
+#                    This only works in multistate mode.
+#       Default:    ""  - (enabled on all maps)
+#                   "0,1,2,..." - (enabled on specific maps only)
 #
 #   ALE.PlayerAnnounceReload
 #       Description: Enable or disable whether the reload announcement is sent to players (Lowest security level).
@@ -61,8 +73,10 @@
 #                   false - (disabled)
 
 ALE.Enabled = true
+ALE.CompatibilityMode = true
 ALE.TraceBack = false
 ALE.ScriptPath = "lua_scripts"
+ALE.OnlyOnMaps = ""
 ALE.PlayerAnnounceReload = false
 ALE.RequirePaths = ""
 ALE.RequireCPaths = ""

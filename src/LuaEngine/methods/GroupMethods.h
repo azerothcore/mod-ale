@@ -135,6 +135,8 @@ namespace LuaGroup
     /**
      * Adds a new member to the [Group]
      *
+     * In multistate, this method is only available in the WORLD state
+     *
      * @param [Player] player : [Player] to add to the group
      * @return bool added : true if member was added
      */
@@ -173,6 +175,8 @@ namespace LuaGroup
 
     /**
      * Returns a table with the [Player]s in this [Group]
+     *
+     * In multistate, this method is only available in the WORLD state
      *
      * @return table groupPlayers : table of [Player]s
      */
@@ -282,6 +286,8 @@ namespace LuaGroup
     /**
      * Sets the leader of this [Group]
      *
+     * In multistate, this method is only available in the WORLD state
+     *
      * @param ObjectGuid guid : guid of the new leader
      */
     int SetLeader(lua_State* L, Group* group)
@@ -358,6 +364,8 @@ namespace LuaGroup
     /**
      * Sets the member's subGroup
      *
+     * In multistate, this method is only available in the WORLD state
+     *
      * @param ObjectGuid guid : guid of the player to move
      * @param uint8 groupID : the subGroup's ID
      */
@@ -381,6 +389,8 @@ namespace LuaGroup
 
     /**
      * Sets the target icon of an object for the [Group]
+     *
+     * In multistate, this method is only available in the WORLD state
      *
      * @param uint8 icon : the icon (Skull, Square, etc)
      * @param ObjectGuid target : GUID of the icon target, 0 is to clear the icon
@@ -410,6 +420,8 @@ namespace LuaGroup
      *     MEMBER_FLAG_MAINASSIST  = 0x04,
      * };
      * </pre>
+     *
+     * In multistate, this method is only available in the WORLD state
      * 
      * @param ObjectGuid target : GUID of the target
      * @param bool apply : add the `flag` if `true`, remove the `flag` otherwise

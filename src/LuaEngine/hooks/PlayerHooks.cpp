@@ -13,7 +13,7 @@
 
 using namespace Hooks;
 
-#define START_HOOK(EVENT) \
+#define START_HOOK_WORLD(EVENT) \
     if (!ALEConfig::GetInstance().IsALEEnabled())\
         return;\
     auto key = EventKey<PlayerEvents>(EVENT);\
@@ -21,17 +21,33 @@ using namespace Hooks;
         return;\
     LOCK_ALE
 
-#define START_HOOK_WITH_RETVAL(EVENT, RETVAL) \
+#define START_HOOK_WORLD_WITH_RETVAL(EVENT, RETVAL) \
     if (!ALEConfig::GetInstance().IsALEEnabled())\
         return RETVAL;\
     auto key = EventKey<PlayerEvents>(EVENT);\
     if (!PlayerEventBindings->HasBindingsFor(key))\
         return RETVAL;\
     LOCK_ALE
+    
+#define START_HOOK_MAP(EVENT) \
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
+        return;\
+    auto key = EventKey<PlayerEvents>(EVENT);\
+    if (!PlayerEventBindings->HasBindingsFor(key))\
+        return;\
+    LOCK_ALE_STATE
+
+#define START_HOOK_MAP_WITH_RETVAL(EVENT, RETVAL) \
+    if (!ALEConfig::GetInstance().IsALEEnabled())\
+        return RETVAL;\
+    auto key = EventKey<PlayerEvents>(EVENT);\
+    if (!PlayerEventBindings->HasBindingsFor(key))\
+        return RETVAL;\
+    LOCK_ALE_STATE
 
 void ALE::OnLearnTalents(Player* pPlayer, uint32 talentId, uint32 talentRank, uint32 spellid)
 {
-    START_HOOK(PLAYER_EVENT_ON_LEARN_TALENTS);
+    START_HOOK_MAP(PLAYER_EVENT_ON_LEARN_TALENTS);
     Push(pPlayer);
     Push(talentId);
     Push(talentRank);
@@ -54,7 +70,7 @@ bool ALE::OnCommand(ChatHandler& handler, const char* text)
         }
     }
 
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_COMMAND, true);
+    START_HOOK_WORLD_WITH_RETVAL(PLAYER_EVENT_ON_COMMAND, true);
     Push(player);
     Push(text);
     Push(&handler);
@@ -63,7 +79,7 @@ bool ALE::OnCommand(ChatHandler& handler, const char* text)
 
 void ALE::OnLootItem(Player* pPlayer, Item* pItem, uint32 count, ObjectGuid guid)
 {
-    START_HOOK(PLAYER_EVENT_ON_LOOT_ITEM);
+    START_HOOK_MAP(PLAYER_EVENT_ON_LOOT_ITEM);
     Push(pPlayer);
     Push(pItem);
     Push(count);
@@ -73,7 +89,7 @@ void ALE::OnLootItem(Player* pPlayer, Item* pItem, uint32 count, ObjectGuid guid
 
 void ALE::OnLootMoney(Player* pPlayer, uint32 amount)
 {
-    START_HOOK(PLAYER_EVENT_ON_LOOT_MONEY);
+    START_HOOK_MAP(PLAYER_EVENT_ON_LOOT_MONEY);
     Push(pPlayer);
     Push(amount);
     CallAllFunctions(PlayerEventBindings, key);
@@ -81,28 +97,28 @@ void ALE::OnLootMoney(Player* pPlayer, uint32 amount)
 
 void ALE::OnFirstLogin(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_ON_FIRST_LOGIN);
+    START_HOOK_WORLD(PLAYER_EVENT_ON_FIRST_LOGIN);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnRepop(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_ON_REPOP);
+    START_HOOK_MAP(PLAYER_EVENT_ON_REPOP);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnResurrect(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_ON_RESURRECT);
+    START_HOOK_MAP(PLAYER_EVENT_ON_RESURRECT);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnQuestAbandon(Player* pPlayer, uint32 questId)
 {
-    START_HOOK(PLAYER_EVENT_ON_QUEST_ABANDON);
+    START_HOOK_MAP(PLAYER_EVENT_ON_QUEST_ABANDON);
     Push(pPlayer);
     Push(questId);
     CallAllFunctions(PlayerEventBindings, key);
@@ -110,7 +126,7 @@ void ALE::OnQuestAbandon(Player* pPlayer, uint32 questId)
 
 void ALE::OnEquip(Player* pPlayer, Item* pItem, uint8 bag, uint8 slot)
 {
-    START_HOOK(PLAYER_EVENT_ON_EQUIP);
+    START_HOOK_MAP(PLAYER_EVENT_ON_EQUIP);
     Push(pPlayer);
     Push(pItem);
     Push(bag);
@@ -120,7 +136,7 @@ void ALE::OnEquip(Player* pPlayer, Item* pItem, uint8 bag, uint8 slot)
 
 InventoryResult ALE::OnCanUseItem(const Player* pPlayer, uint32 itemEntry)
 {
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_CAN_USE_ITEM, EQUIP_ERR_OK);
+    START_HOOK_MAP_WITH_RETVAL(PLAYER_EVENT_ON_CAN_USE_ITEM, EQUIP_ERR_OK);
     InventoryResult result = EQUIP_ERR_OK;
     Push(pPlayer);
     Push(itemEntry);
@@ -141,7 +157,7 @@ InventoryResult ALE::OnCanUseItem(const Player* pPlayer, uint32 itemEntry)
 }
 void ALE::OnPlayerEnterCombat(Player* pPlayer, Unit* pEnemy)
 {
-    START_HOOK(PLAYER_EVENT_ON_ENTER_COMBAT);
+    START_HOOK_MAP(PLAYER_EVENT_ON_ENTER_COMBAT);
     Push(pPlayer);
     Push(pEnemy);
     CallAllFunctions(PlayerEventBindings, key);
@@ -149,14 +165,14 @@ void ALE::OnPlayerEnterCombat(Player* pPlayer, Unit* pEnemy)
 
 void ALE::OnPlayerLeaveCombat(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_ON_LEAVE_COMBAT);
+    START_HOOK_MAP(PLAYER_EVENT_ON_LEAVE_COMBAT);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnPVPKill(Player* pKiller, Player* pKilled)
 {
-    START_HOOK(PLAYER_EVENT_ON_KILL_PLAYER);
+    START_HOOK_MAP(PLAYER_EVENT_ON_KILL_PLAYER);
     Push(pKiller);
     Push(pKilled);
     CallAllFunctions(PlayerEventBindings, key);
@@ -164,7 +180,7 @@ void ALE::OnPVPKill(Player* pKiller, Player* pKilled)
 
 void ALE::OnCreatureKill(Player* pKiller, Creature* pKilled)
 {
-    START_HOOK(PLAYER_EVENT_ON_KILL_CREATURE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_KILL_CREATURE);
     Push(pKiller);
     Push(pKilled);
     CallAllFunctions(PlayerEventBindings, key);
@@ -172,7 +188,7 @@ void ALE::OnCreatureKill(Player* pKiller, Creature* pKilled)
 
 void ALE::OnPlayerKilledByCreature(Creature* pKiller, Player* pKilled)
 {
-    START_HOOK(PLAYER_EVENT_ON_KILLED_BY_CREATURE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_KILLED_BY_CREATURE);
     Push(pKiller);
     Push(pKilled);
     CallAllFunctions(PlayerEventBindings, key);
@@ -180,7 +196,7 @@ void ALE::OnPlayerKilledByCreature(Creature* pKiller, Player* pKilled)
 
 void ALE::OnLevelChanged(Player* pPlayer, uint8 oldLevel)
 {
-    START_HOOK(PLAYER_EVENT_ON_LEVEL_CHANGE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_LEVEL_CHANGE);
     Push(pPlayer);
     Push(oldLevel);
     CallAllFunctions(PlayerEventBindings, key);
@@ -188,7 +204,7 @@ void ALE::OnLevelChanged(Player* pPlayer, uint8 oldLevel)
 
 void ALE::OnFreeTalentPointsChanged(Player* pPlayer, uint32 newPoints)
 {
-    START_HOOK(PLAYER_EVENT_ON_TALENTS_CHANGE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_TALENTS_CHANGE);
     Push(pPlayer);
     Push(newPoints);
     CallAllFunctions(PlayerEventBindings, key);
@@ -196,7 +212,7 @@ void ALE::OnFreeTalentPointsChanged(Player* pPlayer, uint32 newPoints)
 
 void ALE::OnTalentsReset(Player* pPlayer, bool noCost)
 {
-    START_HOOK(PLAYER_EVENT_ON_TALENTS_RESET);
+    START_HOOK_MAP(PLAYER_EVENT_ON_TALENTS_RESET);
     Push(pPlayer);
     Push(noCost);
     CallAllFunctions(PlayerEventBindings, key);
@@ -204,7 +220,7 @@ void ALE::OnTalentsReset(Player* pPlayer, bool noCost)
 
 void ALE::OnMoneyChanged(Player* pPlayer, int32& amount)
 {
-    START_HOOK(PLAYER_EVENT_ON_MONEY_CHANGE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_MONEY_CHANGE);
     Push(pPlayer);
     Push(amount);
     int amountIndex = lua_gettop(L);
@@ -229,7 +245,7 @@ void ALE::OnMoneyChanged(Player* pPlayer, int32& amount)
 
 void ALE::OnGiveXP(Player* pPlayer, uint32& amount, Unit* pVictim, uint8 xpSource)
 {
-    START_HOOK(PLAYER_EVENT_ON_GIVE_XP);
+    START_HOOK_MAP(PLAYER_EVENT_ON_GIVE_XP);
     Push(pPlayer);
     Push(amount);
     Push(pVictim);
@@ -256,7 +272,7 @@ void ALE::OnGiveXP(Player* pPlayer, uint32& amount, Unit* pVictim, uint8 xpSourc
 
 bool ALE::OnReputationChange(Player* pPlayer, uint32 factionID, int32& standing, bool incremental)
 {
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_REPUTATION_CHANGE, true);
+    START_HOOK_MAP_WITH_RETVAL(PLAYER_EVENT_ON_REPUTATION_CHANGE, true);
     bool result = true;
     Push(pPlayer);
     Push(factionID);
@@ -287,7 +303,7 @@ bool ALE::OnReputationChange(Player* pPlayer, uint32 factionID, int32& standing,
 
 void ALE::OnDuelRequest(Player* pTarget, Player* pChallenger)
 {
-    START_HOOK(PLAYER_EVENT_ON_DUEL_REQUEST);
+    START_HOOK_MAP(PLAYER_EVENT_ON_DUEL_REQUEST);
     Push(pTarget);
     Push(pChallenger);
     CallAllFunctions(PlayerEventBindings, key);
@@ -295,7 +311,7 @@ void ALE::OnDuelRequest(Player* pTarget, Player* pChallenger)
 
 void ALE::OnDuelStart(Player* pStarter, Player* pChallenger)
 {
-    START_HOOK(PLAYER_EVENT_ON_DUEL_START);
+    START_HOOK_MAP(PLAYER_EVENT_ON_DUEL_START);
     Push(pStarter);
     Push(pChallenger);
     CallAllFunctions(PlayerEventBindings, key);
@@ -303,7 +319,7 @@ void ALE::OnDuelStart(Player* pStarter, Player* pChallenger)
 
 void ALE::OnDuelEnd(Player* pWinner, Player* pLoser, DuelCompleteType type)
 {
-    START_HOOK(PLAYER_EVENT_ON_DUEL_END);
+    START_HOOK_MAP(PLAYER_EVENT_ON_DUEL_END);
     Push(pWinner);
     Push(pLoser);
     Push(type);
@@ -312,7 +328,7 @@ void ALE::OnDuelEnd(Player* pWinner, Player* pLoser, DuelCompleteType type)
 
 void ALE::OnEmote(Player* pPlayer, uint32 emote)
 {
-    START_HOOK(PLAYER_EVENT_ON_EMOTE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_EMOTE);
     Push(pPlayer);
     Push(emote);
     CallAllFunctions(PlayerEventBindings, key);
@@ -320,7 +336,7 @@ void ALE::OnEmote(Player* pPlayer, uint32 emote)
 
 void ALE::OnTextEmote(Player* pPlayer, uint32 textEmote, uint32 emoteNum, ObjectGuid guid)
 {
-    START_HOOK(PLAYER_EVENT_ON_TEXT_EMOTE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_TEXT_EMOTE);
     Push(pPlayer);
     Push(textEmote);
     Push(emoteNum);
@@ -330,7 +346,7 @@ void ALE::OnTextEmote(Player* pPlayer, uint32 textEmote, uint32 emoteNum, Object
 
 void ALE::OnPlayerSpellCast(Player* pPlayer, Spell* pSpell, bool skipCheck)
 {
-    START_HOOK(PLAYER_EVENT_ON_SPELL_CAST);
+    START_HOOK_MAP(PLAYER_EVENT_ON_SPELL_CAST);
     Push(pPlayer);
     Push(pSpell);
     Push(skipCheck);
@@ -339,42 +355,42 @@ void ALE::OnPlayerSpellCast(Player* pPlayer, Spell* pSpell, bool skipCheck)
 
 void ALE::OnLogin(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_ON_LOGIN);
+    START_HOOK_WORLD(PLAYER_EVENT_ON_LOGIN);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnLogout(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_ON_LOGOUT);
+    START_HOOK_WORLD(PLAYER_EVENT_ON_LOGOUT);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnCreate(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_ON_CHARACTER_CREATE);
+    START_HOOK_WORLD(PLAYER_EVENT_ON_CHARACTER_CREATE);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnDelete(uint32 guidlow)
 {
-    START_HOOK(PLAYER_EVENT_ON_CHARACTER_DELETE);
+    START_HOOK_WORLD(PLAYER_EVENT_ON_CHARACTER_DELETE);
     Push(guidlow);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnSave(Player* pPlayer)
 {
-    START_HOOK(PLAYER_EVENT_ON_SAVE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_SAVE);
     Push(pPlayer);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnBindToInstance(Player* pPlayer, Difficulty difficulty, uint32 mapid, bool permanent)
 {
-    START_HOOK(PLAYER_EVENT_ON_BIND_TO_INSTANCE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_BIND_TO_INSTANCE);
     Push(pPlayer);
     Push(difficulty);
     Push(mapid);
@@ -384,7 +400,7 @@ void ALE::OnBindToInstance(Player* pPlayer, Difficulty difficulty, uint32 mapid,
 
 void ALE::OnUpdateArea(Player* pPlayer, uint32 oldArea, uint32 newArea)
 {
-    START_HOOK(PLAYER_EVENT_ON_UPDATE_AREA);
+    START_HOOK_MAP(PLAYER_EVENT_ON_UPDATE_AREA);
     Push(pPlayer);
     Push(oldArea);
     Push(newArea);
@@ -393,7 +409,7 @@ void ALE::OnUpdateArea(Player* pPlayer, uint32 oldArea, uint32 newArea)
 
 void ALE::OnUpdateZone(Player* pPlayer, uint32 newZone, uint32 newArea)
 {
-    START_HOOK(PLAYER_EVENT_ON_UPDATE_ZONE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_UPDATE_ZONE);
     Push(pPlayer);
     Push(newZone);
     Push(newArea);
@@ -402,7 +418,7 @@ void ALE::OnUpdateZone(Player* pPlayer, uint32 newZone, uint32 newArea)
 
 void ALE::OnMapChanged(Player* player)
 {
-    START_HOOK(PLAYER_EVENT_ON_MAP_CHANGE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_MAP_CHANGE);
     Push(player);
     CallAllFunctions(PlayerEventBindings, key);
 }
@@ -412,7 +428,7 @@ bool ALE::OnChat(Player* pPlayer, uint32 type, uint32 lang, std::string& msg)
     if (lang == LANG_ADDON)
         return OnAddonMessage(pPlayer, type, msg, NULL, NULL, NULL, NULL);
 
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_CHAT, true);
+    START_HOOK_WORLD_WITH_RETVAL(PLAYER_EVENT_ON_CHAT, true);
     bool result = true;
     Push(pPlayer);
     Push(msg);
@@ -442,7 +458,7 @@ bool ALE::OnChat(Player* pPlayer, uint32 type, uint32 lang, std::string& msg, Gr
     if (lang == LANG_ADDON)
         return OnAddonMessage(pPlayer, type, msg, NULL, NULL, pGroup, NULL);
 
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_GROUP_CHAT, true);
+    START_HOOK_WORLD_WITH_RETVAL(PLAYER_EVENT_ON_GROUP_CHAT, true);
     bool result = true;
     Push(pPlayer);
     Push(msg);
@@ -473,7 +489,7 @@ bool ALE::OnChat(Player* pPlayer, uint32 type, uint32 lang, std::string& msg, Gu
     if (lang == LANG_ADDON)
         return OnAddonMessage(pPlayer, type, msg, NULL, pGuild, NULL, NULL);
 
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_GUILD_CHAT, true);
+    START_HOOK_WORLD_WITH_RETVAL(PLAYER_EVENT_ON_GUILD_CHAT, true);
     bool result = true;
     Push(pPlayer);
     Push(msg);
@@ -504,7 +520,7 @@ bool ALE::OnChat(Player* pPlayer, uint32 type, uint32 lang, std::string& msg, Ch
     if (lang == LANG_ADDON)
         return OnAddonMessage(pPlayer, type, msg, NULL, NULL, NULL, pChannel);
 
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_CHANNEL_CHAT, true);
+    START_HOOK_WORLD_WITH_RETVAL(PLAYER_EVENT_ON_CHANNEL_CHAT, true);
     bool result = true;
     Push(pPlayer);
     Push(msg);
@@ -535,7 +551,7 @@ bool ALE::OnChat(Player* pPlayer, uint32 type, uint32 lang, std::string& msg, Pl
     if (lang == LANG_ADDON)
         return OnAddonMessage(pPlayer, type, msg, pReceiver, NULL, NULL, NULL);
 
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_WHISPER, true);
+    START_HOOK_WORLD_WITH_RETVAL(PLAYER_EVENT_ON_WHISPER, true);
     bool result = true;
     Push(pPlayer);
     Push(msg);
@@ -563,7 +579,7 @@ bool ALE::OnChat(Player* pPlayer, uint32 type, uint32 lang, std::string& msg, Pl
 
 void ALE::OnPetAddedToWorld(Player* player, Creature* pet)
 {
-    START_HOOK(PLAYER_EVENT_ON_PET_ADDED_TO_WORLD);
+    START_HOOK_MAP(PLAYER_EVENT_ON_PET_ADDED_TO_WORLD);
     Push(player);
     Push(pet);
     CallAllFunctions(PlayerEventBindings, key);
@@ -571,7 +587,7 @@ void ALE::OnPetAddedToWorld(Player* player, Creature* pet)
 
 void ALE::OnLearnSpell(Player* player, uint32 spellId)
 {
-    START_HOOK(PLAYER_EVENT_ON_LEARN_SPELL);
+    START_HOOK_MAP(PLAYER_EVENT_ON_LEARN_SPELL);
     Push(player);
     Push(spellId);
     CallAllFunctions(PlayerEventBindings, key);
@@ -579,7 +595,7 @@ void ALE::OnLearnSpell(Player* player, uint32 spellId)
 
 void ALE::OnAchiComplete(Player* player, AchievementEntry const* achievement)
 {
-    START_HOOK(PLAYER_EVENT_ON_ACHIEVEMENT_COMPLETE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_ACHIEVEMENT_COMPLETE);
     Push(player);
     Push(achievement);
     CallAllFunctions(PlayerEventBindings, key);
@@ -587,7 +603,7 @@ void ALE::OnAchiComplete(Player* player, AchievementEntry const* achievement)
 
 void ALE::OnFfaPvpStateUpdate(Player* player, bool hasFfaPvp)
 {
-    START_HOOK(PLAYER_EVENT_ON_FFAPVP_CHANGE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_FFAPVP_CHANGE);
     Push(player);
     Push(hasFfaPvp);
     CallAllFunctions(PlayerEventBindings, key);
@@ -595,7 +611,7 @@ void ALE::OnFfaPvpStateUpdate(Player* player, bool hasFfaPvp)
 
 bool ALE::OnCanInitTrade(Player* player, Player* target)
 {
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_CAN_INIT_TRADE, true);
+    START_HOOK_MAP_WITH_RETVAL(PLAYER_EVENT_ON_CAN_INIT_TRADE, true);
     Push(player);
     Push(target);
     return CallAllFunctionsBool(PlayerEventBindings, key);
@@ -603,7 +619,7 @@ bool ALE::OnCanInitTrade(Player* player, Player* target)
 
 bool ALE::OnCanSendMail(Player* player, ObjectGuid receiverGuid, ObjectGuid mailbox, std::string& subject, std::string& body, uint32 money, uint32 cod, Item* item)
 {
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_CAN_SEND_MAIL, true);
+    START_HOOK_MAP_WITH_RETVAL(PLAYER_EVENT_ON_CAN_SEND_MAIL, true);
     Push(player);
     Push(receiverGuid);
     Push(mailbox);
@@ -617,7 +633,7 @@ bool ALE::OnCanSendMail(Player* player, ObjectGuid receiverGuid, ObjectGuid mail
 
 bool ALE::OnCanJoinLfg(Player* player, uint8 roles, lfg::LfgDungeonSet& dungeons, const std::string& comment)
 {
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_CAN_JOIN_LFG, true);
+    START_HOOK_MAP_WITH_RETVAL(PLAYER_EVENT_ON_CAN_JOIN_LFG, true);
     Push(player);
     Push(roles);
 
@@ -639,7 +655,7 @@ bool ALE::OnCanJoinLfg(Player* player, uint8 roles, lfg::LfgDungeonSet& dungeons
 
 void ALE::OnQuestRewardItem(Player* player, Item* item, uint32 count)
 {
-    START_HOOK(PLAYER_EVENT_ON_QUEST_REWARD_ITEM);
+    START_HOOK_MAP(PLAYER_EVENT_ON_QUEST_REWARD_ITEM);
     Push(player);
     Push(item);
     Push(count);
@@ -648,7 +664,7 @@ void ALE::OnQuestRewardItem(Player* player, Item* item, uint32 count)
 
 void ALE::OnCreateItem(Player* player, Item* item, uint32 count)
 {
-    START_HOOK(PLAYER_EVENT_ON_CREATE_ITEM);
+    START_HOOK_MAP(PLAYER_EVENT_ON_CREATE_ITEM);
     Push(player);
     Push(item);
     Push(count);
@@ -657,7 +673,7 @@ void ALE::OnCreateItem(Player* player, Item* item, uint32 count)
 
 void ALE::OnStoreNewItem(Player* player, Item* item, uint32 count)
 {
-    START_HOOK(PLAYER_EVENT_ON_STORE_NEW_ITEM);
+    START_HOOK_MAP(PLAYER_EVENT_ON_STORE_NEW_ITEM);
     Push(player);
     Push(item);
     Push(count);
@@ -666,7 +682,7 @@ void ALE::OnStoreNewItem(Player* player, Item* item, uint32 count)
 
 void ALE::OnPlayerCompleteQuest(Player* player, Quest const* quest)
 {
-    START_HOOK(PLAYER_EVENT_ON_COMPLETE_QUEST);
+    START_HOOK_MAP(PLAYER_EVENT_ON_COMPLETE_QUEST);
     Push(player);
     Push(quest);
     CallAllFunctions(PlayerEventBindings, key);
@@ -674,7 +690,7 @@ void ALE::OnPlayerCompleteQuest(Player* player, Quest const* quest)
 
 bool ALE::OnCanGroupInvite(Player* player, std::string& memberName)
 {
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_CAN_GROUP_INVITE, true);
+    START_HOOK_MAP_WITH_RETVAL(PLAYER_EVENT_ON_CAN_GROUP_INVITE, true);
     Push(player);
     Push(memberName);
     return CallAllFunctionsBool(PlayerEventBindings, key);
@@ -682,7 +698,7 @@ bool ALE::OnCanGroupInvite(Player* player, std::string& memberName)
 
 void ALE::OnGroupRollRewardItem(Player* player, Item* item, uint32 count, RollVote voteType, Roll* roll)
 {
-    START_HOOK(PLAYER_EVENT_ON_GROUP_ROLL_REWARD_ITEM);
+    START_HOOK_MAP(PLAYER_EVENT_ON_GROUP_ROLL_REWARD_ITEM);
     Push(player);
     Push(item);
     Push(count);
@@ -693,7 +709,7 @@ void ALE::OnGroupRollRewardItem(Player* player, Item* item, uint32 count, RollVo
 
 void ALE::OnBattlegroundDesertion(Player* player, const BattlegroundDesertionType type)
 {
-    START_HOOK(PLAYER_EVENT_ON_BG_DESERTION);
+    START_HOOK_MAP(PLAYER_EVENT_ON_BG_DESERTION);
     Push(player);
     Push(type);
     CallAllFunctions(PlayerEventBindings, key);
@@ -701,7 +717,7 @@ void ALE::OnBattlegroundDesertion(Player* player, const BattlegroundDesertionTyp
 
 void ALE::OnCreatureKilledByPet(Player* player, Creature* killed)
 {
-    START_HOOK(PLAYER_EVENT_ON_PET_KILL);
+    START_HOOK_MAP(PLAYER_EVENT_ON_PET_KILL);
     Push(player);
     Push(killed);
     CallAllFunctions(PlayerEventBindings, key);
@@ -709,7 +725,7 @@ void ALE::OnCreatureKilledByPet(Player* player, Creature* killed)
 
 bool ALE::OnPlayerCanUpdateSkill(Player* player, uint32 skill_id)
 {
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_CAN_UPDATE_SKILL, true);
+    START_HOOK_MAP_WITH_RETVAL(PLAYER_EVENT_ON_CAN_UPDATE_SKILL, true);
     Push(player);
     Push(skill_id);
     return CallAllFunctionsBool(PlayerEventBindings, key);
@@ -717,7 +733,7 @@ bool ALE::OnPlayerCanUpdateSkill(Player* player, uint32 skill_id)
 
 void ALE::OnPlayerBeforeUpdateSkill(Player* player, uint32 skill_id, uint32& value, uint32 max, uint32 step)
 {
-    START_HOOK(PLAYER_EVENT_ON_BEFORE_UPDATE_SKILL);
+    START_HOOK_MAP(PLAYER_EVENT_ON_BEFORE_UPDATE_SKILL);
     Push(player);
     Push(skill_id);
     Push(value);
@@ -744,7 +760,7 @@ void ALE::OnPlayerBeforeUpdateSkill(Player* player, uint32 skill_id, uint32& val
 
 void ALE::OnPlayerUpdateSkill(Player* player, uint32 skill_id, uint32 value, uint32 max, uint32 step, uint32 new_value)
 {
-    START_HOOK(PLAYER_EVENT_ON_UPDATE_SKILL);
+    START_HOOK_MAP(PLAYER_EVENT_ON_UPDATE_SKILL);
     Push(player);
     Push(skill_id);
     Push(value);
@@ -756,21 +772,21 @@ void ALE::OnPlayerUpdateSkill(Player* player, uint32 skill_id, uint32 value, uin
 
 bool ALE::CanPlayerResurrect(Player* player)
 {
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_CAN_RESURRECT, true);
+    START_HOOK_MAP_WITH_RETVAL(PLAYER_EVENT_ON_CAN_RESURRECT, true);
     Push(player);
     return CallAllFunctionsBool(PlayerEventBindings, key);
 }
 
 void ALE::OnPlayerReleasedGhost(Player* player)
 {
-    START_HOOK(PLAYER_EVENT_ON_RELEASED_GHOST);
+    START_HOOK_MAP(PLAYER_EVENT_ON_RELEASED_GHOST);
     Push(player);
     CallAllFunctions(PlayerEventBindings, key);
 }
 
 void ALE::OnPlayerQuestAccept(Player* player, Quest const* quest)
 {
-    START_HOOK(PLAYER_EVENT_ON_QUEST_ACCEPT);
+    START_HOOK_MAP(PLAYER_EVENT_ON_QUEST_ACCEPT);
     Push(player);
     Push(quest);
     CallAllFunctions(PlayerEventBindings, key);
@@ -778,7 +794,7 @@ void ALE::OnPlayerQuestAccept(Player* player, Quest const* quest)
 
 void ALE::OnPlayerAuraApply(Player* player, Aura* aura)
 {
-    START_HOOK(PLAYER_EVENT_ON_AURA_APPLY);
+    START_HOOK_MAP(PLAYER_EVENT_ON_AURA_APPLY);
     Push(player);
     Push(aura);
     CallAllFunctions(PlayerEventBindings, key);
@@ -786,7 +802,7 @@ void ALE::OnPlayerAuraApply(Player* player, Aura* aura)
 
 void ALE::OnPlayerHeal(Player* player, Unit* target, uint32& gain)
 {
-    START_HOOK(PLAYER_EVENT_ON_HEAL);
+    START_HOOK_MAP(PLAYER_EVENT_ON_HEAL);
     Push(player);
     Push(target);
     Push(gain);
@@ -811,7 +827,7 @@ void ALE::OnPlayerHeal(Player* player, Unit* target, uint32& gain)
 
 void ALE::OnPlayerDamage(Player* player, Unit* target, uint32& damage)
 {
-    START_HOOK(PLAYER_EVENT_ON_DAMAGE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_DAMAGE);
     Push(player);
     Push(target);
     Push(damage);
@@ -836,7 +852,7 @@ void ALE::OnPlayerDamage(Player* player, Unit* target, uint32& damage)
 
 void ALE::OnPlayerAuraRemove(Player* player, Aura* aura, AuraRemoveMode mode)
 {
-    START_HOOK(PLAYER_EVENT_ON_AURA_REMOVE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_AURA_REMOVE);
     Push(player);
     Push(aura);
     Push(mode);
@@ -845,7 +861,7 @@ void ALE::OnPlayerAuraRemove(Player* player, Aura* aura, AuraRemoveMode mode)
 
 void ALE::OnPlayerModifyPeriodicDamageAurasTick(Player* player, Unit* target, uint32& damage, SpellInfo const* spellInfo)
 {
-    START_HOOK(PLAYER_EVENT_ON_MODIFY_PERIODIC_DAMAGE_AURAS_TICK);
+    START_HOOK_MAP(PLAYER_EVENT_ON_MODIFY_PERIODIC_DAMAGE_AURAS_TICK);
     Push(player);
     Push(target);
     Push(damage);
@@ -871,7 +887,7 @@ void ALE::OnPlayerModifyPeriodicDamageAurasTick(Player* player, Unit* target, ui
 
 void ALE::OnPlayerModifyMeleeDamage(Player* player, Unit* target, uint32& damage)
 {
-    START_HOOK(PLAYER_EVENT_ON_MODIFY_MELEE_DAMAGE);
+    START_HOOK_MAP(PLAYER_EVENT_ON_MODIFY_MELEE_DAMAGE);
     Push(player);
     Push(target);
     Push(damage);
@@ -896,7 +912,7 @@ void ALE::OnPlayerModifyMeleeDamage(Player* player, Unit* target, uint32& damage
 
 void ALE::OnPlayerModifySpellDamageTaken(Player* player, Unit* target, int32& damage, SpellInfo const* spellInfo)
 {
-    START_HOOK(PLAYER_EVENT_ON_MODIFY_SPELL_DAMAGE_TAKEN);
+    START_HOOK_MAP(PLAYER_EVENT_ON_MODIFY_SPELL_DAMAGE_TAKEN);
     Push(player);
     Push(target);
     Push(damage);
@@ -922,7 +938,7 @@ void ALE::OnPlayerModifySpellDamageTaken(Player* player, Unit* target, int32& da
 
 void ALE::OnPlayerModifyHealReceived(Player* player, Unit* target, uint32& heal, SpellInfo const* spellInfo)
 {
-    START_HOOK(PLAYER_EVENT_ON_MODIFY_HEAL_RECEIVED);
+    START_HOOK_MAP(PLAYER_EVENT_ON_MODIFY_HEAL_RECEIVED);
     Push(player);
     Push(target);
     Push(heal);
@@ -948,7 +964,7 @@ void ALE::OnPlayerModifyHealReceived(Player* player, Unit* target, uint32& heal,
 
 uint32 ALE::OnPlayerDealDamage(Player* player, Unit* target, uint32 damage, DamageEffectType damagetype)
 {
-    START_HOOK_WITH_RETVAL(PLAYER_EVENT_ON_DEAL_DAMAGE, damage);
+    START_HOOK_MAP_WITH_RETVAL(PLAYER_EVENT_ON_DEAL_DAMAGE, damage);
     Push(player);
     Push(target);
     Push(damage);

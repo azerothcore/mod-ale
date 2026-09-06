@@ -894,7 +894,7 @@ namespace LuaPlayerBotAI
      */
     int InterruptSpell(lua_State* /*L*/, PlayerbotAI* botAI)
     {
-        botAI->InterruptSpell();
+        botAI->RequestSpellInterrupt();
         return 0;
     }
 

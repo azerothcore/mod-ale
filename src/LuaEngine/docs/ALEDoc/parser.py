@@ -85,6 +85,11 @@ class MangosClassDoc(object):
     @params(self=object, name=str, description=str, methods=[MethodDoc])
     def __init__(self, name, description, methods):
         self.name = name
+        # Which sidebar group the class belongs to. Filled in by the generator
+        # from the folder the methods file sits in; "Game" is the default so a
+        # template never has to guard against it being missing.
+        self.category = 'Game'
+        self.category_label = 'Game'
         # Parse the description as Markdown.
         self.description = markdown.markdown(description)
         # Pull the first paragraph out of the description as the short description.

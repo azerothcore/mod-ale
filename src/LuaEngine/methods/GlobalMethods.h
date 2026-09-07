@@ -1492,7 +1492,7 @@ namespace LuaGlobalFunctions
         std::string formattedQuery;
         if (numArgs > 1)
         {
-            formattedQuery = ALE::FormatQuery(L, query);
+            formattedQuery = ALE::FormatQuery(L, query, WorldDatabase);
             query = formattedQuery.c_str();
         }
 
@@ -1549,7 +1549,7 @@ namespace LuaGlobalFunctions
         std::string formattedQuery;
         if (numArgs > 1)
         {
-            formattedQuery = ALE::FormatQuery(L, query);
+            formattedQuery = ALE::FormatQuery(L, query, WorldDatabase);
             query = formattedQuery.c_str();
         }
 
@@ -1577,7 +1577,7 @@ namespace LuaGlobalFunctions
         std::string formattedQuery;
         if (numArgs > 1)
         {
-            formattedQuery = ALE::FormatQuery(L, query);
+            formattedQuery = ALE::FormatQuery(L, query, CharacterDatabase);
             query = formattedQuery.c_str();
         }
 
@@ -1627,7 +1627,7 @@ namespace LuaGlobalFunctions
         std::string formattedQuery;
         if (numArgs > 1)
         {
-            formattedQuery = ALE::FormatQuery(L, query);
+            formattedQuery = ALE::FormatQuery(L, query, CharacterDatabase);
             query = formattedQuery.c_str();
         }
 
@@ -1655,7 +1655,7 @@ namespace LuaGlobalFunctions
         std::string formattedQuery;
         if (numArgs > 1)
         {
-            formattedQuery = ALE::FormatQuery(L, query);
+            formattedQuery = ALE::FormatQuery(L, query, LoginDatabase);
             query = formattedQuery.c_str();
         }
 
@@ -1705,7 +1705,7 @@ namespace LuaGlobalFunctions
         std::string formattedQuery;
         if (numArgs > 1)
         {
-            formattedQuery = ALE::FormatQuery(L, query);
+            formattedQuery = ALE::FormatQuery(L, query, LoginDatabase);
             query = formattedQuery.c_str();
         }
             

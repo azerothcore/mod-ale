@@ -12,29 +12,50 @@
 
 
 {% block document_title -%}
-    Class <a class="mod" href="">{{ current_class.name }}</a>
+    <span class='text-body-dim'>Class</span> {{ current_class.name }}
 {%- endblock %}
 
 
+{% block breadcrumbs %}
+    <li class="whitespace-nowrap before:mx-2 before:text-line-strong before:content-['/']"><a class="text-body-dim hover:text-accent hover:underline" href="{{ root(current_class.category + '.html') }}">{{ current_class.category_label }}</a></li>
+    <li class="whitespace-nowrap before:mx-2 before:text-line-strong before:content-['/']"><span class="font-semibold text-body-bright">{{ current_class.name }}</span></li>
+{% endblock %}
+
+
 {% block sidebar %}
+    <div class="border-b-2 border-line-strong">
+        <div class="flex items-center justify-between px-4 py-2.5 text-[11px] font-bold uppercase tracking-wider text-body-dim">
+            {{ current_class.name }}
+            <span class="rounded-full border border-line bg-ink-raised px-1.5 font-semibold normal-case tracking-normal">{{ current_class.methods | length }}</span>
+        </div>
+        <div class="px-2 pb-2">
+            {%- for method in current_class.methods %}
+            <a class="block truncate rounded px-2.5 py-1 text-sm hover:bg-ink-raised hover:text-body-bright"
+               href="{{ root(current_class.name + '/' + method.name + '.html') }}">{{ method.name }}</a>
+            {%- endfor %}
+        </div>
+    </div>
 {% endblock %}
 
 
 {% block content %}
-    {{ current_class.description|parse_links }}
+    <div class='prose prose-invert max-w-none'>{{ current_class.description|parse_links }}</div>
 
-    <h2 id='methods' class='section-header'><a href="#methods">Methods</a></h2>
-    <table>
+    <h2 id='methods' class='mt-10 text-xl font-semibold tracking-tight text-body-bright'>
+        <a href="#methods">Methods</a>
+    </h2>
+    <div class='mt-5 overflow-x-auto rounded-xl border border-line bg-ink-raised'>
+    <table class='w-full border-collapse text-left [&_tr:first-child_td]:border-t-0'>
     {%- for method in current_class.methods %}
-        <tr>
-            <td>
-                <a class='stability {{ 'Stable' if method.documented else 'Experimental' }}' title='{{ 'Documented' if method.documented else 'Undocumented' }}'></a>
-                <a class='fn' href='{{ method.name }}.html'>{{ method.name }}</a>
+        <tr class='transition hover:bg-white/[0.025]'>
+            <td class='w-px whitespace-nowrap border-t border-line px-4 py-3 font-mono text-[13.5px]'>
+                <span class="mr-2 inline-block h-2 w-2 shrink-0 rounded-full align-middle {{ 'bg-emerald-500' if method.documented else 'bg-slate-500' }}"
+                      title="{{ 'Documented' if method.documented else 'Undocumented' }}"></span>
+                <a class='text-accent hover:underline' href='{{ method.name }}.html'>{{ method.name }}</a>
             </td>
-            <td class='docblock short'>
-                <p>{{ method.short_description|parse_links }}</p>
-            </td>
+            <td class='border-t border-line px-4 py-3 text-[13.5px] text-body-dim'>{{ method.short_description|parse_links }}</td>
         </tr>
     {%- endfor %}
     </table>
+    </div>
 {% endblock %}

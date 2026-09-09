@@ -1043,7 +1043,8 @@ void ALE::Push(lua_State* luastate, CreatureTemplate const* creatureTemplate)
     Push<CreatureTemplate>(luastate, creatureTemplate);
 }
 
-std::string ALE::FormatQuery(lua_State* L, const char* query)
+template<typename T>
+std::string ALE::FormatQuery(lua_State* L, char const* query, DatabaseWorkerPool<T>& db)
 {
     int numArgs = lua_gettop(L);
     std::string formattedQuery = query;
@@ -1060,10 +1061,7 @@ std::string ALE::FormatQuery(lua_State* L, const char* query)
         else if (lua_isstring(L, i)) 
         {
             std::string value = lua_tostring(L, i);
-            for (size_t pos = 0; (pos = value.find('\'', pos)) != std::string::npos; pos += 2)
-            {
-                value.insert(pos, "'");
-            }
+            db.EscapeString(value);
             arg = "'" + value + "'";
         } 
         else 
@@ -1084,6 +1082,10 @@ std::string ALE::FormatQuery(lua_State* L, const char* query)
 
     return formattedQuery;
 }
+
+template std::string ALE::FormatQuery(lua_State*, char const*, DatabaseWorkerPool<WorldDatabaseConnection>&);
+template std::string ALE::FormatQuery(lua_State*, char const*, DatabaseWorkerPool<CharacterDatabaseConnection>&);
+template std::string ALE::FormatQuery(lua_State*, char const*, DatabaseWorkerPool<LoginDatabaseConnection>&);
 
 static int CheckIntegerRange(lua_State* luastate, int narg, int min, int max)
 {

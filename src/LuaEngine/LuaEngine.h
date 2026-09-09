@@ -37,6 +37,7 @@ extern "C"
 #include <lua.h>
 };
 
+template<class T> class DatabaseWorkerPool;
 struct ItemTemplate;
 typedef BattlegroundTypeId BattleGroundTypeId;
 typedef AreaTrigger AreaTriggerEntry;
@@ -308,7 +309,13 @@ public:
         ALETemplate<T>::Push(luastate, ptr);
     }
 
-    static std::string FormatQuery(lua_State* L, const char* query);
+    /*
+     * Replaces the `?` placeholders in `query` with the Lua arguments at
+     * stack index 2..top. String arguments are escaped through `db`, so the
+     * pool the query will run on must be passed.
+     */
+    template<typename T>
+    static std::string FormatQuery(lua_State* L, char const* query, DatabaseWorkerPool<T>& db);
 
     bool ExecuteCall(int params, int res);
 

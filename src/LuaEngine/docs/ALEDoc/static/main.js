@@ -674,28 +674,9 @@
         index = buildIndex(rawSearchIndex);
         startSearch();
 
-        // Draw a convenient sidebar of known crates if we have a listing
-        if (rootPath == '../') {
-            var sidebar = $('.sidebar');
-            var div = $('<div>').attr('class', 'block crate');
-            div.append($('<h2>').text('All Classes'));
-
-            var crates = [];
-            for (var crate in rawSearchIndex) {
-                if (!rawSearchIndex.hasOwnProperty(crate)) { continue }
-                crates.push(crate);
-            }
-            crates.sort();
-            for (var i = 0; i < crates.length; ++i) {
-                var klass = 'crate';
-                if (crates[i] == window.currentCrate) {
-                    klass += ' current';
-                }
-                div.append($('<a>', {'href': '../' + crates[i] + '/index.html',
-                                    'class': klass}).text(crates[i]));
-            }
-            sidebar.append(div);
-        }
+        // The sidebar used to get an "All Classes" block appended here. The
+        // templates now build it themselves, grouped by category, so this only
+        // added a flat duplicate underneath it.
     }
 
     window.initSearch = initSearch;

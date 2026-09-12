@@ -8,90 +8,133 @@
 
     <title>{% block title %}ALE API{% endblock %}</title>
 
-    <link rel="stylesheet" type="text/css" href="{{ static('main.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ static('dark.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ink:    { DEFAULT: '#0e1013', raised: '#16191f', inset: '#0a0c0f' },
+                        line:   { DEFAULT: '#242932', strong: '#333a47' },
+                        body:   { DEFAULT: '#c8cdd6', dim: '#7d8695', bright: '#f4f6f9' },
+                        accent: { DEFAULT: '#5aa2ff', dim: '#1e4d8c' },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Consolas', 'monospace'],
+                    },
+                },
+            },
+        }
+    </script>
+
+    <!-- Only what Tailwind cannot reach: the markup main.js builds itself. -->
+    <link rel="stylesheet" type="text/css" href="{{ static('doc.css') }}">
 
     <link rel="shortcut icon" href="{{ static('favicon.ico') }}">
-
 </head>
-<body class="rustdoc">
-<!--[if lte IE 8]>
-    <div class="warning">
-        This old browser is unsupported and will most likely display funky
-        things.
+
+<body class="bg-ink font-sans text-[15px] leading-relaxed text-body antialiased selection:bg-accent/30">
+
+<input type="checkbox" id="sidebar-toggle" class="peer hidden">
+
+<aside class="sidebar fixed inset-y-0 left-0 z-20 flex w-72 -translate-x-full flex-col overflow-y-auto
+              border-r border-line bg-ink-inset transition-transform
+              peer-checked:translate-x-0 lg:translate-x-0">
+    <a class="group flex h-16 shrink-0 items-center gap-2.5 border-b border-line px-5 hover:bg-ink-raised/50"
+       href='{{ root('index.html') }}'>
+        <img class="transition group-hover:scale-105" src='{{ static('ale-logo.png') }}' alt='ALE' width='30' height='30'>
+        <span class="font-semibold tracking-tight text-body-bright">ALE <span class="text-accent">API</span></span>
+    </a>
+
+    <div class="pb-8">
+        {% block sidebar %}{% endblock %}
+
+        {%- for name, label, members in categories | default([]) %}
+        {%- set on_this_group = (current_class and current_class.category == name) or (current_category and current_category == name) %}
+        <details class="border-b border-line" {{ 'open' if on_this_group or not (current_class or current_category) }}>
+            <summary class="flex cursor-pointer select-none items-center justify-between px-5 py-3
+                            text-[10px] font-bold uppercase tracking-[0.14em] text-body-dim marker:text-line-strong
+                            hover:text-body-bright">
+                <a class="hover:text-accent hover:underline" href="{{ root(name + '.html') }}">{{ label }}</a>
+                <span class="rounded-full border border-line bg-ink-raised px-1.5 text-[11px] font-semibold normal-case tracking-normal">{{ members | length }}</span>
+            </summary>
+            <div class="px-3 pb-3">
+                {%- for class in members %}
+                <a class="block truncate rounded-md px-2.5 py-1.5 text-[13.5px] transition
+                          hover:bg-ink-raised hover:text-body-bright
+                          {{ 'bg-accent/15 font-semibold text-accent shadow-[inset_2px_0_0_0_theme(colors.accent)]' if current_class and class.name == current_class.name }}"
+                   href="{{ root(class.name + '/index.html') }}">{{ class.name }}</a>
+                {%- endfor %}
+            </div>
+        </details>
+        {%- endfor %}
     </div>
-    <![endif]-->
+</aside>
 
-<section class="sidebar">
-    <a href='{{ root('index.html') }}'><img src='{{ static('eluna-logo.png') }}' alt='ALE Logo' width='100'></a>
-    <div class="block">
-        {% block sidebar %}
-            <h2>All Classes</h2>
-            {% for class in classes -%}
-            <a class="mod {{ 'current' if class == current_class }}" href="{{ root(class.name + '/index.html') }}">{{ class.name }}</a>
-            {%- endfor %}
-        {% endblock %}
-    </div>
-</section>
+<div class="flex min-h-screen flex-col lg:pl-72">
 
-<nav class="sub">
-    <form class="search-form js-only">
-        <div class="search-container">
-            <input class="search-input" name="search"
-                   autocomplete="off"
-                   placeholder="Click or press 'S' to search, '?' for more options..."
-                   type="search">
-        </div>
-    </form>
-</nav>
+    <nav class="sub sticky top-0 z-10 flex h-16 shrink-0 items-center gap-4 border-b border-line
+                bg-ink/80 px-6 backdrop-blur-md
+                lg:px-[max(1.5rem,calc((100%-60rem)/2+1.5rem))]">
+        <label class="cursor-pointer rounded border border-line px-2 py-0.5 text-body-dim lg:hidden"
+               for="sidebar-toggle" title="Toggle the sidebar">&#9776;</label>
 
-<section id='main' class="content mod">
-    <h1 class='fqn'>
-        {% block document_title %}Title Missing{% endblock %}
-        <span class='out-of-band'>
-            <span id='render-detail'>
+        <ol class="flex min-w-0 flex-nowrap items-center overflow-hidden text-sm">
+            <li class="whitespace-nowrap"><a class="text-body-dim hover:text-accent hover:underline" href="{{ root('index.html') }}">ALE API</a></li>
+            {% block breadcrumbs %}{% endblock %}
+        </ol>
+
+        <form class="js-only ml-auto">
+            <input class="search-input w-44 rounded-lg border border-line bg-ink-inset px-3.5 py-2 text-[13.5px] transition
+                          placeholder:text-body-dim/70 hover:border-line-strong
+                          focus:border-accent focus:outline-none focus:ring-4 focus:ring-accent/10 sm:w-72"
+                   name="search" autocomplete="off" placeholder="Search, or press S" type="search">
+        </form>
+    </nav>
+
+    <section id='main' class="content mx-auto w-full max-w-[60rem] grow px-6 py-10">
+        <h1 class='fqn mb-8 border-b border-line pb-5 text-[1.75rem] font-semibold tracking-tight text-body-bright'>
+            {% block document_title %}Title Missing{% endblock %}
+            <span class='out-of-band float-right text-sm font-normal'>
                 <a id="collapse-all" href="#">[-]</a>
                 <a id="expand-all" href="#">[+]</a>
             </span>
-        </span>
-    </h1>
+        </h1>
 
-    {% block content %}<h2>Content missing.</h2>{% endblock %}
-</section>
+        {% block content %}<h2>Content missing.</h2>{% endblock %}
+    </section>
 
-<section id='search' class="content hidden"></section>
+    <section id='search' class="content mx-auto hidden w-full max-w-[60rem] grow px-6 py-8"></section>
 
-<section class="footer"></section>
-
-<div id="help" class="hidden">
-    <div class="shortcuts">
-        <h1>Keyboard shortcuts</h1>
-        <dl>
-            <dt>?</dt>
-            <dd>Show this help dialog</dd>
-            <dt>S</dt>
-            <dd>Focus the search field</dd>
-            <dt>&larrb;</dt>
-            <dd>Move up in search results</dd>
-            <dt>&rarrb;</dt>
-            <dd>Move down in search results</dd>
-            <dt>&#9166;</dt>
-            <dd>Go to active search result</dd>
-        </dl>
-    </div>
-    <div class="infos">
-        <h1>Search tricks</h1>
-        <p>
-            Prefix searches with a type followed by a colon (e.g.
-            <code>fn:</code>) to restrict the search to a given type.
+    <footer class="shrink-0 border-t border-line px-6 py-6 text-xs text-body-dim
+                   lg:px-[max(1.5rem,calc((100%-60rem)/2+1.5rem))]">
+        <p class="max-w-2xl leading-relaxed">
+            Built on <a class="font-medium text-body hover:text-accent hover:underline"
+                        href="https://github.com/ElunaLuaEngine/Eluna">Eluna</a>.
+            ALE is a fork, and the heavy lifting was done upstream - our thanks to the original
+            Eluna authors and to everyone who has contributed to it over the years.
         </p>
-        <p>
-            Accepted types are: <code>fn</code>, <code>mod</code>,
-            <code>struct</code> (or <code>str</code>), <code>enum</code>,
-            <code>trait</code>, <code>typedef</code> (or
-            <code>tdef</code>).
-        </p>
-    </div>
+        <div class="mt-4 flex flex-wrap justify-between gap-4 border-t border-line pt-4">
+            <span>Generated on <script src="{{ root('date.js') }}"></script></span>
+            <span>&copy;2026 ALE Lua Engine</span>
+        </div>
+    </footer>
+</div>
+
+<div id="help" class="hidden fixed inset-0 z-30 m-auto h-fit w-fit rounded-lg border border-line bg-ink-raised p-6 shadow-2xl">
+    <h1 class="mb-3 font-semibold text-body-bright">Keyboard shortcuts</h1>
+    <dl class="grid grid-cols-[3rem_1fr] gap-y-1 text-sm">
+        <dt class="font-mono text-body-dim">?</dt><dd>Show this help dialog</dd>
+        <dt class="font-mono text-body-dim">S</dt><dd>Focus the search field</dd>
+        <dt class="font-mono text-body-dim">&uarr;</dt><dd>Move up in search results</dd>
+        <dt class="font-mono text-body-dim">&darr;</dt><dd>Move down in search results</dd>
+        <dt class="font-mono text-body-dim">&#9166;</dt><dd>Go to active search result</dd>
+    </dl>
 </div>
 
 <script>
@@ -100,7 +143,5 @@
 <script src="{{ static('jquery.js') }}"></script>
 <script src="{{ static('main.js') }}"></script>
 <script async src="{{ root('search-index.js') }}"></script>
-<center>Generated on <script src="{{ root('date.js') }}"></script></center>
-<center>&copy;2026 - ALE Lua Engine</center>
 </body>
 </html>

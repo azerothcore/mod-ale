@@ -1,0 +1,49 @@
+{% extends '_base.html' %}
+
+
+{% block title -%}
+    {{ current_category_label }} - ALE
+{%- endblock %}
+
+
+{% block description -%}
+    The {{ current_category_label }} classes of the ALE engine API.
+{%- endblock %}
+
+
+{% block document_title -%}
+    <span class='text-body-dim'>Category</span> {{ current_category_label }}
+{%- endblock %}
+
+
+{% block breadcrumbs %}
+    <li class="whitespace-nowrap before:mx-2 before:text-line-strong before:content-['/']"><span class="font-semibold text-body-bright">{{ current_category_label }}</span></li>
+{% endblock %}
+
+
+{% block content %}
+    <p class='text-body-dim'>{{ current_category_description }}</p>
+
+    <h2 id='classes' class='mt-10 text-xl font-semibold tracking-tight text-body-bright'>
+        <a href="#classes">Classes</a>
+    </h2>
+    <div class='mt-5 overflow-x-auto rounded-xl border border-line bg-ink-raised'>
+    <table class='w-full border-collapse text-left [&_tr:first-child_td]:border-t-0'>
+    {%- for class in current_category_classes %}
+        <tr class='transition hover:bg-white/[0.025]'>
+            <td class='w-px whitespace-nowrap border-t border-line px-4 py-3 font-mono text-[13.5px]'>
+                {%- if class.fully_documented %}
+                <span class='mr-2 inline-block h-2 w-2 shrink-0 rounded-full align-middle bg-emerald-500'></span><!-- fully documented -->
+                {%- elif class.fully_undocumented %}
+                <span class='mr-2 inline-block h-2 w-2 shrink-0 rounded-full align-middle bg-slate-500'></span><!-- undocumented -->
+                {%- else %}
+                <span class='mr-2 inline-block h-2 w-2 shrink-0 rounded-full align-middle bg-amber-400'></span><!-- partially documented -->
+                {%- endif %}
+                <a class='text-accent hover:underline' href='{{ root(class.name + '/index.html') }}'>{{ class.name }}</a>
+            </td>
+            <td class='border-t border-line px-4 py-3 text-[13.5px] text-body-dim'>{{ class.short_description|parse_links }}</td>
+        </tr>
+    {%- endfor %}
+    </table>
+    </div>
+{% endblock %}

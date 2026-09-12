@@ -12,17 +12,19 @@
 
 
 {% block document_title -%}
-    Method
-    <a class="mod" href="{{ root(current_class.name + '/index.html') }}">
-        {{- current_class.name -}}
-    </a>:<a class="fn" href="{{ root(current_class.name + '/' + current_method.name + '.html') }}">
-        {{- current_method.name -}}
-    </a>
+    <span class='text-body-dim'>Method</span>
+    <a class="text-accent hover:underline" href="{{ root(current_class.name + '/index.html') }}">{{ current_class.name }}</a><span class='text-body-dim'>:</span>{{ current_method.name }}
 {%- endblock %}
 
 
+{% block breadcrumbs %}
+    <li class="whitespace-nowrap before:mx-2 before:text-line-strong before:content-['/']"><a class="text-body-dim hover:text-accent hover:underline" href="{{ root(current_class.category + '.html') }}">{{ current_class.category_label }}</a></li>
+    <li class="whitespace-nowrap before:mx-2 before:text-line-strong before:content-['/']"><a class="text-body-dim hover:text-accent hover:underline" href="{{ root(current_class.name + '/index.html') }}">{{ current_class.name }}</a></li>
+    <li class="whitespace-nowrap before:mx-2 before:text-line-strong before:content-['/']"><span class="font-semibold text-body-bright">{{ current_method.name }}</span></li>
+{% endblock %}
+
+
 {% block sidebar %}
-    <h2>{{ current_class.name }} Methods</h2>
     <script src="sidebar.js"></script>
     <script>
       // Highlight current method by adding "current" class to it
@@ -39,7 +41,7 @@
 
 
 {% block content %}
-    <div class='docblock'>
+    <div class='docblock prose prose-invert max-w-none'>
         {%- if current_method.documented %}
         {{ current_method.description|parse_links }}
         {%- else %}
@@ -47,16 +49,16 @@
         <p>For temporary documentation, please check the <a href="https://github.com/azerothcore/mod-ale/blob/master/src/LuaEngine/LuaFunctions.cpp">LuaFunctions</a> source file.</p>
         {%- endif %}
 
-        <h2 id="synopsis" class='section-header'>
+        <h2 id=\"synopsis\" class='mt-10 text-xl font-semibold tracking-tight text-body-bright'>
             <a href="#synopsis">Synopsis</a>
         </h2>
+        <div class="mt-4 space-y-2 not-prose">
         {%- for prototype in current_method.prototypes %}
-        <p>
-            <code>{{ prototype }}</code>
-        </p>
+            <pre class="overflow-x-auto rounded-xl border border-line bg-ink-inset px-4 py-3 font-mono text-[13.5px] text-body-bright"><code>{{ prototype }}</code></pre>
         {%- endfor %}
+        </div>
 
-        <h2 id="arguments" class='section-header'>
+        <h2 id=\"arguments\" class='mt-10 text-xl font-semibold tracking-tight text-body-bright'>
             <a href="#arguments">Arguments</a>
         </h2>
         <p>
@@ -74,7 +76,7 @@
             {%- endif %}
         </p>
 
-        <h2 id="returns" class='section-header'>
+        <h2 id=\"returns\" class='mt-10 text-xl font-semibold tracking-tight text-body-bright'>
             <a href="#returns">Returns</a>
         </h2>
         <p>

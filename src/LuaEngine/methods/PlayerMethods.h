@@ -5164,7 +5164,7 @@ namespace LuaPlayer
     int IsBot(lua_State* L, Player* player)
     {
     #if defined(MOD_PLAYERBOTS)
-        ALE::Push(L, player->GetSession()->IsBot());
+        ALE::Push(L, player->GetSession()->IsHeadless());
     #else
         (void)player;
         ALE::Push(L, false);

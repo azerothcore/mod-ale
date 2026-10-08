@@ -1,0 +1,100 @@
+/*
+ * The little that Tailwind cannot reach.
+ *
+ * Everything the templates render is styled with utility classes. What is left
+ * here is the markup main.js builds at runtime - search results and the
+ * collapse toggles - which no template ever sees, plus the two structures
+ * markdown produces inside a method page.
+ *
+ * Loaded before the Tailwind CDN script finishes, so nothing here may depend
+ * on Tailwind having run.
+ */
+
+/* Hidden until main.js removes the class, so the search box does not sit
+ * there uselessly when scripting is off. */
+.js-only { display: none; }
+
+/* --------------------------------------------------------- search results */
+
+.search-results {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.search-results tr { cursor: pointer; }
+.search-results tr:hover { background: #16191f; }
+
+.search-results td {
+    padding: .55rem .9rem;
+    border-top: 1px solid #242932;
+    vertical-align: top;
+}
+
+.search-results tr:first-child td { border-top: none; }
+
+.search-results td:first-child {
+    white-space: nowrap;
+    width: 1%;
+    font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+    font-size: .88rem;
+    color: #7d8695;
+}
+
+.search-results a { color: #5aa2ff; text-decoration: none; }
+.search-results a:hover { text-decoration: underline; }
+.search-results .desc { font-size: .88rem; color: #7d8695; }
+
+/* The row the arrow keys are on. */
+.search-results tr.highlighted,
+.search-results tr:focus { background: #1e4d8c; }
+.search-results tr.highlighted td,
+.search-results tr.highlighted .desc { color: #fff; }
+
+/* ------------------------------------------------------- method arguments */
+
+/*
+ * A parameter is a <dl> per entry: the signature on one line, its description
+ * indented under it. The prose plugin does not know this shape, so it is
+ * spelled out.
+ */
+.docblock dl {
+    margin: .75rem 0 0;
+    padding: .8rem 1rem;
+    border: 1px solid #242932;
+    border-left: 2px solid #333a47;
+    border-radius: 10px;
+    background: #16191f;
+}
+
+.docblock dt { margin: 0; }
+
+.docblock dt code {
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: .875rem;
+    color: #f4f6f9;
+}
+
+/* The type sits in a <strong> the generator wraps around it. */
+.docblock dt strong,
+.docblock dt strong a {
+    color: #5aa2ff;
+    font-weight: 500;
+}
+
+.docblock dd {
+    margin: .3rem 0 0;
+    color: #7d8695;
+    font-size: .9rem;
+}
+
+.docblock dd em { font-style: italic; }
+
+/* main.js hides these when you collapse a section. */
+.toggle-wrapper.collapsed { height: 1.25rem; overflow: hidden; }
+
+#collapse-all, #expand-all { color: #5aa2ff; text-decoration: none; }
+#collapse-all:hover, #expand-all:hover { text-decoration: underline; }

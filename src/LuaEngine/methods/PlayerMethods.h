@@ -3616,6 +3616,17 @@ namespace LuaPlayer
     }
 
     /**
+     * Teleports the [Player] to the most appropriate graveyard.
+     *
+     * The graveyard is selected using the [Player]'s corpse location.
+     */
+    int RepopAtGraveyard(lua_State* /*L*/, Player* player)
+    {
+        player->RepopAtGraveyard();
+        return 0;
+    }
+
+    /**
      * Adds a new item to the gossip menu shown to the [Player] on next call to [Player:GossipSendMenu].
      *
      * sender and intid are numbers which are passed directly to the gossip selection handler. Internally they are partly used for the database gossip handling.  

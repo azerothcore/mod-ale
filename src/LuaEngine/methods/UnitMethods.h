@@ -1103,6 +1103,52 @@ namespace LuaUnit
     }
 
     /**
+     * Returns a table containing all [Aura]s applied on the [Unit].
+     *
+     * @return table auras : table filled with [Aura] objects
+     */
+    int GetAuras(lua_State* L, Unit* unit)
+    {
+        Unit::AuraApplicationMap const& auras = unit->GetAppliedAuras();
+
+        lua_createtable(L, auras.size(), 0);
+        int tbl = lua_gettop(L);
+        uint32 i = 0;
+
+        for (Unit::AuraApplicationMap::const_iterator itr = auras.begin(); itr != auras.end(); ++itr)
+        {
+            ALE::Push(L, itr->second->GetBase());
+            lua_rawseti(L, tbl, ++i);
+        }
+
+        lua_settop(L, tbl);
+        return 1;
+    }
+
+    /**
+     * Returns a table containing the [Aura]s shown on the [Unit]s buff bar, ordered by aura slot.
+     *
+     * @return table auras : table filled with [Aura] objects
+     */
+    int GetVisibleAuras(lua_State* L, Unit* unit)
+    {
+        Unit::VisibleAuraMap const* auras = unit->GetVisibleAuras();
+
+        lua_createtable(L, auras->size(), 0);
+        int tbl = lua_gettop(L);
+        uint32 i = 0;
+
+        for (Unit::VisibleAuraMap::const_iterator itr = auras->begin(); itr != auras->end(); ++itr)
+        {
+            ALE::Push(L, itr->second->GetBase());
+            lua_rawseti(L, tbl, ++i);
+        }
+
+        lua_settop(L, tbl);
+        return 1;
+    }
+
+    /**
      * Returns a table containing friendly [Unit]'s within given range of the [Unit].
      *
      * @param float range = 533.333 : search radius

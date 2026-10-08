@@ -17,6 +17,7 @@ extern "C"
 #include "ALECompat.h"
 #include "ALEUtility.h"
 #include "SharedDefines.h"
+#include <type_traits>
 
 class ALEGlobal
 {
@@ -347,8 +348,13 @@ public:
     {
         // Get object pointer (and check type, no error)
         ALEObject* obj = ALE::CHECKOBJ<ALEObject>(L, 1, false);
-        if (obj && manageMemory)
-            delete static_cast<T*>(obj->GetObj());
+        // Types whose destructor is not accessible, singletons for example, can never be
+        // memory managed by ALE, so the delete must not even be compiled for them.
+        if constexpr (std::is_destructible_v<T>)
+        {
+            if (obj && manageMemory)
+                delete static_cast<T*>(obj->GetObj());
+        }
         delete obj;
         return 0;
     }

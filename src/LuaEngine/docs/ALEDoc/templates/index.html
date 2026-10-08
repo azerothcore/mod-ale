@@ -7,81 +7,88 @@
 
 
 {% block content %}
-    <div class='docblock'>
-        <h1 id="the-ale-engine-api" class='section-header'>
-            <a href="#the-ale-engine-api">The ALE Lua Engine&copy; API</a>
-        </h1>
-        <p>
-            The ALE Lua Engine&copy; API allows you to add your own Lua code to be executed when certain events (called "hooks") occur.
-        </p>
-        <p>
-            Add a new in-game command, give life to creatures with new AI, or even light players who try to duel on fire!
-            If the hook exists, you can script it.
-        </p>
-
-        <h2 id="about-ale" class='section-header'>
-            <a href="#about-ale">About ALE</a>
-        </h2>
-        <p>
-            ALE is a <a href="http://www.lua.org/">Lua</a> engine for World of Warcraft emulators.
-            These pages are for <a href="https://www.azerothcore.org/">AzerothCore</a>'s version, but ALE also supports
-            <a href="https://cmangos.net/">CMaNGOS</a>/<a href="https://www.getmangos.eu/">MaNGOS</a> and <a href="https://www.trinitycore.org/">TrinityCore</a>.
-        </p>
-        <p>
-            If you come from the TypeScript / JavaScript world, or would prefer to use a typed language instead of Lua, check out <a href="https://github.com/azerothcore/eluna-ts">ale-ts</a>!
-        </p>
-        <p>
-            You can get support in the <code>#ale-ac</code> channel of <a href="https://discord.com/invite/sqkPb623">AzerothCore's Discord server</a>.
-        </p>
-
-        <h2 id="installation" class='section-header'>
-            <a href="#installation">How to Install</a>
-        </h2>
-        <p>
-            <ol>
-                <li>If you haven't already, clone AzerothCore from <a href="https://github.com/azerothcore/azerothcore-wotlk">our GitHub repository</a></li>
-                <li>Go to the modules directory and run the following command: <pre>git clone https://github.com/azerothcore/mod-ale.git mod-ale</pre></li>
-                <li>Run CMake</li>
-                <li>Build AzerothCore</li>
-            </ol>
-        </p>
-
-        <!-- <h2 id="tutorials-and-guides" class='section-header'>
-            <a href="#tutorials-and-guides">Tutorials & Guides</a>
-        </h2>
-        <p>
-            We haven't written tutorials yet, but when we do, we'll put the links here.
-        </p> -->
-
-        <h2 id="about-this-documentation" class='section-header'>
-            <a href="#about-this-documentation">About this Documentation</a>
-        </h2>
-        <p>
-            The layout, CSS, and Javascript code for this documentation was borrowed from <a href="http://doc.rust-lang.org/">doc.rust-lang.org</a>.
-        </p>
-        <p>
-            The documentation generator was originally written by <a href="https://github.com/Patman64">Patman64</a> and is maintained by the ALE team.
-        </p>
+    <div class="relative -mt-2 mb-10 overflow-hidden rounded-2xl border border-line bg-gradient-to-br from-accent/10 via-ink-raised to-ink-raised p-8">
+        <div class="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-accent/10 blur-3xl"></div>
+        <div class="relative">
+            <h2 class="text-3xl font-bold tracking-tight text-body-bright">Script your server in Lua.</h2>
+            <p class="mt-3 max-w-2xl text-body-dim">
+                ALE (AzerothCore Lua Engine) lets you hook the events of a running world - a player logging in, a creature dying,
+                a table being loaded - and answer them in Lua. Add a command, give a creature new
+                behaviour, patch a data table in memory. If the hook exists, you can script it.
+            </p>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a href="#categories" class="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-ink transition hover:brightness-110">Browse the API</a>
+                <a href="https://github.com/azerothcore/mod-ale" class="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-body transition hover:border-line-strong hover:text-body-bright">GitHub</a>
+            </div>
+        </div>
     </div>
 
-    <h2 id='modules' class='section-header'><a href="#modules">Classes</a></h2>
-    <table>
-    {%- for class in classes %}
-        <tr>
-            <td>
-                {%- if class.fully_documented %}
-                <a class='stability Stable' title='Fully Documented'></a>
-                {%- elif class.fully_undocumented %}
-                <a class='stability Experimental' title='Fully Undocumented'></a>
-                {%- else %}
-                <a class='stability Unstable' title='Partially Documented'></a>
-                {%- endif %}
-                <a class='mod' href='{{ root(class.name + '/index.html') }}'>{{ class.name }}</a>
-            </td>
-            <td class='docblock short'>
-                <p>{{ class.short_description|parse_links }}</p>
-            </td>
-        </tr>
+    <h2 id='categories' class='mt-10 text-xl font-semibold tracking-tight text-body-bright'>
+        <a href="#categories">Categories</a>
+    </h2>
+    <div class='mt-5 grid gap-4 sm:grid-cols-3'>
+    {%- for name, label, members in categories %}
+        <a class='group relative overflow-hidden rounded-xl border border-line bg-ink-raised p-5 transition
+                  hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-lg hover:shadow-accent/5'
+           href='{{ root(name + '.html') }}'>
+            <div class='flex items-baseline justify-between'>
+                <span class='font-semibold text-body-bright'>{{ label }}</span>
+                <span class='font-mono text-2xl font-medium text-line-strong transition group-hover:text-accent/60'>{{ members | length }}</span>
+            </div>
+            <div class='mt-1 text-[13px] text-body-dim'>classes</div>
+        </a>
     {%- endfor %}
-    </table>
+    </div>
+
+    <h2 id='install' class='mt-12 text-xl font-semibold tracking-tight text-body-bright'>
+        <a href="#install">Getting started</a>
+    </h2>
+    <ol class="mt-5 space-y-3 text-[14.5px]">
+        <li class="flex gap-3">
+            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line bg-ink-raised font-mono text-xs text-body-dim">1</span>
+            <span>Clone <a class="text-accent hover:underline" href="https://github.com/azerothcore/azerothcore-wotlk">AzerothCore</a>, if you have not already.</span>
+        </li>
+        <li class="flex gap-3">
+            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line bg-ink-raised font-mono text-xs text-body-dim">2</span>
+            <span>
+                From its <code class="rounded border border-line bg-ink-inset px-1.5 py-0.5 font-mono text-[13px]">modules</code> directory, run
+                <pre class="mt-2 overflow-x-auto rounded-xl border border-line bg-ink-inset px-4 py-3 font-mono text-[13px] text-body-bright"><code>git clone https://github.com/azerothcore/mod-ale.git mod-ale</code></pre>
+            </span>
+        </li>
+        <li class="flex gap-3">
+            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-line bg-ink-raised font-mono text-xs text-body-dim">3</span>
+            <span>Run CMake, then build. Your Lua scripts go in <code class="rounded border border-line bg-ink-inset px-1.5 py-0.5 font-mono text-[13px]">lua_scripts</code>.</span>
+        </li>
+    </ol>
+
+    <p class="mt-6 text-[14.5px] text-body-dim">
+        Support lives in the <code class="rounded border border-line bg-ink-inset px-1.5 py-0.5 font-mono text-[13px]">#ac-lua-engine</code>
+        channel of <a class="text-accent hover:underline" href="https://discord.com/invite/235TkXxp">AzerothCore's Discord</a>.
+        If you would rather write typed code, there is
+        <a class="text-accent hover:underline" href="https://github.com/azerothcore/eluna-ts">eluna-ts</a>.
+    </p>
+
+    <h2 id='credits' class='mt-12 text-xl font-semibold tracking-tight text-body-bright'>
+        <a href="#credits">Credits</a>
+    </h2>
+    <div class="mt-5 grid gap-4 sm:grid-cols-2">
+        <div class="rounded-xl border border-line bg-ink-raised p-5">
+            <div class="font-semibold text-body-bright">Eluna</div>
+            <p class="mt-2 text-[14px] text-body-dim">
+                ALE is a fork of the
+                <a class="text-accent hover:underline" href="https://github.com/ElunaLuaEngine/Eluna">Eluna Lua Engine</a>.
+                Nearly everything documented here started there.
+                Our thanks to its authors and contributors.
+            </p>
+        </div>
+        <div class="rounded-xl border border-line bg-ink-raised p-5">
+            <div class="font-semibold text-body-bright">This documentation</div>
+            <p class="mt-2 text-[14px] text-body-dim">
+                The generator was written by
+                <a class="text-accent hover:underline" href="https://github.com/Patman64">Patman64</a>
+                and is maintained by the ALE team. Its search and page structure came from
+                <a class="text-accent hover:underline" href="http://doc.rust-lang.org/">doc.rust-lang.org</a>.
+            </p>
+        </div>
+    </div>
 {% endblock %}

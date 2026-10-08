@@ -17,10 +17,73 @@ def find_class_files(search_path):
     :return: a list of all files containing ALE methods, and the name of their respective classes
     """
     # Search for all files ending in "Methods.h".
-    method_file_names = glob.glob(os.path.join(search_path, '**', '*Methods.h'))
+    #
+    # recursive=True matters: without it "**" matches a single path component,
+    # so everything in a subfolder of methods/ is silently invisible.
+    method_file_names = glob.glob(os.path.join(search_path, '**', '*Methods.h'), recursive=True)
     # Open each file.
     method_files = [open(file_name, 'r') for file_name in method_file_names]
     return method_files
+
+
+# The order categories appear in the sidebar. Anything not listed follows,
+# alphabetically.
+CATEGORY_ORDER = ['Game', 'Data', 'Playerbots']
+
+# Shown instead of the folder name when the folder reads badly as a heading.
+CATEGORY_LABELS = {
+    'Game': 'Game',
+    'Data': 'Data tables',
+    'Playerbots': 'Playerbots',
+}
+
+# One line at the top of each category page. A folder with no entry here still
+# gets its page, just without the blurb.
+CATEGORY_DESCRIPTIONS = {
+    'Game': 'Players, creatures, items, maps and the rest of the living world: '
+            'what a script reaches while the server is running.',
+    'Data': 'The tables the core loads at startup, reachable by name through '
+            'LookupEntry and ForEachEntry. Writing to one changes the store the '
+            'core itself reads from, without touching SQL or a .dbc file.',
+    'Playerbots': 'The bots of mod-playerbots: the bot itself, its AI, and the '
+                  'managers that create and hold them.',
+}
+
+
+@returns(str)
+@params(path=str)
+def category_of(path):
+    """Return the category a class belongs to, taken from the folder its methods live in.
+
+    There is nothing to maintain: a new folder under methods/ becomes a new
+    category on its own, the way methods/Data/ did. Files sitting directly in
+    methods/ fall into "Game".
+
+    :param path: path of the *Methods.h file
+    :return: the category name
+    """
+    parts = os.path.normpath(path).split(os.sep)
+
+    if 'methods' in parts:
+        below = parts[parts.index('methods') + 1:]
+        # More than one part left means the file sits in a subfolder.
+        if len(below) > 1:
+            return below[0]
+
+    return 'Game'
+
+
+def group_by_category(classes):
+    """Group classes into (name, label, classes) triples, ready for the sidebar."""
+    groups = {}
+    for class_ in classes:
+        groups.setdefault(class_.category, []).append(class_)
+
+    def rank(name):
+        return (CATEGORY_ORDER.index(name), '') if name in CATEGORY_ORDER else (len(CATEGORY_ORDER), name)
+
+    return [(name, CATEGORY_LABELS.get(name, name), sorted(groups[name], key=lambda c: c.name))
+            for name in sorted(groups, key=rank)]
 
 
 def make_renderer(template_path, link_parser_factory):
@@ -65,11 +128,18 @@ if __name__ == '__main__':
     classes = []
     for f in class_files:
         print(f'Parsing file {f.name}...')
-        classes.append(ClassParser.parse_file(f))
+        class_ = ClassParser.parse_file(f)
+        class_.category = category_of(f.name)
+        class_.category_label = CATEGORY_LABELS.get(class_.category, class_.category)
+        classes.append(class_)
         f.close()
 
     # Sort the classes so they are in the correct order in lists.
     classes.sort(key=lambda c: c.name)
+
+    # The sidebar groups classes by category; every page shows the same one.
+    categories = group_by_category(classes)
+    print('Categories: ' + ', '.join(f'{name} ({len(members)})' for name, _, members in categories))
 
     def make_parsers(level):
         """Returns a function that parses content for refs to other classes, methods, or enums,
@@ -95,14 +165,14 @@ if __name__ == '__main__':
                 class_name, method_name = full_name.split(':')
                 url = '{}{}/{}.html'.format(('../' * level), class_name, method_name)
                 # Replace occurrencies of &Class:Method with the url created
-                content = content.replace(name, '<a class="fn" href="{}">{}</a>'.format(url, full_name))
+                content = content.replace(name, '<a class="text-accent hover:underline" href="{}">{}</a>'.format(url, full_name))
 
             for name in class_names:
                 # Take the [] off the front of the class's name.
                 class_name = name[1:-1]
                 url = '{}{}/index.html'.format(('../' * level), class_name)
                 # Replace occurrencies of &Class:Method with the url created
-                content = content.replace(name, '<a class="mod" href="{}">{}</a>'.format(url, class_name))
+                content = content.replace(name, '<a class="text-accent hover:underline" href="{}">{}</a>'.format(url, class_name))
 
             return content
 
@@ -127,7 +197,7 @@ if __name__ == '__main__':
             if content in class_names:
                 class_name = content[1:-1]
                 url = '{}{}/index.html'.format(('../' * level), class_name)
-                return '<strong><a class="mod" href="{}">{}</a></strong>'.format(url, class_name)
+                return '<strong><a class="text-accent hover:underline" href="{}">{}</a></strong>'.format(url, class_name)
 
             # Case for enums to direct to a search on github
             enum_name = content[1:-1]
@@ -143,11 +213,21 @@ if __name__ == '__main__':
     render = make_renderer('ALEDoc/templates', make_parsers)
 
     # Render the index.
-    render('index.html', 'index.html', level=0, classes=classes)
+    render('index.html', 'index.html', level=0, classes=classes, categories=categories)
     # Render the search index.
     render('search-index.js', 'search-index.js', level=0, classes=classes)
     # Render the date.
     render('date.js', 'date.js', level=0, currdate=time.strftime("%d/%m/%Y"))
+
+    # Render one page per category, so the breadcrumb trail leads somewhere.
+    for name, label, members in categories:
+        print(f'Rendering page for category {name}...')
+        render('category.html', name + '.html', level=0,
+               classes=classes, categories=categories,
+               current_category=name,
+               current_category_label=label,
+               current_category_classes=members,
+               current_category_description=CATEGORY_DESCRIPTIONS.get(name, ''))
 
     for class_ in classes:
         print(f'Rendering pages for class {class_.name}...')
@@ -158,12 +238,12 @@ if __name__ == '__main__':
         sidebar_path = '{}/sidebar.js'.format(class_.name)
 
         # Render the class's index page.
-        render('class.html', index_path, level=1, classes=classes, current_class=class_)
+        render('class.html', index_path, level=1, classes=classes, categories=categories, current_class=class_)
 
         # Render the class's sidebar script.
-        render('sidebar.js', sidebar_path, level=1, classes=classes, current_class=class_)
+        render('sidebar.js', sidebar_path, level=1, classes=classes, categories=categories, current_class=class_)
 
         # Render each method's page.
         for method in class_.methods:
             method_path = '{}/{}.html'.format(class_.name, method.name)
-            render('method.html', method_path, level=1, current_class=class_, current_method=method)
+            render('method.html', method_path, level=1, classes=classes, categories=categories, current_class=class_, current_method=method)

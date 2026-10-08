@@ -115,6 +115,39 @@ namespace LuaAura
     }
 
     /**
+     * Returns the number of charges left on the [Aura].
+     *
+     * @return uint32 charges
+     */
+    int GetCharges(lua_State* L, Aura* aura)
+    {
+        ALE::Push(L, aura->GetCharges());
+        return 1;
+    }
+
+    /**
+     * Returns `true` if the [Aura] is passive, `false` otherwise.
+     *
+     * @return bool isPassive
+     */
+    int IsPassive(lua_State* L, Aura* aura)
+    {
+        ALE::Push(L, aura->IsPassive());
+        return 1;
+    }
+
+    /**
+     * Returns the [SpellInfo] of the spell that created the [Aura].
+     *
+     * @return [SpellInfo] spellInfo
+     */
+    int GetSpellInfo(lua_State* L, Aura* aura)
+    {
+        ALE::Push(L, aura->GetSpellInfo());
+        return 1;
+    }
+
+    /**
      * Change the amount of time before the [Aura] expires.
      *
      * @param int32 duration : the new duration of the Aura, in milliseconds

@@ -512,7 +512,7 @@ namespace LuaPlayerBotAI
      */
     int GetNearGroupMemberCount(lua_State* L, PlayerbotAI* botAI)
     {
-        float distance = ALE::CHECKVAL<float>(L, 2, sPlayerbotAIConfig.sightDistance);
+        float distance = ALE::CHECKVAL<float>(L, 2, sPlayerbotAIConfig.SightDistance);
         ALE::Push(L, botAI->GetNearGroupMemberCount(distance));
         return 1;
     }
@@ -525,7 +525,7 @@ namespace LuaPlayerBotAI
      */
     int HasPlayerNearby(lua_State* L, PlayerbotAI* botAI)
     {
-        float range = ALE::CHECKVAL<float>(L, 2, sPlayerbotAIConfig.reactDistance);
+        float range = ALE::CHECKVAL<float>(L, 2, sPlayerbotAIConfig.ReactDistance);
         ALE::Push(L, botAI->HasPlayerNearby(range));
         return 1;
     }

@@ -3402,7 +3402,11 @@ namespace LuaPlayer
     {
         uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
         bool update = ALE::CHECKVAL<bool>(L, 3, true);
-        player->GetSpellHistory()->ResetCooldown(spellId, update);
+        // The client is cleared even when the server holds no entry for the spell
+        player->GetSpellHistory()->ResetCooldown(spellId, false);
+        if (update)
+            player->SendClearCooldown(spellId, player);
+
         return 0;
     }
 
@@ -3416,6 +3420,8 @@ namespace LuaPlayer
     {
         uint32 category = ALE::CHECKVAL<uint32>(L, 2);
         bool update = ALE::CHECKVAL<bool>(L, 3, true);
+        if (!category)
+            return 0;
 
         player->GetSpellHistory()->ResetCooldowns([category](SpellHistory::CooldownStorageType::iterator itr) -> bool
         {

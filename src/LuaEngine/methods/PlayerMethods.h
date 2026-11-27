@@ -232,7 +232,7 @@ namespace LuaPlayer
     {
         uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
 
-        ALE::Push(L, player->HasSpellCooldown(spellId));
+        ALE::Push(L, player->GetSpellHistory()->HasCooldown(spellId));
         return 1;
     }
 
@@ -921,7 +921,7 @@ namespace LuaPlayer
     {
         uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
 
-        ALE::Push(L, uint32(player->GetSpellCooldownDelay(spellId)));
+        ALE::Push(L, player->GetSpellHistory()->GetRemainingCooldown(spellId));
         return 1;
     }
 
@@ -3402,7 +3402,11 @@ namespace LuaPlayer
     {
         uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
         bool update = ALE::CHECKVAL<bool>(L, 3, true);
-        player->RemoveSpellCooldown(spellId, update);
+        // The client is cleared even when the server holds no entry for the spell
+        player->GetSpellHistory()->ResetCooldown(spellId, false);
+        if (update)
+            player->SendClearCooldown(spellId, player);
+
         return 0;
     }
 
@@ -3416,9 +3420,14 @@ namespace LuaPlayer
     {
         uint32 category = ALE::CHECKVAL<uint32>(L, 2);
         bool update = ALE::CHECKVAL<bool>(L, 3, true);
-        (void)update; // ensure that the variable is referenced in order to pass compiler checks
+        if (!category)
+            return 0;
 
-        player->RemoveCategoryCooldown(category);
+        player->GetSpellHistory()->ResetCooldowns([category](SpellHistory::CooldownStorageType::iterator itr) -> bool
+        {
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(itr->first);
+            return itr->second.CategoryId == category || (spellInfo && spellInfo->GetCategory() == category);
+        }, update);
         return 0;
     }
 
@@ -3427,7 +3436,7 @@ namespace LuaPlayer
      */
     int ResetAllCooldowns(lua_State* /*L*/, Player* player)
     {
-        player->RemoveAllSpellCooldown();
+        player->GetSpellHistory()->ResetAllCooldowns();
         return 0;
     }
 

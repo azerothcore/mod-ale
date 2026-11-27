@@ -270,7 +270,7 @@ namespace LuaCreature
         uint32 spell = ALE::CHECKVAL<uint32>(L, 2);
 
         if (const SpellInfo* info = sSpellMgr->GetSpellInfo(spell))
-            ALE::Push(L, info->GetCategory() && creature->HasSpellCooldown(spell));
+            ALE::Push(L, info->GetCategory() && creature->GetSpellHistory()->HasCooldown(spell));
         else
             ALE::Push(L, false);
         return 1;
@@ -317,7 +317,7 @@ namespace LuaCreature
     {
         uint32 spellId = ALE::CHECKVAL<uint32>(L, 2);
 
-        ALE::Push(L, creature->HasSpellCooldown(spellId));
+        ALE::Push(L, creature->GetSpellHistory()->HasCooldown(spellId));
         return 1;
     }
 
@@ -547,7 +547,7 @@ namespace LuaCreature
         uint32 spell = ALE::CHECKVAL<uint32>(L, 2);
 
         if (sSpellMgr->GetSpellInfo(spell))
-            ALE::Push(L, creature->GetSpellCooldown(spell));
+            ALE::Push(L, creature->GetSpellHistory()->GetRemainingCooldown(spell));
         else
             ALE::Push(L, 0);
 
